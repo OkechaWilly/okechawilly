@@ -1,0 +1,11 @@
+export const artworks = [
+ { slug: "the-quiet-between", title: "The Quiet Between", year: "2025", medium: "Oil on canvas", size: "Reference image", category: "Studies & Experiments", status: "Available", price: "Price on request", image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=1200&q=85", note: "A study in stillness, memory and the spaces between moments." },
+ { slug: "earth-memory", title: "Earth Memory", year: "2025", medium: "Mixed media study", size: "Reference image", category: "Nature & Environment", status: "Portfolio", price: "Not for sale", image: "https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?w=1200&q=85", note: "An imagined landscape shaped by the textures of the natural world." },
+ { slug: "sacred-light", title: "Sacred Light", year: "2026", medium: "Oil painting study", size: "Reference image", category: "The Sacred & Ordinary", status: "Study", price: "Coming soon", image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=1200&q=85", note: "A visual meditation on faith, architecture and the human search for meaning." },
+ { slug: "figures-in-conversation", title: "Figures in Conversation", year: "2024", medium: "Portrait study", size: "Reference image", category: "Portraits", status: "Portfolio", price: "Not for sale", image: "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=1200&q=85", note: "A study of presence, gesture and the stories held in a face." }
+];
+export const collections = [
+ { title: "The Sacred & Ordinary", count: "An ongoing series", image: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=1200&q=85", href: "/collections/the-sacred-and-ordinary" },
+ { title: "Portraits", count: "People & presence", image: "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=1200&q=85", href: "/collections/portraits" },
+ { title: "Nature & Environment", count: "Land, memory & belonging", image: "https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?w=1200&q=85", href: "/collections/nature-and-environment" }
+];
