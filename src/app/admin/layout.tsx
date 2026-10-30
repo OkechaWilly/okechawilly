@@ -8,7 +8,7 @@ export default async function AdminLayout({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) redirect("/admin/login");
+  if (!user) redirect("/studio-login");
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -16,7 +16,7 @@ export default async function AdminLayout({
     .eq("id", user.id)
     .maybeSingle();
 
-  if (profile?.role !== "admin") redirect("/admin/login?error=unauthorized");
+  if (profile?.role !== "admin") redirect("/studio-login?error=unauthorized");
 
   return (
     <div className="min-h-screen bg-[#f1efe9]">
