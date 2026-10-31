@@ -118,7 +118,6 @@ export default function ArtworkManager({
       is_published: artwork.is_published ?? false,
       sort_order: artwork.sort_order?.toString() ?? "0",
     });
-    setSelectedCollections([]);
     setFiles([]);
     setNotice("");
   }
@@ -143,6 +142,7 @@ export default function ArtworkManager({
     setBusy(true);
     setNotice("");
     try {
+      const existingImageCount = editing?.artwork_images?.length ?? 0;
       const payload = {
         title: form.title.trim(),
         slug: editing?.slug || `${makeSlug(form.title)}-${Date.now().toString().slice(-6)}`,
@@ -187,7 +187,6 @@ export default function ArtworkManager({
         if (error) throw error;
       }
 
-      const uploadedImages: ImageRecord[] = [];
       for (let index = 0; index < files.length; index++) {
         const file = files[index];
         const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -202,13 +201,12 @@ export default function ArtworkManager({
             artwork_id: artworkId,
             storage_path: path,
             alt_text: `${form.title} — image ${index + 1}`,
-            is_primary: (editing?.artwork_images?.length ?? 0) === 0 && index === 0,
-            sort_order: (editing?.artwork_images?.length ?? 0) + index,
+            is_primary: existingImageCount === 0 && index === 0,
+            sort_order: existingImageCount + index,
           })
           .select("*")
           .single();
         if (imageError) throw imageError;
-        uploadedImages.push(imageData as ImageRecord);
       }
 
       const { data: refreshed, error: refreshError } = await supabase
