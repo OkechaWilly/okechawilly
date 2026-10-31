@@ -8,7 +8,7 @@ export default async function AdminArtworksPage() {
     await Promise.all([
       supabase
         .from("artworks")
-        .select("*, artwork_images(*)")
+        .select("*, artwork_images(*), collection_artworks(collection_id)")
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false }),
       supabase.from("collections").select("id, title").order("sort_order"),
