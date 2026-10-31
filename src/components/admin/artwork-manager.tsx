@@ -28,6 +28,7 @@ type ArtworkRecord = {
   is_published: boolean;
   sort_order: number;
   artwork_images: ImageRecord[];
+  collection_artworks?: { collection_id: string }[];
 };
 
 type Collection = { id: string; title: string };
@@ -74,6 +75,7 @@ export default function ArtworkManager({
   const supabase = useMemo(() => createClient(), []);
   const [artworks, setArtworks] = useState(initialArtworks);
   const [editing, setEditing] = useState<ArtworkRecord | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
@@ -89,6 +91,7 @@ export default function ArtworkManager({
   });
 
   function startNew() {
+    setFormOpen(true);
     setEditing(null);
     setForm(emptyForm);
     setSelectedCollections([]);
@@ -97,7 +100,9 @@ export default function ArtworkManager({
   }
 
   function startEdit(artwork: ArtworkRecord) {
+    setFormOpen(true);
     setEditing(artwork);
+    setSelectedCollections((artwork.collection_artworks ?? []).map((item) => item.collection_id));
     setForm({
       title: artwork.title ?? "",
       year: artwork.year?.toString() ?? "",
@@ -197,7 +202,7 @@ export default function ArtworkManager({
             artwork_id: artworkId,
             storage_path: path,
             alt_text: `${form.title} — image ${index + 1}`,
-            is_primary: !editing && index === 0 && !(editing?.artwork_images?.length),
+            is_primary: (editing?.artwork_images?.length ?? 0) === 0 && index === 0,
             sort_order: (editing?.artwork_images?.length ?? 0) + index,
           })
           .select("*")
@@ -207,7 +212,7 @@ export default function ArtworkManager({
       }
 
       const { data: refreshed, error: refreshError } = await supabase
-        .from("artworks").select("*, artwork_images(*)").eq("id", artworkId).single();
+        .from("artworks").select("*, artwork_images(*), collection_artworks(collection_id)").eq("id", artworkId).single();
       if (refreshError) throw refreshError;
 
       setArtworks((current) => {
@@ -215,6 +220,7 @@ export default function ArtworkManager({
         return [refreshed as ArtworkRecord, ...next];
       });
       setEditing(null);
+      setFormOpen(false);
       setFiles([]);
       setNotice("Artwork saved successfully.");
     } catch (error) {
@@ -237,7 +243,7 @@ export default function ArtworkManager({
         if (storageError) setNotice("Artwork deleted, but one or more stored images may need manual cleanup.");
       }
       setArtworks((current) => current.filter((item) => item.id !== artwork.id));
-      if (!notice) setNotice("Artwork deleted.");
+      setNotice("Artwork deleted.");
       if (editing?.id === artwork.id) setEditing(null);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Could not delete this artwork.");
@@ -312,17 +318,15 @@ export default function ArtworkManager({
         </div>
       )}
 
-      {(editing || notice === "" && false) && null}
-      {/** Form is shown when adding or editing; startNew uses a dedicated flag below. */}
       <ArtworkForm
-        open={!!editing || form.title !== "" || notice === "Add a title and details for your new artwork."}
+        open={formOpen}
         editing={!!editing}
         form={form}
         collections={collections}
         selectedCollections={selectedCollections}
         files={files}
         busy={busy}
-        onClose={() => { setEditing(null); setForm(emptyForm); setFiles([]); }}
+        onClose={() => { setFormOpen(false); setEditing(null); setForm(emptyForm); setFiles([]); }}
         onChange={updateField}
         onToggleCollection={toggleCollection}
         onFiles={setFiles}
