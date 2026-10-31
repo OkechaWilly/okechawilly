@@ -2,12 +2,11 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AdminLogin() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -38,7 +37,6 @@ export default function AdminLogin() {
           <p className="eyebrow">Private workspace</p>
           <h1 className="display mt-3 text-4xl">Studio sign in.</h1>
           <p className="mt-3 text-sm leading-6 text-[#77736d]">Sign in with the administrator account created in Supabase.</p>
-          {searchParams.get("error") === "unauthorized" && <p className="mt-5 text-xs text-red-700">This account does not have administrator access.</p>}
           {error && <p role="alert" className="mt-5 text-xs text-red-700">{error}</p>}
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <label className="block text-[10px] uppercase tracking-[.13em] text-[#77736d]">
