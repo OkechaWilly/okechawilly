@@ -344,3 +344,12 @@ My current painting direction includes an ongoing exploration of religion and it
    '3732b0e8-e117-46b0-86ae-7158784b9d09/ff7cffa7-c05a-42cd-ade6-1402b1260a09.png',
    true)
 on conflict (id) do nothing;
+
+
+-- Optional collector-facing specifications for shop products.
+alter table public.products
+  add column if not exists medium text,
+  add column if not exists materials text,
+  add column if not exists dimensions text,
+  add column if not exists framing text,
+  add column if not exists shipping_information text;
