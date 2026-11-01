@@ -281,3 +281,16 @@ grant select, insert, update, delete on public.profiles, public.collections,
   public.artworks, public.artwork_images, public.collection_artworks,
   public.products, public.product_images, public.orders, public.order_items,
   public.inquiries, public.journal_posts to authenticated;
+
+
+-- Allow visitors to submit contact enquiries without exposing enquiry records.
+drop policy if exists "Public submit enquiries" on public.inquiries;
+create policy "Public submit enquiries" on public.inquiries
+for insert to anon, authenticated
+with check (
+  length(trim(name)) between 1 and 120
+  and length(trim(email)) between 3 and 254
+  and length(trim(message)) between 10 and 5000
+  and (subject is null or length(subject) <= 120)
+);
+grant insert on public.inquiries to anon, authenticated;
