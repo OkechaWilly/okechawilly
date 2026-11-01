@@ -9,7 +9,7 @@ type Product = {
   id: string; title: string; slug: string; product_type: string; description: string | null;
   price: number | null; currency: string; artwork_id: string | null; edition_size: number | null;
   edition_sold: number; sku: string | null; stock_quantity: number | null; track_inventory: boolean;
-  options: string[]; status: string; is_published: boolean; product_images: ProductImage[];
+  options: string[]; medium: string | null; materials: string | null; dimensions: string | null; framing: string | null; shipping_information: string | null; status: string; is_published: boolean; product_images: ProductImage[];
 };
 const field = "mt-2 w-full border border-[#d9d4ca] bg-white px-3 py-3 text-sm outline-none focus:border-[#9c8062]";
 const label = "block text-[10px] uppercase tracking-[.14em] text-[#77736d]";
@@ -31,6 +31,11 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
   const [slug, setSlug] = useState("");
   const [type, setType] = useState("original");
   const [description, setDescription] = useState("");
+  const [medium, setMedium] = useState("");
+  const [materials, setMaterials] = useState("");
+  const [dimensions, setDimensions] = useState("");
+  const [framing, setFraming] = useState("");
+  const [shippingInformation, setShippingInformation] = useState("");
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("UGX");
   const [artworkId, setArtworkId] = useState("");
@@ -47,7 +52,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
   const [notice, setNotice] = useState("");
 
   function reset() {
-    setEditing(null); setTitle(""); setSlug(""); setType("original"); setDescription("");
+    setEditing(null); setTitle(""); setSlug(""); setType("original"); setDescription(""); setMedium(""); setMaterials(""); setDimensions(""); setFraming(""); setShippingInformation("");
     setPrice(""); setCurrency("UGX"); setArtworkId(""); setEditionSize(""); setEditionSold("0");
     setSku(""); setStock(""); setTrackInventory(true); setOptions(""); setStatus("draft");
     setPublished(false); setImage(null); setOpen(false);
@@ -55,7 +60,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
   function createNew() { reset(); setNotice(""); setOpen(true); }
   function edit(item: Product) {
     setEditing(item); setTitle(item.title); setSlug(item.slug); setType(item.product_type);
-    setDescription(item.description || ""); setPrice(item.price == null ? "" : String(item.price));
+    setDescription(item.description || ""); setMedium(item.medium || ""); setMaterials(item.materials || ""); setDimensions(item.dimensions || ""); setFraming(item.framing || ""); setShippingInformation(item.shipping_information || ""); setPrice(item.price == null ? "" : String(item.price));
     setCurrency(item.currency || "UGX"); setArtworkId(item.artwork_id || "");
     setEditionSize(item.edition_size == null ? "" : String(item.edition_size));
     setEditionSold(String(item.edition_sold ?? 0)); setSku(item.sku || "");
@@ -73,7 +78,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     try {
       const payload = {
         title: title.trim(), slug: slugify(slug || title), product_type: type,
-        description: description.trim() || null, price: price ? Number(price) : null, currency,
+        description: description.trim() || null, medium: medium.trim() || null, materials: materials.trim() || null, dimensions: dimensions.trim() || null, framing: framing.trim() || null, shipping_information: shippingInformation.trim() || null, price: price ? Number(price) : null, currency,
         artwork_id: artworkId || null,
         edition_size: type === "limited_print" ? Number(editionSize) : null,
         edition_sold: type === "limited_print" ? Number(editionSold || 0) : 0,
@@ -144,6 +149,12 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
         <label className={label}>SKU / reference<input className={field} value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Optional product code" /></label>
         <label className={label}>Stock quantity<input className={field} type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="Leave blank if not tracked" /></label>
         <label className={label + " md:col-span-2"}>Description<textarea className={field + " min-h-28"} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the product for collectors." /></label>
+        <div className="md:col-span-2 mt-2 border-t border-[#dedad2] pt-5"><p className="eyebrow">Artwork & product details</p><p className="mt-2 text-xs text-[#89847c]">Add the practical details collectors need. Leave any field blank if it does not apply.</p></div>
+        <label className={label}>Medium<input className={field} value={medium} onChange={(e) => setMedium(e.target.value)} placeholder="e.g. Oil on canvas" /></label>
+        <label className={label}>Materials<input className={field} value={materials} onChange={(e) => setMaterials(e.target.value)} placeholder="e.g. Cotton canvas, archival ink" /></label>
+        <label className={label}>Dimensions<input className={field} value={dimensions} onChange={(e) => setDimensions(e.target.value)} placeholder="e.g. 60 × 80 cm" /></label>
+        <label className={label}>Framing<input className={field} value={framing} onChange={(e) => setFraming(e.target.value)} placeholder="e.g. Unframed / Framed in natural wood" /></label>
+        <label className={label + " md:col-span-2"}>Shipping & delivery information<textarea className={field + " min-h-20"} value={shippingInformation} onChange={(e) => setShippingInformation(e.target.value)} placeholder="e.g. Carefully packaged. International delivery arranged and quoted separately." /></label>
         <label className={label}>Product image<input className={field} type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] || null)} />{editing?.product_images?.length ? <span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">{editing.product_images.length} image(s) uploaded. Add another image here.</span> : null}</label>
         <label className={label}>Options / variants<input className={field} value={options} onChange={(e) => setOptions(e.target.value)} placeholder="e.g. Small, Medium, Large" /><span className="mt-1 block text-[9px] normal-case tracking-normal text-[#89847c]">Separate options with commas. Useful for sizes or finishes.</span></label>
       </div>
