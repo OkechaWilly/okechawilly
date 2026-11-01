@@ -77,14 +77,14 @@ export default async function Shop() {
                 <article key={product.id}>
                   <Link href={`/shop/${product.slug}`} className="group block">
                     <div className="aspect-[4/5] overflow-hidden bg-[#e6e2da]">
-                      {product.imageUrl ? <img src={product.imageUrl} alt={product.imageAlt} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]" /> : <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-widest text-[#89847c]">Image coming soon</div>}
+                      {product.imageUrl ? <img src={product.imageUrl} alt={product.imageAlt} className="h-full w-full object-contain p-5 transition duration-500 group-hover:scale-[1.025] sm:p-7" /> : <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-widest text-[#89847c]">Image coming soon</div>}
                     </div>
                     <p className="eyebrow mt-5">{categories.find((category) => category.value === product.product_type)?.title || "Artwork"}</p>
                     <h3 className="display mt-2 text-2xl">{product.title}</h3>
                   </Link>
-                  <div className="mt-2 flex items-center justify-between gap-3 text-xs text-[#77736d]">
+                  <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#ded9d0] pt-3 text-xs text-[#77736d]">
                     <span>{formatPrice(product.price, product.currency)}</span>
-                    {product.product_type === "limited_print" && product.edition_size != null && <span>{Math.max(0, product.edition_size - product.edition_sold)} remaining</span>}
+                    {product.product_type === "limited_print" && product.edition_size != null ? <span>{Math.max(0, product.edition_size - product.edition_sold)} remaining</span> : <Link href={`/shop/${product.slug}`} className="uppercase tracking-[.12em] !text-[#242320] transition-colors hover:!text-[#9c8062]">View details ↗</Link>}
                   </div>
                 </article>
               ))}
