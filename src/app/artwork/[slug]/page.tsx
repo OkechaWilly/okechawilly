@@ -125,7 +125,7 @@ export default async function ArtworkDetail({
           <div className="space-y-4">
             <Link
               href={`/contact?subject=${enquirySubject}`}
-              className="flex w-full items-center justify-between bg-[#242320] px-6 py-5 text-[10px] uppercase tracking-[.15em] text-white transition hover:bg-[#9c8062]"
+              className="flex w-full items-center justify-between bg-[#242320] px-6 py-5 text-[10px] uppercase tracking-[.15em] !text-[#f7f6f2] transition hover:bg-[#9c8062]"
             >
               <span>{isAvailable ? "Enquire about this work" : "Ask about this work"}</span>
               <span aria-hidden="true">↗</span>
