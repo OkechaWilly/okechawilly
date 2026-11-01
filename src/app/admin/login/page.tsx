@@ -49,7 +49,7 @@ export default function AdminLogin() {
               Password
               <input required type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 w-full border border-[#dedad2] bg-white px-4 py-3 text-sm text-[#242320] outline-none focus:border-[#9c8062]" />
             </label>
-            <button disabled={loading} className="w-full bg-[#242320] px-6 py-4 text-[10px] uppercase tracking-[.15em] text-white transition hover:bg-[#514b43] disabled:opacity-60">
+            <button disabled={loading} className="w-full bg-[#242320] px-6 py-4 text-[10px] uppercase tracking-[.15em] !text-[#f7f6f2] transition-colors hover:bg-[#9c8062] disabled:opacity-60">
               {loading ? "Signing in…" : "Sign in to studio"}
             </button>
           </form>
