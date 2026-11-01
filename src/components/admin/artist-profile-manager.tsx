@@ -124,6 +124,22 @@ export default function ArtistProfileManager({ initialProfile }: { initialProfil
           {galleryFiles.length>0 && <p className="mt-2 text-xs text-[#77736d]">{galleryFiles.length} image(s) selected.</p>}
         </div>
       </section>
+      <section className="border-t border-[#d9d4ca] pt-7">
+        <p className="eyebrow">06 / Live preview</p>
+        <h2 className="display mt-2 text-3xl">How the page will read</h2>
+        <div className="mt-5 grid overflow-hidden border border-[#dedad2] bg-[#f7f6f2] md:grid-cols-[1fr_.8fr]">
+          <div className="p-6 md:p-9">
+            <p className="text-[9px] uppercase tracking-[.16em] text-[#9c8062]">The artist</p>
+            <h3 className="display mt-5 text-4xl">{profile.display_name || "Your name"}</h3>
+            <p className="mt-4 text-sm leading-7 text-[#77736d]">{profile.introduction || "Your introduction will appear here."}</p>
+            <p className="mt-5 text-[9px] uppercase tracking-[.14em] text-[#9c8062]">Based in {profile.location || "your location"}</p>
+            <div className="mt-8 border-t border-[#dedad2] pt-5"><p className="text-[9px] uppercase tracking-[.14em] text-[#9c8062]">Areas of inquiry</p>{profile.themes.slice(0,3).map((t,i)=><p key={i} className="mt-3 text-sm">{t.title || "Untitled theme"}</p>)}</div>
+          </div>
+          <div className="relative min-h-[260px] bg-[#e9e5dc]">
+            {(portrait ? URL.createObjectURL(portrait) : profile.portrait_path ? publicUrl(profile.portrait_path) : "") && <img src={portrait ? URL.createObjectURL(portrait) : publicUrl(profile.portrait_path!)} alt="Portrait preview" className="absolute inset-0 h-full w-full object-cover" />}
+          </div>
+        </div>
+      </section>
       <div className="sticky bottom-3 flex flex-wrap items-center justify-between gap-4 border border-[#dedad2] bg-[#f7f6f2]/95 p-4 shadow-lg backdrop-blur">
         <label className="flex items-center gap-3 text-xs"><input type="checkbox" checked={profile.is_published} onChange={e=>update("is_published",e.target.checked)} className="accent-[#9c8062]" /> Make profile visible on website</label>
         <button disabled={busy} className="bg-[#242320] px-7 py-3 text-[10px] uppercase tracking-[.16em] text-white disabled:opacity-50">{busy?"Saving...":"Save profile"}</button>
