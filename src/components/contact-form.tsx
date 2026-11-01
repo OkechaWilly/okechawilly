@@ -26,7 +26,7 @@ export default function ContactForm({ initialSubject = "Artwork enquiry" }: { in
     </div>
     <label className={label}>Enquiry type<select className={field} value={subject} onChange={e=>setSubject(e.target.value)}><option>Artwork enquiry</option><option>Commission request</option><option>Print enquiry</option><option>Exhibition or collaboration</option><option>Shipping question</option><option>Other</option></select></label>
     <label className={label}>Message<textarea required minLength={10} maxLength={5000} rows={6} className={field} value={message} onChange={e=>setMessage(e.target.value)} placeholder="Tell me a little about what you're interested in..." /></label>
-    <button disabled={busy} className="bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] text-white disabled:opacity-50">{busy?"Sending...":"Send enquiry ↗"}</button>
+    <button disabled={busy} className="bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] !text-[#f7f6f2] transition-colors hover:bg-[#9c8062] disabled:opacity-50">{busy?"Sending...":"Send enquiry ↗"}</button>
     {notice&&<p role="status" className="text-sm text-[#77736d]">{notice}</p>}
     <p className="text-[10px] leading-5 text-[#89847c]">Your details will only be used to respond to this enquiry.</p>
   </form>;
