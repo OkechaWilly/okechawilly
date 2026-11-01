@@ -7,6 +7,7 @@ const sections = [
   { title: "Shop catalogue", description: "Prepare originals, print editions and merchandise for future sale.", href: "/admin/products", label: "Manage products" },
   { title: "Orders", description: "Review customer orders and track fulfilment once checkout is enabled.", href: "/admin/orders", label: "View orders" },
   { title: "Collector enquiries", description: "Keep track of questions about works, commissions and availability.", href: "/admin/inquiries", label: "View enquiries" },
+  { title: "Journal", description: "Write and publish studio notes, artwork stories and reflections.", href: "/admin/journal", label: "Manage journal" },
 ];
 
 export default async function AdminDashboard() {
