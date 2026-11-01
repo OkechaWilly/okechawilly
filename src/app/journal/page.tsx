@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -17,7 +16,7 @@ export default async function Journal() {
     {posts?.length ? <div className="mt-16 grid gap-x-8 gap-y-14 md:grid-cols-2">
       {posts.map(post=><article key={post.id}>
         <Link href={`/journal/${post.slug}`} className="group block">
-          {post.cover_image ? <div className="relative mb-5 aspect-[4/3] overflow-hidden bg-[#e9e6df]"><Image src={post.cover_image} alt={post.title} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"/></div> : <div className="mb-5 aspect-[4/3] bg-[#e9e6df]"/>}
+          {post.cover_image ? <div className="relative mb-5 aspect-[4/3] overflow-hidden bg-[#e9e6df]"><img src={post.cover_image} alt={post.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"/></div> : <div className="mb-5 aspect-[4/3] bg-[#e9e6df]"/>}
           <p className="eyebrow">{post.published_at ? new Date(post.published_at).toLocaleDateString("en-UG",{day:"numeric",month:"long",year:"numeric"}) : "From the studio"}</p>
           <h2 className="display mt-3 text-3xl">{post.title}</h2>
           {post.excerpt&&<p className="mt-3 text-sm leading-7 text-[#77736d]">{post.excerpt}</p>}
