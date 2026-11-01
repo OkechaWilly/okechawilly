@@ -75,7 +75,7 @@ export default async function Home() {
           <div className="mt-9 flex flex-wrap gap-3">
             <Link
               href="/artwork"
-              className="inline-flex items-center gap-5 bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] text-white transition hover:bg-[#9c8062]"
+              className="inline-flex items-center gap-5 bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] !text-[#f7f6f2] transition hover:bg-[#9c8062]"
             >
               Explore artwork <span aria-hidden="true">↗</span>
             </Link>
