@@ -42,6 +42,13 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
           <h1 className="display mt-4 text-5xl md:text-6xl">{product.title}</h1>
           <p className="mt-5 text-lg font-medium">{price}</p>
           {product.description && <p className="mt-6 whitespace-pre-line text-sm leading-7 text-[#77736d]">{product.description}</p>}
+          {(product.medium || product.materials || product.dimensions || product.framing) && <div className="mt-8 border-t border-[#e8e5de] pt-5"><p className="eyebrow mb-3">Product details</p><dl className="divide-y divide-[#e8e5de] text-sm">
+            {product.medium && <div className="flex justify-between gap-5 py-3"><dt className="text-[#77736d]">Medium</dt><dd className="text-right">{product.medium}</dd></div>}
+            {product.materials && <div className="flex justify-between gap-5 py-3"><dt className="text-[#77736d]">Materials</dt><dd className="text-right">{product.materials}</dd></div>}
+            {product.dimensions && <div className="flex justify-between gap-5 py-3"><dt className="text-[#77736d]">Dimensions</dt><dd className="text-right">{product.dimensions}</dd></div>}
+            {product.framing && <div className="flex justify-between gap-5 py-3"><dt className="text-[#77736d]">Framing</dt><dd className="text-right">{product.framing}</dd></div>}
+          </dl></div>}
+          {product.shipping_information && <div className="mt-7 border-t border-[#e8e5de] pt-5"><p className="eyebrow">Shipping & delivery</p><p className="mt-3 whitespace-pre-line text-xs leading-6 text-[#77736d]">{product.shipping_information}</p></div>}
           <div className="my-9 border-y border-[#e8e5de] py-5 text-sm">
             {product.product_type === "limited_print" && product.edition_size != null && <div className="flex justify-between py-2"><span className="text-[#77736d]">Edition</span><span>{product.edition_size} copies</span></div>}
             {product.product_type === "limited_print" && product.edition_size != null && <div className="flex justify-between py-2"><span className="text-[#77736d]">Remaining</span><span>{Math.max(0, product.edition_size - product.edition_sold)}</span></div>}
