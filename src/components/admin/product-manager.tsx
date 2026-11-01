@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Artwork = { id: string; title: string; year: number | null };
-type ProductImage = { id: string; storage_path: string; is_primary: boolean; sort_order: number };
+type ProductImage = { id: string; storage_path: string; is_primary: boolean; sort_order: number; alt_text?: string | null };
 type Product = {
   id: string; title: string; slug: string; product_type: string; description: string | null;
   price: number | null; currency: string; artwork_id: string | null; edition_size: number | null;
@@ -47,7 +47,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
   const [options, setOptions] = useState("");
   const [status, setStatus] = useState("draft");
   const [published, setPublished] = useState(false);
-  const [image, setImage] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
 
@@ -55,7 +55,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     setEditing(null); setTitle(""); setSlug(""); setType("original"); setDescription(""); setMedium(""); setMaterials(""); setDimensions(""); setFraming(""); setShippingInformation("");
     setPrice(""); setCurrency("UGX"); setArtworkId(""); setEditionSize(""); setEditionSold("0");
     setSku(""); setStock(""); setTrackInventory(true); setOptions(""); setStatus("draft");
-    setPublished(false); setImage(null); setOpen(false);
+    setPublished(false); setImageFiles([]); setOpen(false);
   }
   function createNew() { reset(); setNotice(""); setOpen(true); }
   function edit(item: Product) {
@@ -66,7 +66,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     setEditionSold(String(item.edition_sold ?? 0)); setSku(item.sku || "");
     setStock(item.stock_quantity == null ? "" : String(item.stock_quantity));
     setTrackInventory(item.track_inventory); setOptions((item.options || []).join(", "));
-    setStatus(item.status); setPublished(item.is_published); setImage(null); setNotice(""); setOpen(true);
+    setStatus(item.status); setPublished(item.is_published); setImageFiles([]); setNotice(""); setOpen(true);
   }
   const publicUrl = (path: string) => supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
 
@@ -116,6 +116,69 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     } finally { setBusy(false); }
   }
 
+  async function setPrimaryImage(image: ProductImage) {
+    if (!editing) return;
+    setBusy(true); setNotice("");
+    try {
+      const { error: clearError } = await supabase.from("product_images").update({ is_primary: false }).eq("product_id", editing.id);
+      if (clearError) throw clearError;
+      const { error: setError } = await supabase.from("product_images").update({ is_primary: true }).eq("id", image.id);
+      if (setError) throw setError;
+      const nextImages = editing.product_images.map((entry) => ({ ...entry, is_primary: entry.id === image.id }));
+      const next = { ...editing, product_images: nextImages };
+      setEditing(next); setProducts((current) => current.map((item) => item.id === editing.id ? next : item));
+      setNotice("Main product image updated.");
+    } catch (error) { setNotice(error instanceof Error ? error.message : "Could not update the main image."); }
+    finally { setBusy(false); }
+  }
+
+  async function moveProductImage(image: ProductImage, direction: -1 | 1) {
+    if (!editing) return;
+    const sorted = [...editing.product_images].sort((a,b)=>a.sort_order-b.sort_order);
+    const index = sorted.findIndex((entry)=>entry.id===image.id);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= sorted.length) return;
+    [sorted[index], sorted[target]] = [sorted[target], sorted[index]];
+    setBusy(true); setNotice("");
+    try {
+      for (let i=0;i<sorted.length;i++) {
+        const { error } = await supabase.from("product_images").update({ sort_order:i }).eq("id",sorted[i].id);
+        if (error) throw error;
+      }
+      const nextImages = sorted.map((entry,i)=>({...entry,sort_order:i}));
+      const next = {...editing,product_images:nextImages};
+      setEditing(next); setProducts((current)=>current.map((item)=>item.id===editing.id?next:item));
+      setNotice("Image order updated.");
+    } catch (error) { setNotice(error instanceof Error ? error.message : "Could not reorder images."); }
+    finally { setBusy(false); }
+  }
+
+  async function deleteProductImage(image: ProductImage) {
+    if (!editing || !window.confirm("Remove this product image?")) return;
+    setBusy(true); setNotice("");
+    try {
+      const { error } = await supabase.from("product_images").delete().eq("id",image.id);
+      if (error) throw error;
+      await supabase.storage.from("product-images").remove([image.storage_path]);
+      let nextImages = editing.product_images.filter((entry)=>entry.id!==image.id).sort((a,b)=>a.sort_order-b.sort_order);
+      if (image.is_primary && nextImages.length) {
+        const { error: primaryError } = await supabase.from("product_images").update({is_primary:true}).eq("id",nextImages[0].id);
+        if (primaryError) throw primaryError;
+        nextImages = nextImages.map((entry,index)=>({...entry,is_primary:index===0,sort_order:index}));
+      } else {
+        nextImages = nextImages.map((entry,index)=>({...entry,sort_order:index}));
+      }
+      for (let i=0;i<nextImages.length;i++) {
+        const { error: orderError } = await supabase.from("product_images").update({sort_order:i,is_primary:nextImages[i].is_primary}).eq("id",nextImages[i].id);
+        if (orderError) throw orderError;
+      }
+      const next = {...editing,product_images:nextImages};
+      setEditing(next); setProducts((current)=>current.map((item)=>item.id===editing.id?next:item));
+      setNotice("Product image removed.");
+    } catch (error) { setNotice(error instanceof Error ? error.message : "Could not remove this image."); }
+    finally { setBusy(false); }
+  }
+
   async function remove(item: Product) {
     if (!window.confirm(`Delete “${item.title}”? This cannot be undone.`)) return;
     setBusy(true); setNotice("");
@@ -155,7 +218,20 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
         <label className={label}>Dimensions<input className={field} value={dimensions} onChange={(e) => setDimensions(e.target.value)} placeholder="e.g. 60 × 80 cm" /></label>
         <label className={label}>Framing<input className={field} value={framing} onChange={(e) => setFraming(e.target.value)} placeholder="e.g. Unframed / Framed in natural wood" /></label>
         <label className={label + " md:col-span-2"}>Shipping & delivery information<textarea className={field + " min-h-20"} value={shippingInformation} onChange={(e) => setShippingInformation(e.target.value)} placeholder="e.g. Carefully packaged. International delivery arranged and quoted separately." /></label>
-        <label className={label}>Product image<input className={field} type="file" accept="image/*" onChange={(e) => setImage(e.target.files?.[0] || null)} />{editing?.product_images?.length ? <span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">{editing.product_images.length} image(s) uploaded. Add another image here.</span> : null}</label>
+        <div className="md:col-span-2">
+          <label className={label}>Product images<input className={field} type="file" accept="image/*" multiple onChange={(e) => setImageFiles(Array.from(e.target.files || []))} /><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Select multiple images. The first image is used as the main image unless you choose another below.</span></label>
+          {editing?.product_images?.length ? <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{[...editing.product_images].sort((a,b)=>a.sort_order-b.sort_order).map((img,index,arr)=><div key={img.id} className="border border-[#dedad2] bg-white p-2">
+            <div className="aspect-square bg-[#e8e5de]"><img src={publicUrl(img.storage_path)} alt={img.alt_text || title} className="h-full w-full object-contain" /></div>
+            <p className="mt-2 text-[9px] uppercase tracking-wider text-[#77736d]">{img.is_primary ? "Main image" : `Image ${index+1}`}</p>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-2 text-[9px] uppercase tracking-wide">
+              {!img.is_primary && <button type="button" disabled={busy} onClick={()=>setPrimaryImage(img)} className="underline">Make main</button>}
+              <button type="button" disabled={busy || index===0} onClick={()=>moveProductImage(img,-1)} className="underline">Move left</button>
+              <button type="button" disabled={busy || index===arr.length-1} onClick={()=>moveProductImage(img,1)} className="underline">Move right</button>
+              <button type="button" disabled={busy} onClick={()=>deleteProductImage(img)} className="text-[#9b5947] underline">Remove</button>
+            </div>
+          </div>)}</div> : null}
+          {imageFiles.length > 0 && <p className="mt-3 text-xs text-[#625e57]">{imageFiles.length} new image(s) selected — they will upload when you save.</p>}
+        </div>
         <label className={label}>Options / variants<input className={field} value={options} onChange={(e) => setOptions(e.target.value)} placeholder="e.g. Small, Medium, Large" /><span className="mt-1 block text-[9px] normal-case tracking-normal text-[#89847c]">Separate options with commas. Useful for sizes or finishes.</span></label>
       </div>
       <div className="mt-7 flex flex-wrap items-center gap-5 border-t border-[#dedad2] pt-6">
