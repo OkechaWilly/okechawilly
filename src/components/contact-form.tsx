@@ -3,16 +3,18 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export default function ContactForm() {
+export default function ContactForm({ initialSubject = "Artwork enquiry" }: { initialSubject?: string }) {
+
+
   const [name,setName]=useState(""); const [email,setEmail]=useState("");
-  const [subject,setSubject]=useState("Artwork enquiry"); const [message,setMessage]=useState("");
+  const [subject,setSubject]=useState(initialSubject); const [message,setMessage]=useState("");
   const [busy,setBusy]=useState(false); const [notice,setNotice]=useState("");
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setBusy(true); setNotice("");
     const supabase=createClient();
     const {error}=await supabase.from("inquiries").insert({name:name.trim(),email:email.trim(),subject,message:message.trim()});
     if(error) setNotice("We couldn't send your enquiry just now. Please try again or use email.");
-    else {setNotice("Thank you. Your enquiry has been sent to the studio.");setName("");setEmail("");setSubject("Artwork enquiry");setMessage("");}
+    else {setNotice("Thank you. Your enquiry has been sent to the studio.");setName("");setEmail("");setSubject(initialSubject);setMessage("");}
     setBusy(false);
   }
   const field="mt-2 w-full border border-[#d9d4ca] bg-white px-4 py-3 text-sm outline-none focus:border-[#9c8062]";
