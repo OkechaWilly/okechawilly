@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 const sections = [
+  { title: "Artist profile", description: "Edit your About page, artist portrait, biography, statement and supporting studio images.", href: "/admin/profile", label: "Edit artist profile" },
   { title: "Artwork archive", description: "Add paintings, update details, organise collections and publish portfolio entries.", href: "/admin/artworks", label: "Manage artworks" },
   { title: "Collections", description: "Create themed bodies of work, upload cover images and assign artworks to each collection.", href: "/admin/collections", label: "Manage collections" },
   { title: "Shop catalogue", description: "Prepare originals, print editions and merchandise for future sale.", href: "/admin/products", label: "Manage products" },
