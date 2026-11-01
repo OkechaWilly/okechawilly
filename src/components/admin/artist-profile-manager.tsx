@@ -142,7 +142,7 @@ export default function ArtistProfileManager({ initialProfile }: { initialProfil
       </section>
       <div className="sticky bottom-3 flex flex-wrap items-center justify-between gap-4 border border-[#dedad2] bg-[#f7f6f2]/95 p-4 shadow-lg backdrop-blur">
         <label className="flex items-center gap-3 text-xs"><input type="checkbox" checked={profile.is_published} onChange={e=>update("is_published",e.target.checked)} className="accent-[#9c8062]" /> Make profile visible on website</label>
-        <button disabled={busy} className="bg-[#242320] px-7 py-3 text-[10px] uppercase tracking-[.16em] text-white disabled:opacity-50">{busy?"Saving...":"Save profile"}</button>
+        <button disabled={busy} className="bg-[#242320] px-7 py-3 text-[10px] uppercase tracking-[.16em] !text-[#f7f6f2] transition-colors hover:bg-[#9c8062] disabled:opacity-50">{busy?"Saving...":"Save profile"}</button>
       </div>
     </form>
   </section>;
