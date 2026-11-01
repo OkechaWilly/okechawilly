@@ -104,7 +104,7 @@ export default function CollectionManager({ initialCollections, artworks }: { in
     <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
       <div><p className="eyebrow">Studio workspace</p><h1 className="display mt-3 text-5xl md:text-6xl">Collections.</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-[#77736d]">Group artworks into thoughtful themes and decide which collections appear in the public gallery.</p></div>
-      <button onClick={createNew} className="bg-[#242320] px-6 py-3 text-[10px] uppercase tracking-[.16em] text-white hover:bg-[#9c8062]">+ New collection</button>
+      <button onClick={createNew} className="bg-[#242320] px-6 py-3 text-[10px] uppercase tracking-[.16em] !text-[#f7f6f2] hover:bg-[#9c8062]">+ New collection</button>
     </div>
     {notice && <p className="mt-6 border border-[#d9d4ca] bg-white px-4 py-3 text-sm text-[#625e57]">{notice}</p>}
     {open && <form onSubmit={save} className="mt-10 border border-[#dedad2] bg-[#f7f6f2] p-5 md:p-8">
@@ -122,7 +122,7 @@ export default function CollectionManager({ initialCollections, artworks }: { in
       </div>
       <div className="mt-7 flex flex-wrap items-center gap-5 border-t border-[#dedad2] pt-6">
         <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} className="accent-[#9c8062]" /> Publish collection on website</label>
-        <button disabled={busy} className="bg-[#242320] px-6 py-3 text-[10px] uppercase tracking-[.16em] text-white disabled:opacity-50">{busy ? "Saving..." : "Save collection"}</button>
+        <button disabled={busy} className="bg-[#242320] px-6 py-3 text-[10px] uppercase tracking-[.16em] !text-[#f7f6f2] disabled:opacity-50">{busy ? "Saving..." : "Save collection"}</button>
         <button type="button" onClick={reset} className="text-[10px] uppercase tracking-[.14em] underline underline-offset-4">Cancel</button>
       </div>
     </form>}
