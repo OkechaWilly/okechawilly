@@ -5,7 +5,7 @@ import { ArtworkCard } from "@/components/artwork-card";
 export default async function Home() {
   const supabase = await createClient();
   const [{ data: featuredData }, { data: collectionData }] = await Promise.all([
-    supabase.from("artworks").select("*, artwork_images(*)").eq("is_published", true).order("is_featured", { ascending: false }).order("sort_order", { ascending: true }).order("created_at", { ascending: false }).limit(4),
+    supabase.from("artworks").select("*, artwork_images(*)").eq("is_published", true).order("is_featured", { ascending: false }).order("sort_order", { ascending: true }).order("created_at", { ascending: false }).limit(8),
     supabase.from("collections").select("*").eq("is_published", true).order("sort_order", { ascending: true }).order("created_at", { ascending: false }).limit(3),
   ]);
 
@@ -15,6 +15,7 @@ export default async function Home() {
     return { slug: artwork.slug, title: artwork.title, year: artwork.year?.toString() ?? "Undated", medium: artwork.medium ?? "Medium not specified", image, status: artwork.status.replaceAll("_", " ") };
   });
 
+  const heroArtwork = featured[0];
   const collections = (collectionData ?? []).map((collection) => ({
     ...collection,
     image: collection.cover_image
@@ -31,7 +32,7 @@ export default async function Home() {
         <div className="mt-9 flex flex-wrap gap-3"><Link href="/artwork" className="bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] text-white transition hover:bg-[#9c8062]">Explore artwork ↗</Link><Link href="/about" className="border border-[#c9c5bc] px-7 py-4 text-[10px] uppercase tracking-[.15em] transition hover:border-[#242320]">Meet the artist</Link></div>
         <p className="mt-16 text-[10px] uppercase tracking-[.16em] text-[#aaa49a]">01 — A practice in progress</p>
       </div>
-      <div className="order-1 relative md:order-2"><div className="aspect-[4/4.6] overflow-hidden bg-[#e7e2d9]"><img src="https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=1600&q=90" alt="Temporary gallery reference photograph" className="h-full w-full object-cover"/></div><div className="absolute -bottom-5 -left-5 bg-[#f7f6f2] px-5 py-4"><p className="eyebrow">Selected visual study</p><p className="serif mt-1 text-xl">The language of colour</p></div></div>
+      <div className="order-1 relative md:order-2"><div className="aspect-[4/4.6] overflow-hidden bg-[#e7e2d9]">{heroArtwork?.image ? <img src={heroArtwork.image} alt={heroArtwork.title} className="h-full w-full object-cover"/> : <div className="flex h-full items-center justify-center p-10 text-center"><p className="serif text-3xl text-[#9c8062]">A practice in progress</p></div>}</div>{heroArtwork && <Link href={"/artwork/"+heroArtwork.slug} className="absolute -bottom-5 -left-5 max-w-[80%] bg-[#f7f6f2] px-5 py-4 shadow-sm"><p className="eyebrow">From the portfolio</p><p className="serif mt-1 text-xl">{heroArtwork.title}</p></Link>}</div>
     </section>
     <section className="border-y border-[#e8e5de] py-6"><div className="container flex flex-wrap items-center justify-between gap-4"><p className="eyebrow">A visual practice rooted in curiosity</p><p className="serif text-lg italic text-[#77736d]">Kampala · Uganda · Everywhere</p></div></section>
     <section className="container py-24">
@@ -41,7 +42,7 @@ export default async function Home() {
     <section className="bg-[#eeece6] py-24"><div className="container"><div className="mb-10 flex items-end justify-between"><div><p className="eyebrow mb-3">From the portfolio</p><h2 className="display text-5xl md:text-6xl">Selected works</h2></div><Link href="/artwork" className="text-[10px] uppercase tracking-[.14em] underline underline-offset-4">View all works ↗</Link></div>
       {featured.length ? <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">{featured.map((artwork) => <ArtworkCard key={artwork.slug} item={artwork}/>)}</div> : <p className="text-sm text-[#77736d]">Published artworks will appear here once they are added to the portfolio.</p>}
     </div></section>
-    <section className="container grid gap-12 py-24 md:grid-cols-2 md:items-center"><div className="aspect-[4/4.2] overflow-hidden bg-[#e7e2d9]"><img src="https://images.unsplash.com/photo-1577083552431-6e5fd01aa342?w=1200&q=85" alt="Temporary studio and art reference" className="h-full w-full object-cover"/></div><div className="max-w-lg"><p className="eyebrow mb-4">A little about the artist</p><h2 className="display text-5xl md:text-6xl">Making sense<br/>of the world.</h2><p className="mt-7 text-sm leading-7 text-[#77736d]">My practice moves between observation, storytelling and experimentation. I am interested in the ways art can hold memory, question belief and open up new ways of seeing the world around us.</p><Link href="/about" className="mt-8 inline-block border-b border-[#242320] pb-2 text-[10px] uppercase tracking-[.15em]">Read my story ↗</Link></div></section>
+    <section className="container grid gap-12 py-24 md:grid-cols-2 md:items-center"><div className="flex aspect-[4/4.2] items-end bg-[#e9e5dc] p-8 md:p-12"><div><p className="eyebrow">Okecha Willy · Uganda</p><p className="display mt-5 max-w-sm text-5xl leading-[1.05]">Art, memory<br/>and the world<br/><em className="text-[#9c8062]">around us.</em></p></div></div><div className="max-w-lg"><p className="eyebrow mb-4">A little about the artist</p><h2 className="display text-5xl md:text-6xl">Making sense<br/>of the world.</h2><p className="mt-7 text-sm leading-7 text-[#77736d]">My practice moves between observation, storytelling and experimentation. I am interested in the ways art can hold memory, question belief and open up new ways of seeing the world around us.</p><Link href="/about" className="mt-8 inline-block border-b border-[#242320] pb-2 text-[10px] uppercase tracking-[.15em]">Read my story ↗</Link></div></section>
     <section className="container pb-24"><div className="bg-[#242320] px-8 py-16 text-center text-[#f7f6f2] md:px-20"><p className="eyebrow !text-[#c6b49e]">Have something in mind?</p><h2 className="display mx-auto mt-5 max-w-2xl text-5xl md:text-6xl">Let’s make room for a conversation.</h2><p className="mx-auto mt-5 max-w-md text-sm leading-6 text-[#c5c1b9]">For original artwork, commissions, collaborations and enquiries.</p><Link href="/contact" className="mt-8 inline-block bg-[#f7f6f2] px-7 py-4 text-[10px] uppercase tracking-[.15em] text-[#242320]">Get in touch ↗</Link></div></section>
   </main>;
 }
