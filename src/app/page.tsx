@@ -272,7 +272,7 @@ export default async function Home() {
           </p>
           <Link
             href="/contact"
-            className="mt-8 inline-flex items-center gap-5 bg-[#f7f6f2] px-7 py-4 text-[10px] uppercase tracking-[.15em] text-[#242320] transition hover:bg-[#c6b49e]"
+            className="mt-8 inline-flex items-center gap-5 bg-[#f7f6f2] px-7 py-4 text-[10px] uppercase tracking-[.15em] !text-[#242320] transition-colors hover:bg-[#c6b49e] hover:!text-[#242320]"
           >
             Get in touch <span>↗</span>
           </Link>
