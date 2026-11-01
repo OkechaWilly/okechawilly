@@ -29,6 +29,7 @@ export default async function AdminLayout({
           <nav className="flex flex-wrap gap-5 text-[10px] uppercase tracking-[.12em] text-[#625e57]">
             <Link href="/admin">Overview</Link>
             <Link href="/admin/artworks">Artworks</Link>
+            <Link href="/admin/collections">Collections</Link>
             <Link href="/admin/products">Products</Link>
             <Link href="/admin/orders">Orders</Link>
             <Link href="/admin/inquiries">Enquiries</Link>
