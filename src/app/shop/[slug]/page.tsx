@@ -50,7 +50,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
             {Array.isArray(product.options) && product.options.length > 0 && <div className="flex justify-between gap-5 py-2"><span className="text-[#77736d]">Options</span><span className="text-right">{product.options.join(", ")}</span></div>}
           </div>
           <p className="text-xs leading-6 text-[#77736d]">To purchase this work or confirm delivery options, contact the studio. Online checkout is not yet available.</p>
-          <Link href={`/contact?subject=${encodeURIComponent(`Enquiry about ${product.title}`)}`} className="mt-7 inline-block bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] text-white">Enquire about this product ↗</Link>
+          <Link href={`/contact?subject=${encodeURIComponent(`Enquiry about ${product.title}`)}`} className="mt-7 inline-block bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] !text-[#f7f6f2] transition-colors hover:bg-[#9c8062]">Enquire about this product ↗</Link>
         </div>
       </div>
     </main>
