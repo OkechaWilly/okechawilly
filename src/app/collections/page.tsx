@@ -3,14 +3,87 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function Collections() {
   const supabase = await createClient();
-  const { data } = await supabase.from("collections").select("*").eq("is_published", true).order("sort_order", { ascending: true }).order("created_at", { ascending: false });
+  const { data } = await supabase
+    .from("collections")
+    .select("*, collection_artworks(count)")
+    .eq("is_published", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
   const collections = (data ?? []).map((collection) => ({
     ...collection,
-    image: collection.cover_image ? (collection.cover_image.startsWith("http") ? collection.cover_image : supabase.storage.from("artwork-images").getPublicUrl(collection.cover_image).data.publicUrl) : "",
+    image: collection.cover_image
+      ? collection.cover_image.startsWith("http")
+        ? collection.cover_image
+        : supabase.storage.from("artwork-images").getPublicUrl(collection.cover_image).data.publicUrl
+      : "",
+    artworkCount: collection.collection_artworks?.[0]?.count ?? 0,
   }));
 
-  return <main className="container py-20">
-    <p className="eyebrow">Browse by theme</p><h1 className="display mt-4 text-6xl md:text-8xl">Collections<span className="text-[#9c8062]">.</span></h1>
-    {collections.length ? <div className="mt-14 grid gap-7 md:grid-cols-3">{collections.map((collection) => <Link key={collection.id} href={"/collections/" + collection.slug} className="group"><div className="image-hover aspect-[4/5] overflow-hidden bg-[#e7e2d9]">{collection.image ? <img src={collection.image} alt={collection.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-105"/> : <div className="flex h-full items-center justify-center p-8 text-center"><span className="serif text-3xl">{collection.title}</span></div>}</div><p className="eyebrow mt-4">Collection</p><h2 className="serif mt-1 text-3xl">{collection.title}</h2>{collection.description && <p className="mt-3 text-sm leading-6 text-[#77736d]">{collection.description}</p>}</Link>)}</div> : <p className="mt-12 text-sm text-[#77736d]">Collections will appear here once they have been created and published in the studio.</p>}
-  </main>;
+  return (
+    <main className="container pb-24 pt-16 md:pt-24">
+      <div className="max-w-3xl">
+        <p className="eyebrow">The artist’s archive</p>
+        <h1 className="display mt-5 text-6xl leading-[.98] md:text-8xl">
+          Collections<span className="text-[#9c8062]">.</span>
+        </h1>
+        <p className="mt-7 max-w-xl text-sm leading-7 text-[#77736d] md:text-base">
+          Explore selected bodies of work, gathered around ideas, observations and recurring themes.
+          Each collection offers a closer look at a particular part of the practice.
+        </p>
+      </div>
+
+      <div className="mt-14 flex items-center justify-between border-y border-[#dedad2] py-4">
+        <p className="eyebrow">Selected bodies of work</p>
+        <p className="text-[10px] uppercase tracking-[.14em] text-[#89847c]">
+          {String(collections.length).padStart(2, "0")} {collections.length === 1 ? "collection" : "collections"}
+        </p>
+      </div>
+
+      {collections.length ? (
+        <div className="mt-8 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          {collections.map((collection, index) => (
+            <Link key={collection.id} href={"/collections/" + collection.slug} className="group block">
+              <div className="image-hover relative aspect-[4/5] overflow-hidden bg-[#e7e2d9]">
+                {collection.image ? (
+                  <img
+                    src={collection.image}
+                    alt={collection.title}
+                    className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center p-8 text-center">
+                    <span className="serif text-4xl text-[#77736d]">{collection.title}</span>
+                  </div>
+                )}
+                <span className="absolute left-4 top-4 bg-[#f7f6f2]/90 px-3 py-2 text-[9px] uppercase tracking-[.15em] text-[#625e57]">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+              </div>
+              <div className="mt-5 flex items-start justify-between gap-4">
+                <div>
+                  <p className="eyebrow">Collection</p>
+                  <h2 className="serif mt-2 text-3xl transition-colors group-hover:text-[#9c8062]">{collection.title}</h2>
+                </div>
+                <span className="mt-5 text-xs text-[#89847c]">{collection.artworkCount} works ↗</span>
+              </div>
+              {collection.description && (
+                <p className="mt-3 max-w-md text-sm leading-6 text-[#77736d]">{collection.description}</p>
+              )}
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-10 border border-dashed border-[#cfcac0] bg-[#f7f6f2] px-6 py-20 text-center">
+          <p className="display text-3xl">A body of work in progress.</p>
+          <p className="mx-auto mt-4 max-w-md text-sm leading-7 text-[#77736d]">
+            New collections will appear here as selected works are brought together and published.
+          </p>
+          <Link href="/artwork" className="mt-7 inline-block text-[10px] uppercase tracking-[.16em] underline underline-offset-4">
+            Explore all artwork
+          </Link>
+        </div>
+      )}
+    </main>
+  );
 }
