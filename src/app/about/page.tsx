@@ -37,15 +37,14 @@ export default function About() {
               culture, nature and the many ways we experience being human.
             </p>
           </div>
-          <div className="relative aspect-[4/5] overflow-hidden bg-[#e7e2d9]">
-            <img
-              src="https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=1200&q=85"
-              alt="Temporary artwork reference image; to be replaced with an artist portrait"
-              className="h-full w-full object-cover"
-            />
-            <span className="absolute bottom-4 left-4 bg-[#f7f6f2]/90 px-3 py-2 text-[10px] uppercase tracking-[.18em] text-[#77736d]">
-              Portrait photograph to be added
-            </span>
+          <div className="relative flex min-h-[420px] flex-col justify-between overflow-hidden bg-[#e9e5dc] p-8 md:p-10">
+            <p className="eyebrow">Based in Uganda · Working everywhere</p>
+            <div>
+              <p className="display text-5xl leading-[1.04]">Looking closely.<br/><em className="text-[#9c8062]">Asking questions.</em></p>
+              <div className="mt-8 h-px w-16 bg-[#9c8062]"/>
+              <p className="mt-5 max-w-xs text-sm leading-7 text-[#77736d]">Painting and image-making as ways to explore the stories, beliefs and environments that shape us.</p>
+            </div>
+            <p className="text-[10px] uppercase tracking-[.16em] text-[#9c8062]">Okecha Willy — Artist</p>
           </div>
         </div>
       </section>
