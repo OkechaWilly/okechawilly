@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Post = { id:string; title:string; slug:string; excerpt:string|null; content:string|null; cover_image:string|null; status:"draft"|"published"|"archived"; published_at:string|null; created_at:string };
@@ -20,16 +20,26 @@ export default function JournalManager({initialPosts,artworks}:{initialPosts:Pos
   const [busy,setBusy]=useState(false);
   const [filter,setFilter]=useState("all");
   const [uploading,setUploading]=useState(false);
+  const contentRef=useRef<HTMLTextAreaElement|null>(null);
+  const cursorRef=useRef(0);
 
   function publicImage(path:string) { return supabase.storage.from("artwork-images").getPublicUrl(path).data.publicUrl; }
-  async function uploadImage(file:File, inline:boolean) {
+  async function uploadImage(file:File, inline:boolean, insertAt?:number) {
     setUploading(true); setNotice("");
     const extension=file.name.split(".").pop()?.toLowerCase()||"jpg";
     const path="journal/"+crypto.randomUUID()+"."+extension;
     const {error}=await supabase.storage.from("artwork-images").upload(path,file,{contentType:file.type||undefined,upsert:false});
     if(error){setNotice(error.message);setUploading(false);return;}
     const url=publicImage(path);
-    if(inline)setForm(current=>({...current,content:current.content+(current.content?"\n\n":"")+"!["+file.name.replace(/\.[^.]+$/,"")+"]("+url+")"+"\n\n"}));
+    if(inline)setForm(current=>{
+      const markdown="!["+file.name.replace(/\.[^.]+$/,"")+"]("+url+")";
+      const position=insertAt??contentRef.current?.selectionStart??current.content.length;
+      const before=current.content.slice(0,position);
+      const after=current.content.slice(position);
+      const prefix=before&&!before.endsWith("\n")?"\n\n":"";
+      const suffix=after&&!after.startsWith("\n")?"\n\n":"";
+      return {...current,content:before+prefix+markdown+suffix+after};
+    });
     else setForm(current=>({...current,cover_image:url}));
     setNotice(inline?"Image uploaded and added to the article.":"Cover image uploaded.");
     setUploading(false);
@@ -87,7 +97,28 @@ export default function JournalManager({initialPosts,artworks}:{initialPosts:Pos
         <div className="md:col-span-2">
           <label className="text-[10px] uppercase tracking-[.14em] text-[#77736d]">Article content</label>
           <p className="mt-1 text-xs text-[#89847c]">Write normally. Separate paragraphs with a blank line. Images can be inserted between paragraphs.</p>
-          <textarea required rows={14} className={field+" mt-2 leading-7"} placeholder="Write your article here. Separate paragraphs with a blank line." value={form.content} onChange={e=>setForm({...form,content:e.target.value})}/>
+          <textarea
+            ref={contentRef}
+            required
+            rows={14}
+            className={field+" mt-2 leading-7"}
+            placeholder="Write your article here. You can also drag an image into this area or paste one from your clipboard."
+            value={form.content}
+            onChange={e=>{cursorRef.current=e.target.selectionStart;setForm({...form,content:e.target.value});}}
+            onSelect={e=>{cursorRef.current=e.currentTarget.selectionStart;}}
+            onClick={e=>{cursorRef.current=e.currentTarget.selectionStart;}}
+            onKeyUp={e=>{cursorRef.current=e.currentTarget.selectionStart;}}
+            onDragOver={e=>{if(Array.from(e.dataTransfer.types).includes("Files"))e.preventDefault();}}
+            onDrop={e=>{
+              const file=Array.from(e.dataTransfer.files).find(item=>item.type.startsWith("image/"));
+              if(file){e.preventDefault();const position=cursorRef.current;void uploadImage(file,true,position);}
+            }}
+            onPaste={e=>{
+              const item=Array.from(e.clipboardData.items).find(entry=>entry.type.startsWith("image/"));
+              const file=item?.getAsFile();
+              if(file){e.preventDefault();const position=e.currentTarget.selectionStart;void uploadImage(file,true,position);}
+            }}
+          />
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <label className="cursor-pointer border border-[#d9d4ca] bg-white px-4 py-2 text-xs">{uploading?"Uploading...":"Upload inline image"}<input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={e=>{const file=e.target.files?.[0];if(file)void uploadImage(file,true);e.currentTarget.value="";}}/></label>
             <select aria-label="Insert artwork image into article" className={field+" w-auto flex-1"} defaultValue="" onChange={e=>{if(e.target.value)insertArtworkImage(e.target.value,true);e.target.value="";}}>
