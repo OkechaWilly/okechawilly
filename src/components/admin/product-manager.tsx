@@ -128,7 +128,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
       <div><p className="eyebrow">Studio workspace</p><h1 className="display mt-3 text-5xl md:text-6xl">Shop products.</h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-[#77736d]">Manage the works and objects available to collectors. Products can be prepared and published before online checkout is enabled.</p></div>
-      <button onClick={createNew} className="bg-[#242320] px-6 py-3 text-[10px] uppercase tracking-[.16em] text-white hover:bg-[#9c8062]">+ New product</button>
+      <button onClick={createNew} className="bg-[#242320] px-6 py-3 text-[10px] uppercase tracking-[.16em] !text-[#f7f6f2] hover:bg-[#9c8062]">+ New product</button>
     </div>
     {notice && <p className="mt-6 border border-[#d9d4ca] bg-white px-4 py-3 text-sm text-[#625e57]">{notice}</p>}
     {open && <form onSubmit={save} className="mt-10 border border-[#dedad2] bg-[#f7f6f2] p-5 md:p-8">
@@ -151,7 +151,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
         <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={trackInventory} onChange={(e) => setTrackInventory(e.target.checked)} className="accent-[#9c8062]" /> Track inventory</label>
         <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} className="accent-[#9c8062]" /> Publish on website</label>
         <label className={label + " flex items-center gap-2"}>Status<select className="ml-2 border border-[#d9d4ca] bg-white px-3 py-2 text-xs" value={status} onChange={(e) => setStatus(e.target.value)}><option value="draft">Draft</option><option value="active">Active</option><option value="archived">Archived</option><option value="sold_out">Sold out</option></select></label>
-        <button disabled={busy} className="bg-[#242320] px-6 py-3 text-[10px] uppercase tracking-[.16em] text-white disabled:opacity-50">{busy ? "Saving..." : "Save product"}</button>
+        <button disabled={busy} className="bg-[#242320] px-6 py-3 text-[10px] uppercase tracking-[.16em] !text-[#f7f6f2] transition-colors hover:bg-[#9c8062] disabled:opacity-50">{busy ? "Saving..." : "Save product"}</button>
         <button type="button" onClick={reset} className="text-[10px] uppercase tracking-[.14em] underline underline-offset-4">Cancel</button>
       </div>
       <p className="mt-4 text-[10px] leading-5 text-[#89847c]">Publishing makes the product visible in the catalogue when the public shop is connected. This does not activate payment or checkout.</p>
