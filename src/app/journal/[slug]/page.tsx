@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,7 +13,7 @@ export default async function JournalPost({params}:{params:Promise<{slug:string}
       <p className="eyebrow">{post.published_at?new Date(post.published_at).toLocaleDateString("en-UG",{day:"numeric",month:"long",year:"numeric"}):"From the studio"}</p>
       <h1 className="display mt-4 text-5xl leading-[1.08] md:text-7xl">{post.title}</h1>
       {post.excerpt&&<p className="mt-7 text-lg leading-8 text-[#77736d]">{post.excerpt}</p>}
-      {post.cover_image&&<div className="relative mt-12 aspect-[16/10] overflow-hidden bg-[#e9e6df]"><Image src={post.cover_image} alt={post.title} fill priority sizes="(max-width: 768px) 100vw, 768px" className="object-cover"/></div>}
+      {post.cover_image&&<div className="relative mt-12 aspect-[16/10] overflow-hidden bg-[#e9e6df]"><img src={post.cover_image} alt={post.title} className="absolute inset-0 h-full w-full object-cover"/></div>}
       <div className="mt-12 space-y-6 text-base leading-8 text-[#45423d]">{(post.content||"").split(/\n\s*\n/).filter(Boolean).map((paragraph:string,index:number)=><p key={index} className="whitespace-pre-wrap">{paragraph}</p>)}</div>
     </article>
   </main>;
