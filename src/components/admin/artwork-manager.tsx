@@ -260,7 +260,7 @@ export default function ArtworkManager({
             Catalogue your work, organise collections and decide what appears in the public archive.
           </p>
         </div>
-        <button onClick={startNew} className="bg-[#242320] px-6 py-3 text-[10px] uppercase tracking-[.16em] text-white transition hover:bg-[#9c8062]">
+        <button onClick={startNew} className="bg-[#242320] px-6 py-3 text-[10px] uppercase tracking-[.16em] !text-[#f7f6f2] transition-colors hover:bg-[#9c8062]">
           + Add artwork
         </button>
       </div>
@@ -399,7 +399,7 @@ function ArtworkForm({
 
           <div className="flex flex-col-reverse justify-end gap-3 border-t border-[#dedad2] pt-6 sm:flex-row">
             <button type="button" onClick={onClose} className="border border-[#d9d4ca] px-6 py-3 text-[10px] uppercase tracking-[.14em]">Cancel</button>
-            <button disabled={busy} type="submit" className="bg-[#242320] px-7 py-3 text-[10px] uppercase tracking-[.14em] text-white disabled:opacity-50">{busy ? "Saving..." : editing ? "Save changes" : "Create artwork"}</button>
+            <button disabled={busy} type="submit" className="bg-[#242320] px-7 py-3 text-[10px] uppercase tracking-[.14em] !text-[#f7f6f2] transition-colors hover:bg-[#9c8062] disabled:opacity-50">{busy ? "Saving..." : editing ? "Save changes" : "Create artwork"}</button>
           </div>
         </form>
       </div>
