@@ -4,14 +4,16 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Post = { id:string; title:string; slug:string; excerpt:string|null; content:string|null; cover_image:string|null; status:"draft"|"published"|"archived"; published_at:string|null; created_at:string };
-const blank = { title:"", slug:"", excerpt:"", content:"", cover_image:"", status:"draft" as const };
+type PostStatus = "draft" | "published" | "archived";
+type JournalForm = { title:string; slug:string; excerpt:string; content:string; cover_image:string; status:PostStatus };
+const blank:JournalForm = { title:"", slug:"", excerpt:"", content:"", cover_image:"", status:"draft" };
 const field = "w-full border border-[#d9d4ca] bg-white px-3 py-3 text-sm outline-none focus:border-[#9c8062]";
 const slugify = (value:string) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
 
 export default function JournalManager({initialPosts}:{initialPosts:Post[]}) {
   const supabase=createClient();
   const [posts,setPosts]=useState(initialPosts);
-  const [form,setForm]=useState(blank);
+  const [form,setForm]=useState<JournalForm>(blank);
   const [editing,setEditing]=useState<string|null>(null);
   const [notice,setNotice]=useState("");
   const [busy,setBusy]=useState(false);
@@ -49,7 +51,7 @@ export default function JournalManager({initialPosts}:{initialPosts:Post[]}) {
         <label className="text-[10px] uppercase tracking-[.14em] text-[#77736d] md:col-span-2">Short introduction<textarea rows={2} maxLength={400} className={field+" mt-2"} value={form.excerpt} onChange={e=>setForm({...form,excerpt:e.target.value})}/></label>
         <label className="text-[10px] uppercase tracking-[.14em] text-[#77736d] md:col-span-2">Cover image URL<input type="url" className={field+" mt-2"} placeholder="https://..." value={form.cover_image} onChange={e=>setForm({...form,cover_image:e.target.value})}/></label>
         <label className="text-[10px] uppercase tracking-[.14em] text-[#77736d] md:col-span-2">Article content<textarea required rows={12} className={field+" mt-2 leading-7"} placeholder="Write your article here. Separate paragraphs with a blank line." value={form.content} onChange={e=>setForm({...form,content:e.target.value})}/></label>
-        <label className="text-[10px] uppercase tracking-[.14em] text-[#77736d]">Publishing status<select className={field+" mt-2"} value={form.status} onChange={e=>setForm({...form,status:e.target.value as typeof form.status})}><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label>
+        <label className="text-[10px] uppercase tracking-[.14em] text-[#77736d]">Publishing status<select className={field+" mt-2"} value={form.status} onChange={e=>setForm({...form,status:e.target.value as PostStatus})}><option value="draft">Draft</option><option value="published">Published</option><option value="archived">Archived</option></select></label>
       </div>
       <button disabled={busy} className="mt-5 bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] text-white disabled:opacity-50">{busy?"Saving...":editing?"Save changes":"Save article"}</button>
     </form>
