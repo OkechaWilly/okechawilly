@@ -98,15 +98,26 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
         id = data.id;
       }
       if (!id) throw new Error("Product could not be identified.");
-      let images = editing?.product_images || [];
-      if (image) {
+      let images = [...(editing?.product_images || [])];
+      for (const [index, image] of imageFiles.entries()) {
         const ext = image.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `products/${id}/${crypto.randomUUID()}.${ext}`;
         const { error: uploadError } = await supabase.storage.from("product-images").upload(path, image, { contentType: image.type || undefined });
         if (uploadError) throw uploadError;
-        const { error: imageError } = await supabase.from("product_images").insert({ product_id: id, storage_path: path, alt_text: title.trim(), is_primary: images.length === 0, sort_order: images.length });
+        const isPrimary = images.length === 0 && index === 0;
+        const { data: imageRow, error: imageError } = await supabase
+          .from("product_images")
+          .insert({
+            product_id: id,
+            storage_path: path,
+            alt_text: title.trim(),
+            is_primary: isPrimary,
+            sort_order: images.length,
+          })
+          .select("id, storage_path, is_primary, sort_order, alt_text")
+          .single();
         if (imageError) throw imageError;
-        images = [...images, { id: crypto.randomUUID(), storage_path: path, is_primary: images.length === 0, sort_order: images.length }];
+        images = [...images, imageRow as ProductImage];
       }
       const updated: Product = { id, ...payload, product_images: images };
       setProducts((current) => [updated, ...current.filter((item) => item.id !== id)]);
