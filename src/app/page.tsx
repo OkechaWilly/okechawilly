@@ -46,6 +46,7 @@ export default async function Home() {
   });
 
   const heroArtwork = featured[0];
+  const aboutArtwork = featured[1] ?? featured[0];
   const selectedWorks = featured.slice(0, 4);
   const collections = (collectionData ?? []).map((collection) => ({
     ...collection,
@@ -226,17 +227,26 @@ export default async function Home() {
 
       <section className="container grid gap-12 py-20 md:grid-cols-2 md:items-center md:py-24">
         <div className="relative flex aspect-[4/4.2] items-end overflow-hidden bg-[#e9e5dc] p-8 md:p-12">
-          <div className="absolute right-8 top-8 text-[10px] uppercase tracking-[.16em] text-[#9c8062]">
+          {aboutArtwork?.image && (
+            <img
+              src={aboutArtwork.image}
+              alt={aboutArtwork.imageAlt || aboutArtwork.title}
+              loading="lazy"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#171613]/80 via-[#171613]/15 to-transparent" />
+          <div className="absolute right-8 top-8 text-[10px] uppercase tracking-[.16em] text-white/85">
             Artist · Observer · Maker
           </div>
-          <div>
-            <p className="eyebrow">Okecha Willy · Uganda</p>
+          <div className="relative z-10 text-[#f7f6f2]">
+            <p className="eyebrow !text-[#e2cdb3]">Okecha Willy · Uganda</p>
             <p className="display mt-5 max-w-sm text-5xl leading-[1.05] md:text-6xl">
               Art, memory
               <br />
               and the world
               <br />
-              <em className="text-[#9c8062]">around us.</em>
+              <em className="text-[#e2cdb3]">around us.</em>
             </p>
           </div>
         </div>
