@@ -65,6 +65,17 @@ export default async function Shop() {
         </div>
       </section>
 
+      <section className="container -mt-6 pb-16 md:pb-20">
+        <div className="flex flex-col gap-5 border border-[#e7e3dc] bg-[#f7f6f2] p-7 md:flex-row md:items-center md:justify-between md:p-9">
+          <div>
+            <p className="eyebrow">For print collectors</p>
+            <h2 className="display mt-2 text-3xl md:text-4xl">Fine art prints.</h2>
+            <p className="mt-3 max-w-xl text-sm leading-7 text-[#77736d]">Explore available limited and open-edition prints, with details on formats, materials and availability.</p>
+          </div>
+          <Link href="/prints" className="inline-flex shrink-0 items-center self-start border border-[#242320] px-6 py-4 text-[10px] uppercase tracking-[.15em] transition-colors hover:bg-[#242320] hover:!text-[#f7f6f2] md:self-center">Explore prints <span className="ml-5">↗</span></Link>
+        </div>
+      </section>
+
       {available.length > 0 ? (
         <section className="border-y border-[#e7e3dc] bg-[#f1efe9]">
           <div className="container py-16 md:py-20">
