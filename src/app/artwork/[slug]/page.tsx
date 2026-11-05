@@ -32,10 +32,14 @@ export default async function ArtworkDetail({
 
   const status = String(artwork.status || "available").replaceAll("_", " ");
   const isAvailable = status.toLowerCase() === "available";
-  const dimensions =
-    artwork.width_cm && artwork.height_cm
-      ? `${artwork.width_cm} × ${artwork.height_cm} cm`
-      : "Not specified";
+  const dimensionParts = [
+    artwork.width_cm ? `${artwork.width_cm} W` : null,
+    artwork.height_cm ? `${artwork.height_cm} H` : null,
+    artwork.depth_cm ? `${artwork.depth_cm} D` : null,
+  ].filter(Boolean);
+  const dimensions = dimensionParts.length
+    ? `${dimensionParts.join(" × ")} cm`
+    : "Not specified";
 
   const enquirySubject = encodeURIComponent(`Enquiry about “${artwork.title}”`);
 
