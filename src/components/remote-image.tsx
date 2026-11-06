@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { isSupabaseImage } from "@/lib/images";
 
 type Props = {
   src: string;
@@ -12,27 +11,34 @@ type Props = {
 };
 
 /**
- * For images whose address is typed or pasted by an editor (journal covers and
- * inline pictures). Our own storage images are optimised by next/image; images
- * from any other website cannot be, so they are shown as ordinary lazy images
- * instead of failing.
+ * Images in Supabase are already resized during upload. Bypass the extra
+ * Next.js image proxy so pages can request the stored asset directly.
+ * External editor-provided URLs remain ordinary responsive images as well.
  */
 export function RemoteImage({ src, alt, className = "", fill = false, sizes, priority = false }: Props) {
-  if (isSupabaseImage(src)) {
-    return fill ? (
-      <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className={className} />
-    ) : (
-      <Image src={src} alt={alt} width={0} height={0} sizes={sizes ?? "100vw"} priority={priority} className={className} />
+  if (fill) {
+    return (
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        priority={priority}
+        unoptimized
+        className={className}
+      />
     );
   }
+
+  // eslint-disable-next-line @next/next/no-img-element
   return (
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
       alt={alt}
       loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
       decoding="async"
-      className={fill ? `absolute inset-0 h-full w-full ${className}` : className}
+      className={className}
     />
   );
 }
