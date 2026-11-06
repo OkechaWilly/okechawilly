@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import Image from "next/image";
 
 const printTypes: Record<string, string> = {
   limited_print: "Limited-edition print",
@@ -78,9 +79,9 @@ export default async function FineArtPrintsPage() {
               {prints.map((print) => (
                 <article key={print.id}>
                   <Link href={`/shop/${print.slug}`} className="group block">
-                    <div className="aspect-[4/5] overflow-hidden bg-[#e6e2da]">
+                    <div className="relative aspect-[4/5] overflow-hidden bg-[#e6e2da]">
                       {print.imageUrl ? (
-                        <img src={print.imageUrl} alt={print.imageAlt} className="h-full w-full object-contain p-5 transition duration-500 group-hover:scale-[1.025] sm:p-7" />
+                        <Image src={print.imageUrl} alt={print.imageAlt} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-contain p-5 transition duration-500 group-hover:scale-[1.025] sm:p-7" />
                       ) : (
                         <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-widest text-[#89847c]">Image coming soon</div>
                       )}
