@@ -21,7 +21,8 @@ const types = [
   { value: "original", label: "Original painting" },
   { value: "limited_print", label: "Limited-edition print" },
   { value: "open_print", label: "Open-edition print" },
-  { value: "merchandise", label: "Merchandise" },
+  { value: "wearable", label: "Wearable (t-shirt, clothing)" },
+  { value: "merchandise", label: "Object / merchandise" },
   { value: "art_object", label: "Art object" },
 ];
 
