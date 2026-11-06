@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 type ArtworkCardItem = {
   slug: string;
@@ -19,11 +20,12 @@ export function ArtworkCard({ item }: { item: ArtworkCardItem }) {
     <Link href={"/artwork/" + item.slug} className="group block">
       <div className="image-hover relative aspect-[4/5] overflow-hidden bg-[#e8e4dc]">
         {item.image ? (
-          <img
+          <Image
             src={item.image}
             alt={item.imageAlt || item.title}
-            loading="lazy"
-            className="h-full w-full object-cover"
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover"
           />
         ) : (
           <div className="flex h-full items-center justify-center p-8 text-center">

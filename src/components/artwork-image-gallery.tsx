@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 type ArtworkImage = { url: string; alt: string };
 
@@ -33,9 +34,14 @@ export function ArtworkImageGallery({
           className="group relative block w-full cursor-zoom-in overflow-hidden bg-[#e8e4dc] text-left"
           aria-label={`View larger image of ${title}`}
         >
-          <img
+          <Image
             src={active.url}
             alt={active.alt}
+            width={0}
+            height={0}
+            sizes="(min-width: 768px) 55vw, 100vw"
+            quality={85}
+            priority
             className="h-auto max-h-[82vh] w-full object-contain"
           />
           <span className="absolute bottom-4 right-4 bg-[#f7f6f2]/90 px-3 py-2 text-[9px] uppercase tracking-[.14em] opacity-0 transition group-hover:opacity-100">
@@ -52,13 +58,13 @@ export function ArtworkImageGallery({
                 onClick={() => setActiveIndex(index)}
                 aria-label={`Show image ${index + 1} of ${title}`}
                 aria-pressed={activeIndex === index}
-                className={`aspect-square overflow-hidden border transition ${
+                className={`relative aspect-square overflow-hidden border transition ${
                   activeIndex === index
                     ? "border-[#9c8062] p-1"
                     : "border-transparent opacity-65 hover:opacity-100"
                 }`}
               >
-                <img src={image.url} alt={image.alt} className="h-full w-full object-cover" />
+                <Image src={image.url} alt={image.alt} fill sizes="120px" className="object-cover" />
               </button>
             ))}
           </div>
@@ -84,10 +90,14 @@ export function ArtworkImageGallery({
           >
             ×
           </button>
-          <img
+          <Image
             src={active.url}
             alt={active.alt}
-            className="max-h-[88vh] max-w-full object-contain"
+            width={0}
+            height={0}
+            sizes="100vw"
+            quality={85}
+            className="h-auto max-h-[88vh] w-auto max-w-full object-contain"
             onClick={(event) => event.stopPropagation()}
           />
           {images.length > 1 && (
