@@ -69,7 +69,8 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     setEditionSize(item.edition_size == null ? "" : String(item.edition_size));
     setEditionSold(String(item.edition_sold ?? 0)); setSku(item.sku || "");
     setStock(item.stock_quantity == null ? "" : String(item.stock_quantity));
-    setTrackInventory(item.track_inventory); setOptions((item.options || []).join(", "));\n    setVariants((item.product_variants || []).map((v) => ({ id: v.id, label: v.label, size: v.size || "", finish: v.finish || "", price: String(v.price ?? ""), currency: v.currency || item.currency || "UGX", stock_quantity: v.stock_quantity == null ? "" : String(v.stock_quantity), is_available: v.is_available !== false })));
+    setTrackInventory(item.track_inventory); setOptions((item.options || []).join(", "));
+    setVariants((item.product_variants || []).map((v) => ({ id: v.id, label: v.label, size: v.size || "", finish: v.finish || "", price: String(v.price ?? ""), currency: v.currency || item.currency || "UGX", stock_quantity: v.stock_quantity == null ? "" : String(v.stock_quantity), is_available: v.is_available !== false })));
     setStatus(item.status); setPublished(item.is_published); setImageFiles([]); setNotice(""); setOpen(true);
   }
   const publicUrl = (path: string) => supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
@@ -101,7 +102,17 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
         if (error) throw error;
         id = data.id;
       }
-      if (!id) throw new Error("Product could not be identified.");\n      if (type === "limited_print" || type === "open_print") {\n        const cleanVariants = variants.filter((v) => v.label.trim() && v.price !== "" && Number.isFinite(Number(v.price)) && Number(v.price) >= 0);\n        if (cleanVariants.length !== variants.filter((v) => v.label.trim() || v.size.trim() || v.finish.trim() || v.price !== "").length) throw new Error("Complete each print option with a label and valid price, or remove the empty row.");\n        const { error: clearVariantsError } = await supabase.from("product_variants").delete().eq("product_id", id);\n        if (clearVariantsError) throw clearVariantsError;\n        if (cleanVariants.length) {\n          const { error: variantsError } = await supabase.from("product_variants").insert(cleanVariants.map((v, index) => ({ product_id: id, label: v.label.trim(), size: v.size.trim() || null, finish: v.finish.trim() || null, price: Number(v.price), currency: v.currency || currency, stock_quantity: v.stock_quantity === "" ? null : Number(v.stock_quantity), is_available: v.is_available, sort_order: index })));\n          if (variantsError) throw variantsError;\n        }\n      }
+      if (!id) throw new Error("Product could not be identified.");
+      if (type === "limited_print" || type === "open_print") {
+        const cleanVariants = variants.filter((v) => v.label.trim() && v.price !== "" && Number.isFinite(Number(v.price)) && Number(v.price) >= 0);
+        if (cleanVariants.length !== variants.filter((v) => v.label.trim() || v.size.trim() || v.finish.trim() || v.price !== "").length) throw new Error("Complete each print option with a label and valid price, or remove the empty row.");
+        const { error: clearVariantsError } = await supabase.from("product_variants").delete().eq("product_id", id);
+        if (clearVariantsError) throw clearVariantsError;
+        if (cleanVariants.length) {
+          const { error: variantsError } = await supabase.from("product_variants").insert(cleanVariants.map((v, index) => ({ product_id: id, label: v.label.trim(), size: v.size.trim() || null, finish: v.finish.trim() || null, price: Number(v.price), currency: v.currency || currency, stock_quantity: v.stock_quantity === "" ? null : Number(v.stock_quantity), is_available: v.is_available, sort_order: index })));
+          if (variantsError) throw variantsError;
+        }
+      }
       let images = [...(editing?.product_images || [])];
       for (const [index, original] of imageFiles.entries()) {
         const image = await prepareImageForUpload(original);
