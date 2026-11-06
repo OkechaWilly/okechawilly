@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import Image from "next/image";
 
 export default async function Collections() {
   const supabase = await createClient();
@@ -46,10 +47,12 @@ export default async function Collections() {
             <Link key={collection.id} href={"/collections/" + collection.slug} className="group block">
               <div className="image-hover relative aspect-[4/5] overflow-hidden bg-[#e7e2d9]">
                 {collection.image ? (
-                  <img
+                  <Image
                     src={collection.image}
                     alt={collection.title}
-                    className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+                    fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover transition duration-700 group-hover:scale-[1.04]"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center p-8 text-center">
