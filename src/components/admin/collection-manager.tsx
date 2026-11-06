@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
+import { prepareImageForUpload } from "@/lib/image-resize";
 
 type Artwork = { id: string; title: string; is_published: boolean };
 type Collection = {
@@ -63,9 +65,10 @@ export default function CollectionManager({ initialCollections, artworks }: { in
       if (!id) throw new Error("Collection could not be identified.");
       let coverPath = editing?.cover_image || null;
       if (cover) {
-        const ext = cover.name.split(".").pop()?.toLowerCase() || "jpg";
+        const coverFile = await prepareImageForUpload(cover);
+        const ext = coverFile.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `collections/${id}/${crypto.randomUUID()}.${ext}`;
-        const { error } = await supabase.storage.from("artwork-images").upload(path, cover, { contentType: cover.type || undefined });
+        const { error } = await supabase.storage.from("artwork-images").upload(path, coverFile, { contentType: coverFile.type || undefined });
         if (error) throw error;
         coverPath = path;
         const { error: updateError } = await supabase.from("collections").update({ cover_image: coverPath }).eq("id", id);
@@ -128,7 +131,7 @@ export default function CollectionManager({ initialCollections, artworks }: { in
     </form>}
     <div className="mt-10 flex items-center justify-between border-b border-[#dedad2] pb-4"><p className="eyebrow">{collections.length} collections</p><p className="text-[10px] uppercase tracking-[.12em] text-[#89847c]">Ordered by display priority</p></div>
     {collections.length ? <div className="mt-3 divide-y divide-[#e2ded6]">{collections.map((item, index) => <article key={item.id} className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center">
-      <div className="h-24 w-32 shrink-0 overflow-hidden bg-[#e8e5de]">{item.cover_image ? <img src={publicUrl(item.cover_image)} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-[9px] uppercase tracking-widest text-[#89847c]">No cover</div>}</div>
+      <div className="relative h-24 w-32 shrink-0 overflow-hidden bg-[#e8e5de]">{item.cover_image ? <Image src={publicUrl(item.cover_image)} alt={item.title} fill sizes="128px" className="object-cover" /> : <div className="flex h-full items-center justify-center text-[9px] uppercase tracking-widest text-[#89847c]">No cover</div>}</div>
       <div className="min-w-0 flex-1"><p className="text-[9px] uppercase tracking-[.15em] text-[#9c8062]">0{index + 1} / {item.is_published ? "Published" : "Draft"}</p><h2 className="serif mt-2 text-2xl">{item.title}</h2><p className="mt-1 text-xs text-[#89847c]">{item.collection_artworks?.length || 0} artworks · /collections/{item.slug}</p>{item.description && <p className="mt-2 line-clamp-2 text-xs leading-6 text-[#77736d]">{item.description}</p>}</div>
       <div className="flex gap-4 text-[10px] uppercase tracking-[.12em]"><button onClick={() => edit(item)} className="underline underline-offset-4">Edit</button><button disabled={busy} onClick={() => remove(item)} className="text-[#9b5947] underline underline-offset-4">Delete</button></div>
     </article>)}</div> : <div className="mt-8 border border-dashed border-[#cfcac0] bg-[#f7f6f2] px-6 py-14 text-center"><p className="display text-2xl">Your collections will live here.</p><p className="mt-3 text-xs text-[#89847c]">Start with themes such as The Sacred & Ordinary, Portraits, African Stories, Nature & Environment, or Studies & Experiments.</p></div>}

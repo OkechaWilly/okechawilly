@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { prepareImageForUpload } from "@/lib/image-resize";
 
 type Theme = { title: string; description: string };
 type GalleryItem = { path: string; alt: string; caption?: string };
@@ -31,7 +32,8 @@ export default function ArtistProfileManager({ initialProfile }: { initialProfil
     setProfile(current => ({ ...current, [key]: value }));
   }
 
-  async function upload(file: File, folder: string) {
+  async function upload(original: File, folder: string) {
+    const file = await prepareImageForUpload(original);
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `artist-profile/${folder}/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from(bucket).upload(path, file, {

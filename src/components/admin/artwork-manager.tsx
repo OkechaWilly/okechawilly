@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
+import { prepareImageForUpload } from "@/lib/image-resize";
 
 type ImageRecord = {
   id: string;
@@ -188,7 +190,7 @@ export default function ArtworkManager({
       }
 
       for (let index = 0; index < files.length; index++) {
-        const file = files[index];
+        const file = await prepareImageForUpload(files[index]);
         const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `${artworkId}/${crypto.randomUUID()}.${extension}`;
         const { error: uploadError } = await supabase.storage
@@ -288,8 +290,8 @@ export default function ArtworkManager({
             const cover = artwork.artwork_images?.find((image) => image.is_primary) ?? artwork.artwork_images?.[0];
             return (
               <article key={artwork.id} className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center">
-                <div className="h-24 w-24 shrink-0 overflow-hidden bg-[#e8e5de]">
-                  {cover ? <img src={imageUrl(cover.storage_path)} alt={cover.alt_text || artwork.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-[9px] uppercase tracking-widest text-[#89847c]">No image</div>}
+                <div className="relative h-24 w-24 shrink-0 overflow-hidden bg-[#e8e5de]">
+                  {cover ? <Image src={imageUrl(cover.storage_path)} alt={cover.alt_text || artwork.title} fill sizes="96px" className="object-cover" /> : <div className="flex h-full items-center justify-center text-[9px] uppercase tracking-widest text-[#89847c]">No image</div>}
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="serif text-2xl">{artwork.title}</h2>

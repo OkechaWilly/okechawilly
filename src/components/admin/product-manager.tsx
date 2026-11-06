@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
+import { prepareImageForUpload } from "@/lib/image-resize";
 
 type Artwork = { id: string; title: string; year: number | null };
 type ProductImage = { id: string; storage_path: string; is_primary: boolean; sort_order: number; alt_text?: string | null };
@@ -99,7 +101,8 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
       }
       if (!id) throw new Error("Product could not be identified.");
       let images = [...(editing?.product_images || [])];
-      for (const [index, image] of imageFiles.entries()) {
+      for (const [index, original] of imageFiles.entries()) {
+        const image = await prepareImageForUpload(original);
         const ext = image.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `products/${id}/${crypto.randomUUID()}.${ext}`;
         const { error: uploadError } = await supabase.storage.from("product-images").upload(path, image, { contentType: image.type || undefined });
@@ -232,7 +235,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
         <div className="md:col-span-2">
           <label className={label}>Product images<input className={field} type="file" accept="image/*" multiple onChange={(e) => setImageFiles(Array.from(e.target.files || []))} /><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Select multiple images. The first image is used as the main image unless you choose another below.</span></label>
           {editing?.product_images?.length ? <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{[...editing.product_images].sort((a,b)=>a.sort_order-b.sort_order).map((img,index,arr)=><div key={img.id} className="border border-[#dedad2] bg-white p-2">
-            <div className="aspect-square bg-[#e8e5de]"><img src={publicUrl(img.storage_path)} alt={img.alt_text || title} className="h-full w-full object-contain" /></div>
+            <div className="relative aspect-square bg-[#e8e5de]"><Image src={publicUrl(img.storage_path)} alt={img.alt_text || title} fill sizes="(min-width: 640px) 25vw, 50vw" className="object-contain" /></div>
             <p className="mt-2 text-[9px] uppercase tracking-wider text-[#77736d]">{img.is_primary ? "Main image" : `Image ${index+1}`}</p>
             <div className="mt-2 flex flex-wrap gap-x-3 gap-y-2 text-[9px] uppercase tracking-wide">
               {!img.is_primary && <button type="button" disabled={busy} onClick={()=>setPrimaryImage(img)} className="underline">Make main</button>}
@@ -259,7 +262,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
       const cover = item.product_images?.find((img) => img.is_primary) || item.product_images?.[0];
       const typeLabel = types.find((t) => t.value === item.product_type)?.label || item.product_type;
       return <article key={item.id} className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center">
-        <div className="h-24 w-32 shrink-0 overflow-hidden bg-[#e8e5de]">{cover ? <img src={publicUrl(cover.storage_path)} alt={item.title} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-[9px] uppercase tracking-widest text-[#89847c]">No image</div>}</div>
+        <div className="relative h-24 w-32 shrink-0 overflow-hidden bg-[#e8e5de]">{cover ? <Image src={publicUrl(cover.storage_path)} alt={item.title} fill sizes="128px" className="object-cover" /> : <div className="flex h-full items-center justify-center text-[9px] uppercase tracking-widest text-[#89847c]">No image</div>}</div>
         <div className="min-w-0 flex-1"><p className="text-[9px] uppercase tracking-[.15em] text-[#9c8062]">0{index + 1} / {item.is_published ? "Published" : "Draft"} · {typeLabel}</p><h2 className="serif mt-2 text-2xl">{item.title}</h2><p className="mt-1 text-xs text-[#89847c]">{item.price == null ? "Price not set" : new Intl.NumberFormat("en-UG", { style: "currency", currency: item.currency || "UGX", maximumFractionDigits: 0 }).format(Number(item.price))} · {item.status.replace("_", " ")}</p>{item.product_type === "limited_print" && <p className="mt-1 text-[10px] text-[#89847c]">Edition: {item.edition_sold} / {item.edition_size}</p>}</div>
         <div className="flex gap-4 text-[10px] uppercase tracking-[.12em]"><button onClick={() => edit(item)} className="underline underline-offset-4">Edit</button><button disabled={busy} onClick={() => remove(item)} className="text-[#9b5947] underline underline-offset-4">Delete</button></div>
       </article>;

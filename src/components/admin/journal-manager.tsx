@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { prepareImageForUpload } from "@/lib/image-resize";
 
 type Post = { id:string; title:string; slug:string; excerpt:string|null; content:string|null; cover_image:string|null; status:"draft"|"published"|"archived"; published_at:string|null; created_at:string };
 type PostStatus = "draft" | "published" | "archived";
@@ -24,8 +25,9 @@ export default function JournalManager({initialPosts,artworks}:{initialPosts:Pos
   const cursorRef=useRef(0);
 
   function publicImage(path:string) { return supabase.storage.from("artwork-images").getPublicUrl(path).data.publicUrl; }
-  async function uploadImage(file:File, inline:boolean, insertAt?:number) {
+  async function uploadImage(original:File, inline:boolean, insertAt?:number) {
     setUploading(true); setNotice("");
+    const file=await prepareImageForUpload(original);
     const extension=file.name.split(".").pop()?.toLowerCase()||"jpg";
     const path="journal/"+crypto.randomUUID()+"."+extension;
     const {error}=await supabase.storage.from("artwork-images").upload(path,file,{contentType:file.type||undefined,upsert:false});
