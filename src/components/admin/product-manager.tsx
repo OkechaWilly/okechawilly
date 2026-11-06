@@ -12,7 +12,7 @@ type Product = {
   id: string; title: string; slug: string; product_type: string; description: string | null;
   price: number | null; currency: string; artwork_id: string | null; edition_size: number | null;
   edition_sold: number; sku: string | null; stock_quantity: number | null; track_inventory: boolean;
-  options: string[]; product_variants?: { id: string; label: string; size: string | null; finish: string | null; price: number; currency: string; stock_quantity: number | null; is_available: boolean }[]; medium: string | null; materials: string | null; dimensions: string | null; framing: string | null; shipping_information: string | null; status: string; is_published: boolean; product_images: ProductImage[];
+  options: string[]; product_variants?: ProductVariant[]; medium: string | null; materials: string | null; dimensions: string | null; framing: string | null; shipping_information: string | null; status: string; is_published: boolean; product_images: ProductImage[];
 };
 const field = "mt-2 w-full border border-[#d9d4ca] bg-white px-3 py-3 text-sm outline-none focus:border-[#9c8062]";
 const label = "block text-[10px] uppercase tracking-[.14em] text-[#77736d]";
