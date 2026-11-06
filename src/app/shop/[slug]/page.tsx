@@ -3,11 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArtworkImageGallery } from "@/components/artwork-image-gallery";
 import ProductVariantPicker from "@/components/product-variant-picker";
+import { PRODUCT_TYPE_LABELS } from "@/lib/shop";
 
-const typeLabels: Record<string, string> = {
-  original: "Original painting", limited_print: "Limited-edition print",
-  open_print: "Open-edition print", merchandise: "Objects & merchandise", art_object: "Art object",
-};
 
 export default async function ShopProductDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -56,7 +53,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
           <ArtworkImageGallery images={imageUrls} title={product.title} />
         </div>
         <div className="pt-2 md:sticky md:top-24 md:self-start">
-          <p className="eyebrow">{typeLabels[product.product_type] || "Studio product"}</p>
+          <p className="eyebrow">{PRODUCT_TYPE_LABELS[product.product_type] || "Studio product"}</p>
           <h1 className="display mt-4 text-5xl md:text-6xl">{product.title}</h1>
           <ProductVariantPicker productTitle={product.title} variants={(product.product_variants || []).sort((a: any, b: any) => a.sort_order - b.sort_order)} fallbackPrice={product.price == null ? null : Number(product.price)} fallbackCurrency={product.currency || "UGX"} />
           {product.description && <p className="mt-6 whitespace-pre-line text-sm leading-7 text-[#77736d]">{product.description}</p>}
