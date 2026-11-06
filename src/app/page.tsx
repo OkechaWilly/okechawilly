@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ArtworkCard } from "@/components/artwork-card";
-import Image from "next/image";
 import { FeaturedArtworkHero } from "@/components/featured-artwork-hero";
 
 export default async function Home() {
