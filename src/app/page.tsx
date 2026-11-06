@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ArtworkCard } from "@/components/artwork-card";
 import Image from "next/image";
+import { FeaturedArtworkHero } from "@/components/featured-artwork-hero";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -10,10 +11,10 @@ export default async function Home() {
       .from("artworks")
       .select("*, artwork_images(*)")
       .eq("is_published", true)
-      .order("is_featured", { ascending: false })
+      .eq("is_featured", true)
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false })
-      .limit(8),
+      .limit(12),
     supabase
       .from("collections")
       .select("*")
@@ -46,7 +47,6 @@ export default async function Home() {
     };
   });
 
-  const heroArtwork = featured[0];
   const aboutArtwork = featured[1] ?? featured[0];
   const selectedWorks = featured.slice(0, 4);
   const collections = (collectionData ?? []).map((collection) => ({
@@ -60,77 +60,7 @@ export default async function Home() {
 
   return (
     <div>
-      <section className="container grid items-center gap-12 pb-20 pt-12 md:min-h-[690px] md:grid-cols-[.88fr_1.12fr] md:gap-16 md:py-20">
-        <div className="order-2 md:order-1">
-          <p className="eyebrow mb-7 flex items-center gap-3">
-            <span className="inline-block h-px w-8 bg-[#9c8062]" />
-            Independent artist · Uganda
-          </p>
-          <h1 className="display max-w-[620px] text-[clamp(58px,7vw,100px)]">
-            Art that
-            <br />
-            <em className="text-[#9c8062]">holds</em> a story.
-          </h1>
-          <p className="mt-8 max-w-md text-[15px] leading-7 text-[#77736d]">
-            Exploring identity, spirituality, culture and the human experience through painting and visual storytelling. A growing body of work shaped by observation, memory and curiosity.
-          </p>
-          <div className="mt-9 flex flex-wrap gap-3">
-            <Link
-              href="/artwork"
-              className="inline-flex items-center gap-5 bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] !text-[#f7f6f2] transition hover:bg-[#9c8062]"
-            >
-              Explore artwork <span aria-hidden="true">↗</span>
-            </Link>
-            <Link
-              href="/about"
-              className="inline-flex items-center border border-[#c9c5bc] px-7 py-4 text-[10px] uppercase tracking-[.15em] transition hover:border-[#242320]"
-            >
-              Meet the artist
-            </Link>
-          </div>
-          <div className="mt-16 flex items-center gap-4">
-            <span className="text-[10px] tracking-[.16em] text-[#9c8062]">01</span>
-            <span className="h-px w-10 bg-[#d9d4ca]" />
-            <p className="text-[10px] uppercase tracking-[.16em] text-[#aaa49a]">
-              A practice in progress
-            </p>
-          </div>
-        </div>
-
-        <div className="order-1 md:order-2">
-          <div className="relative ml-3 mr-3 md:ml-0 md:mr-4">
-            <div className="absolute -right-3 -top-3 h-full w-full border border-[#d9d2c6]" />
-            <div className="image-hover relative aspect-[4/4.6] overflow-hidden bg-[#e7e2d9]">
-              {heroArtwork?.image ? (
-                <Image
-                  src={heroArtwork.image}
-                  alt={heroArtwork.imageAlt || heroArtwork.title}
-                  fill
-                  priority
-                  sizes="(min-width: 768px) 45vw, 90vw"
-                  className="object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center p-10 text-center">
-                  <p className="serif text-3xl text-[#9c8062]">A practice in progress</p>
-                </div>
-              )}
-            </div>
-            {heroArtwork && (
-              <Link
-                href={"/artwork/" + heroArtwork.slug}
-                className="absolute -bottom-5 -left-3 max-w-[85%] bg-[#f7f6f2] px-5 py-4 shadow-sm transition hover:-translate-y-1 md:-left-6"
-              >
-                <p className="eyebrow">Featured artwork</p>
-                <p className="serif mt-1 text-xl">{heroArtwork.title}</p>
-              </Link>
-            )}
-            <span className="absolute -bottom-10 right-0 text-[9px] uppercase tracking-[.16em] text-[#aaa49a]">
-              Okecha Willy · Studio archive
-            </span>
-          </div>
-        </div>
-      </section>
+      <FeaturedArtworkHero artworks={featured} />
 
       <section className="border-y border-[#e8e5de] py-6">
         <div className="container flex flex-wrap items-center justify-between gap-4">
