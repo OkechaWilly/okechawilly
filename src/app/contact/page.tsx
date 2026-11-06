@@ -1,10 +1,11 @@
 import Link from "next/link";
 import ContactForm from "@/components/contact-form";
+import { cleanSubject } from "@/lib/contact";
 
 export default async function Contact({ searchParams }: { searchParams: Promise<{ subject?: string }> }) {
   const params = await searchParams;
-  const requestedSubject = params.subject?.trim().slice(0, 160);
-  const initialSubject = requestedSubject || "Artwork enquiry";
+  // Capped at the database limit (120) so a long artwork title can't make the insert fail.
+  const initialSubject = cleanSubject(params.subject);
 
   return <main className="container py-20">
     <p className="eyebrow">Start a conversation</p>
