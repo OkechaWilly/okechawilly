@@ -22,7 +22,8 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
   const productImages = [...(product.product_images || [])].sort((a, b) =>
     Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
   );
-  const artworkImages = [...(product.artwork?.artwork_images || [])].sort((a, b) =>
+  const linkedArtwork = Array.isArray(product.artwork) ? product.artwork[0] : product.artwork;
+  const artworkImages = [...(linkedArtwork?.artwork_images || [])].sort((a, b) =>
     Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
   );
   const seenPaths = new Set<string>();
@@ -35,7 +36,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
     ...artworkImages.map((image) => ({
       path: image.storage_path,
       bucket: "artwork-images",
-      alt: image.alt_text || product.artwork?.title || product.title,
+      alt: image.alt_text || linkedArtwork?.title || product.title,
     })),
   ].filter((image) => {
     if (seenPaths.has(image.path)) return false;
