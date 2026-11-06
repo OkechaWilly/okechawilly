@@ -39,7 +39,8 @@ export default async function ArtworkDetail({
   ].filter(Boolean);
   const dimensions = dimensionParts.length
     ? `${dimensionParts.join(" × ")} cm`
-    : "Not specified";
+    : null;
+  const hasArtworkDetails = Boolean(artwork.medium || dimensions);
 
   const enquirySubject = encodeURIComponent(`Enquiry about “${artwork.title}”`);
 
@@ -104,27 +105,25 @@ export default async function ArtworkDetail({
             </div>
           )}
 
-          <div className="my-9 border-y border-[#e8e5de] py-5">
-            <p className="eyebrow mb-4">Artwork details</p>
-            <dl className="space-y-4 text-xs">
-              <div className="flex items-start justify-between gap-6">
-                <dt className="text-[#8a857c]">Year</dt>
-                <dd className="text-right">{artwork.year || "Not specified"}</dd>
-              </div>
-              <div className="flex items-start justify-between gap-6">
-                <dt className="text-[#8a857c]">Medium</dt>
-                <dd className="max-w-[65%] text-right">{artwork.medium || "Not specified"}</dd>
-              </div>
-              <div className="flex items-start justify-between gap-6">
-                <dt className="text-[#8a857c]">Dimensions</dt>
-                <dd className="text-right">{dimensions}</dd>
-              </div>
-              <div className="flex items-start justify-between gap-6">
-                <dt className="text-[#8a857c]">Availability</dt>
-                <dd className="text-right capitalize">{status}</dd>
-              </div>
-            </dl>
-          </div>
+          {hasArtworkDetails && (
+            <div className="my-9 border-y border-[#e8e5de] py-5">
+              <p className="eyebrow mb-4">Artwork details</p>
+              <dl className="space-y-4 text-xs">
+                {artwork.medium && (
+                  <div className="flex items-start justify-between gap-6">
+                    <dt className="text-[#8a857c]">Medium</dt>
+                    <dd className="max-w-[65%] text-right">{artwork.medium}</dd>
+                  </div>
+                )}
+                {dimensions && (
+                  <div className="flex items-start justify-between gap-6">
+                    <dt className="text-[#8a857c]">Dimensions</dt>
+                    <dd className="text-right">{dimensions}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          )}
 
           <div className="space-y-4">
             <Link
