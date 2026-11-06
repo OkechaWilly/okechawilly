@@ -38,7 +38,8 @@ export default async function FineArtPrintsPage() {
     const images = [...(print.product_images || [])].sort((a, b) =>
       Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
     );
-    const artworkImages = [...(print.artwork?.artwork_images || [])].sort((a, b) =>
+    const linkedArtwork = Array.isArray(print.artwork) ? print.artwork[0] : print.artwork;
+    const artworkImages = [...(linkedArtwork?.artwork_images || [])].sort((a, b) =>
       Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
     );
     const cover = images[0];
