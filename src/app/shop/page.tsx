@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import Image from "next/image";
 
 const categories = [
   { value: "original", title: "Original paintings" },
@@ -87,8 +88,8 @@ export default async function Shop() {
               {available.map((product) => (
                 <article key={product.id}>
                   <Link href={`/shop/${product.slug}`} className="group block">
-                    <div className="aspect-[4/5] overflow-hidden bg-[#e6e2da]">
-                      {product.imageUrl ? <img src={product.imageUrl} alt={product.imageAlt} className="h-full w-full object-contain p-5 transition duration-500 group-hover:scale-[1.025] sm:p-7" /> : <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-widest text-[#89847c]">Image coming soon</div>}
+                    <div className="relative aspect-[4/5] overflow-hidden bg-[#e6e2da]">
+                      {product.imageUrl ? <Image src={product.imageUrl} alt={product.imageAlt} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-contain p-5 transition duration-500 group-hover:scale-[1.025] sm:p-7" /> : <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-widest text-[#89847c]">Image coming soon</div>}
                     </div>
                     <p className="eyebrow mt-5">{categories.find((category) => category.value === product.product_type)?.title || "Artwork"}</p>
                     <h3 className="display mt-2 text-2xl">{product.title}</h3>
