@@ -14,7 +14,7 @@ export default function ProductVariantPicker({ productTitle, variants, fallbackP
   const available = useMemo(() => variants.filter((v) => v.is_available && (v.stock_quantity == null || v.stock_quantity > 0)), [variants]);
   const [selectedId, setSelectedId] = useState(available[0]?.id || "");
   const selected = available.find((v) => v.id === selectedId) || null;
-  const price = selected ? formatPrice(selected.price, selected.currency) : fallbackPrice == null ? "Price on request" : formatPrice(fallbackPrice, fallbackCurrency);
+  const price = selected ? formatPrice(selected.price, selected.currency) : variants.length > 0 ? "Currently unavailable" : fallbackPrice == null ? "Price on request" : formatPrice(fallbackPrice, fallbackCurrency);
   const details = selected ? [selected.size, selected.finish].filter(Boolean).join(" · ") : "";
   const subject = selected ? `Enquiry about ${productTitle} — ${selected.label}` : `Enquiry about ${productTitle}`;
   return <div>
