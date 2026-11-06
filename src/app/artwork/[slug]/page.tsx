@@ -19,6 +19,35 @@ export default async function ArtworkDetail({
 
   if (!artwork) notFound();
 
+  const { data: linkedProductsData } = await supabase
+    .from("products")
+    .select("id, title, slug, product_type, price, currency, product_images(*)")
+    .eq("artwork_id", artwork.id)
+    .eq("is_published", true)
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
+
+  const linkedProducts = (linkedProductsData ?? []).map((product) => {
+    const productImages = [...(product.product_images ?? [])].sort(
+      (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
+    );
+    const productCover = productImages[0];
+    return {
+      ...product,
+      image: productCover
+        ? supabase.storage.from("product-images").getPublicUrl(productCover.storage_path).data.publicUrl
+        : "",
+      imageAlt: productCover?.alt_text || product.title,
+      priceLabel: product.price == null
+        ? "Price on request"
+        : new Intl.NumberFormat("en-UG", {
+            style: "currency",
+            currency: product.currency || "UGX",
+            maximumFractionDigits: 0,
+          }).format(Number(product.price)),
+    };
+  });
+
   const images = [...(artwork.artwork_images ?? [])]
     .sort(
       (a, b) =>
@@ -153,6 +182,37 @@ export default async function ArtworkDetail({
           </div>
         </aside>
       </div>
+
+      {linkedProducts.length > 0 && (
+        <section className="mt-20 border-t border-[#e8e5de] pt-12">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="eyebrow">More ways to collect</p>
+              <h2 className="display mt-3 text-4xl md:text-5xl">Take this work home.</h2>
+            </div>
+            <p className="max-w-sm text-sm leading-7 text-[#77736d]">Explore available editions and objects created from this original work.</p>
+          </div>
+          <div className="mt-9 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
+            {linkedProducts.map((product) => (
+              <Link key={product.id} href={`/shop/${product.slug}`} className="group block">
+                <div className="relative aspect-[4/5] overflow-hidden bg-[#e7e2d9]">
+                  {product.image ? (
+                    <img src={product.image} alt={product.imageAlt} loading="lazy" decoding="async" className="h-full w-full object-contain p-6 transition duration-500 group-hover:scale-[1.025]" />
+                  ) : images[0]?.url ? (
+                    <img src={images[0].url} alt={images[0].alt} loading="lazy" decoding="async" className="h-full w-full object-contain p-6 transition duration-500 group-hover:scale-[1.025]" />
+                  ) : null}
+                </div>
+                <p className="eyebrow mt-4">{product.product_type.replaceAll("_", " ")}</p>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <h3 className="display text-2xl">{product.title}</h3>
+                  <span className="text-xs text-[#77736d]">{product.priceLabel}</span>
+                </div>
+                <span className="mt-3 inline-block border-b border-[#c9c5bc] pb-1 text-[9px] uppercase tracking-[.14em] transition-colors group-hover:border-[#9c8062] group-hover:text-[#9c8062]">View details ↗</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="mt-20 border-t border-[#e8e5de] pt-7">
         <Link
