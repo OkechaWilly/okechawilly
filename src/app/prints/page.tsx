@@ -1,40 +1,19 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
-
-const printTypes: Record<string, string> = {
-  limited_print: "Limited-edition print",
-  open_print: "Open-edition print",
-};
-
-function formatPrice(price: number | null, currency: string) {
-  if (price == null) return "Price on request";
-  try {
-    return new Intl.NumberFormat("en-UG", {
-      style: "currency",
-      currency: currency || "UGX",
-      maximumFractionDigits: 0,
-    }).format(Number(price));
-  } catch {
-    return `${currency} ${Number(price).toLocaleString("en-UG")}`;
-  }
-}
+import { PRODUCT_TYPE_LABELS, PRINT_TYPES, isCurrentlyAvailable, priceLabel } from "@/lib/shop";
 
 export default async function FineArtPrintsPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
-    .select("id, title, slug, product_type, description, price, currency, edition_size, edition_sold, stock_quantity, track_inventory, product_images(*), artwork:artworks(title, artwork_images(*))")
+    .select("id, title, slug, product_type, description, price, currency, edition_size, edition_sold, stock_quantity, track_inventory, product_images(*), product_variants(price, currency, is_available, stock_quantity), artwork:artworks(title, artwork_images(*))")
     .eq("is_published", true)
     .eq("status", "active")
-    .in("product_type", ["limited_print", "open_print"])
+    .in("product_type", PRINT_TYPES)
     .order("created_at", { ascending: false });
 
-  const prints = (data || []).filter((print) => {
-    if (print.product_type === "limited_print" && print.edition_size != null && (print.edition_sold ?? 0) >= print.edition_size) return false;
-    if (print.track_inventory && print.stock_quantity === 0) return false;
-    return true;
-  }).map((print) => {
+  const prints = (data || []).filter((print) => isCurrentlyAvailable(print)).map((print) => {
     const images = [...(print.product_images || [])].sort((a, b) =>
       Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
     );
@@ -95,11 +74,11 @@ export default async function FineArtPrintsPage() {
                         <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-widest text-[#89847c]">Image coming soon</div>
                       )}
                     </div>
-                    <p className="eyebrow mt-5">{printTypes[print.product_type]}</p>
+                    <p className="eyebrow mt-5">{PRODUCT_TYPE_LABELS[print.product_type]}</p>
                     <h3 className="display mt-2 text-2xl">{print.title}</h3>
                   </Link>
                   <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#ded9d0] pt-3 text-xs text-[#77736d]">
-                    <span>{formatPrice(print.price, print.currency)}</span>
+                    <span>{priceLabel(print)}</span>
                     {print.product_type === "limited_print" && print.edition_size != null ? (
                       <span>{Math.max(0, print.edition_size - (print.edition_sold ?? 0))} remaining</span>
                     ) : (
