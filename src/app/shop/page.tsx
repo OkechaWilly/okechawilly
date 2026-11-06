@@ -25,7 +25,7 @@ export default async function Shop() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
-    .select("id, title, slug, product_type, description, price, currency, edition_size, edition_sold, stock_quantity, track_inventory, status, product_images(*)")
+    .select("id, title, slug, product_type, description, price, currency, edition_size, edition_sold, stock_quantity, track_inventory, status, product_images(*), artwork:artworks(title, artwork_images(*))")
     .eq("is_published", true)
     .eq("status", "active")
     .order("created_at", { ascending: false });
@@ -34,11 +34,20 @@ export default async function Shop() {
     const images = [...(product.product_images || [])].sort((a, b) =>
       Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
     );
+    const linkedArtwork = Array.isArray(product.artwork) ? product.artwork[0] : product.artwork;
+    const artworkImages = [...(linkedArtwork?.artwork_images || [])].sort((a, b) =>
+      Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
+    );
     const cover = images[0];
+    const artworkCover = artworkImages[0];
     return {
       ...product,
-      imageUrl: cover ? supabase.storage.from("product-images").getPublicUrl(cover.storage_path).data.publicUrl : null,
-      imageAlt: cover?.alt_text || product.title,
+      imageUrl: cover
+        ? supabase.storage.from("product-images").getPublicUrl(cover.storage_path).data.publicUrl
+        : artworkCover
+          ? supabase.storage.from("artwork-images").getPublicUrl(artworkCover.storage_path).data.publicUrl
+          : null,
+      imageAlt: cover?.alt_text || artworkCover?.alt_text || product.title,
     };
   });
 
@@ -48,6 +57,8 @@ export default async function Shop() {
     if (product.track_inventory && product.stock_quantity === 0) return false;
     return true;
   });
+
+  const hasPrints = available.some((product) => ["limited_print", "open_print"].includes(product.product_type));
 
   return (
     <main>
@@ -66,7 +77,7 @@ export default async function Shop() {
         </div>
       </section>
 
-      <section className="container -mt-6 pb-16 md:pb-20">
+      {hasPrints && <section className="container -mt-6 pb-16 md:pb-20">
         <div className="flex flex-col gap-5 border border-[#e7e3dc] bg-[#f7f6f2] p-7 md:flex-row md:items-center md:justify-between md:p-9">
           <div>
             <p className="eyebrow">For print collectors</p>
@@ -75,7 +86,7 @@ export default async function Shop() {
           </div>
           <Link href="/prints" className="inline-flex shrink-0 items-center self-start border border-[#242320] px-6 py-4 text-[10px] uppercase tracking-[.15em] transition-colors hover:bg-[#242320] hover:!text-[#f7f6f2] md:self-center">Explore prints <span className="ml-5">↗</span></Link>
         </div>
-      </section>
+      </section>}
 
       {available.length > 0 ? (
         <section className="border-y border-[#e7e3dc] bg-[#f1efe9]">
