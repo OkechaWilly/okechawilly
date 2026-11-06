@@ -12,19 +12,38 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
   const { slug } = await params;
   const supabase = await createClient();
   const { data: product } = await supabase.from("products")
-    .select("*, product_images(*)")
+    .select("*, product_images(*), artwork:artworks(title, artwork_images(*))")
     .eq("slug", slug).eq("is_published", true).eq("status", "active").single();
 
   if (!product) notFound();
   if (product.track_inventory && product.stock_quantity === 0) notFound();
   if (product.product_type === "limited_print" && product.edition_size != null && product.edition_sold >= product.edition_size) notFound();
 
-  const images = [...(product.product_images || [])].sort((a, b) =>
+  const productImages = [...(product.product_images || [])].sort((a, b) =>
     Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
   );
-  const imageUrls = images.map((image) => ({
-    url: supabase.storage.from("product-images").getPublicUrl(image.storage_path).data.publicUrl,
-    alt: image.alt_text || product.title,
+  const artworkImages = [...(product.artwork?.artwork_images || [])].sort((a, b) =>
+    Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
+  );
+  const seenPaths = new Set<string>();
+  const imageUrls = [
+    ...productImages.map((image) => ({
+      path: image.storage_path,
+      bucket: "product-images",
+      alt: image.alt_text || product.title,
+    })),
+    ...artworkImages.map((image) => ({
+      path: image.storage_path,
+      bucket: "artwork-images",
+      alt: image.alt_text || product.artwork?.title || product.title,
+    })),
+  ].filter((image) => {
+    if (seenPaths.has(image.path)) return false;
+    seenPaths.add(image.path);
+    return true;
+  }).map((image) => ({
+    url: supabase.storage.from(image.bucket).getPublicUrl(image.path).data.publicUrl,
+    alt: image.alt,
   }));
   const price = product.price == null ? "Price on request" : new Intl.NumberFormat("en-UG", {
     style: "currency", currency: product.currency || "UGX", maximumFractionDigits: 0,
