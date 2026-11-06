@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { RemoteImage } from "@/components/remote-image";
 
 export default async function JournalPost({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -36,10 +37,10 @@ export default async function JournalPost({ params }: { params: Promise<{ slug: 
       <p className="eyebrow">{post.published_at ? new Date(post.published_at).toLocaleDateString("en-UG", { day: "numeric", month: "long", year: "numeric" }) : "From the studio"}</p>
       <h1 className="display mt-4 text-5xl leading-[1.08] md:text-7xl">{post.title}</h1>
       {post.excerpt && <p className="mt-7 text-lg leading-8 text-[#77736d]">{post.excerpt}</p>}
-      {post.cover_image && <div className="relative mt-12 aspect-[16/10] overflow-hidden bg-[#e9e6df]"><img src={post.cover_image} alt={post.title} className="absolute inset-0 h-full w-full object-cover"/></div>}
+      {post.cover_image && <div className="relative mt-12 aspect-[16/10] overflow-hidden bg-[#e9e6df]"><RemoteImage src={post.cover_image} alt={post.title} fill priority sizes="(min-width: 768px) 768px, 100vw" className="object-cover"/></div>}
       <div className="mt-12 space-y-8 text-base leading-8 text-[#45423d]">
         {blocks.map((block, index) => block.type === "image"
-          ? <figure key={index} className="my-10"><img src={block.value} alt={block.alt || post.title} className="h-auto w-full object-contain"/>{block.alt && <figcaption className="mt-3 text-xs text-[#89847c]">{block.alt}</figcaption>}</figure>
+          ? <figure key={index} className="my-10"><RemoteImage src={block.value} alt={block.alt || post.title} sizes="(min-width: 768px) 768px, 100vw" className="h-auto w-full object-contain"/>{block.alt && <figcaption className="mt-3 text-xs text-[#89847c]">{block.alt}</figcaption>}</figure>
           : <p key={index} className="whitespace-pre-wrap">{block.value}</p>)}
       </div>
     </article>
