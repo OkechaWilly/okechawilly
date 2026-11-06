@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ArtworkCard } from "@/components/artwork-card";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 
 export default async function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -51,9 +52,9 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
       </Link>
 
       <section className="mt-9 grid gap-9 md:grid-cols-[1.15fr_.85fr] md:gap-14">
-        <div className="aspect-[5/4] overflow-hidden bg-[#e7e2d9]">
+        <div className="relative aspect-[5/4] overflow-hidden bg-[#e7e2d9]">
           {coverImage ? (
-            <img src={coverImage} alt={collection.title} className="h-full w-full object-cover" />
+            <Image src={coverImage} alt={collection.title} fill priority sizes="(min-width: 768px) 57vw, 100vw" className="object-cover" />
           ) : (
             <div className="flex h-full items-center justify-center p-8 text-center">
               <span className="serif text-5xl text-[#77736d]">{collection.title}</span>
