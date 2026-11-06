@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ArtworkCard } from "@/components/artwork-card";
+import Image from "next/image";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -101,11 +102,13 @@ export default async function Home() {
             <div className="absolute -right-3 -top-3 h-full w-full border border-[#d9d2c6]" />
             <div className="image-hover relative aspect-[4/4.6] overflow-hidden bg-[#e7e2d9]">
               {heroArtwork?.image ? (
-                <img
+                <Image
                   src={heroArtwork.image}
                   alt={heroArtwork.imageAlt || heroArtwork.title}
-                  fetchPriority="high"
-                  className="h-full w-full object-cover"
+                  fill
+                  priority
+                  sizes="(min-width: 768px) 45vw, 90vw"
+                  className="object-cover"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center p-10 text-center">
@@ -159,11 +162,12 @@ export default async function Home() {
               >
                 <div className="image-hover relative aspect-[4/5] overflow-hidden bg-[#e7e2d9]">
                   {collection.image ? (
-                    <img
+                    <Image
                       src={collection.image}
                       alt={collection.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
+                      fill
+                      sizes="(min-width: 768px) 33vw, 100vw"
+                      className="object-cover"
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center p-8 text-center">
@@ -228,11 +232,12 @@ export default async function Home() {
       <section className="container grid gap-12 py-20 md:grid-cols-2 md:items-center md:py-24">
         <div className="relative flex aspect-[4/4.2] items-end overflow-hidden bg-[#e9e5dc] p-8 md:p-12">
           {aboutArtwork?.image && (
-            <img
+            <Image
               src={aboutArtwork.image}
               alt={aboutArtwork.imageAlt || aboutArtwork.title}
-              loading="lazy"
-              className="absolute inset-0 h-full w-full object-cover"
+              fill
+              sizes="(min-width: 768px) 50vw, 100vw"
+              className="object-cover"
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#171613]/80 via-[#171613]/15 to-transparent" />
