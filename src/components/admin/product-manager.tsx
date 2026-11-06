@@ -47,7 +47,8 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
   const [sku, setSku] = useState("");
   const [stock, setStock] = useState("");
   const [trackInventory, setTrackInventory] = useState(true);
-  const [options, setOptions] = useState("");\n  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [options, setOptions] = useState("");
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [status, setStatus] = useState("draft");
   const [published, setPublished] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
