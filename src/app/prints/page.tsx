@@ -24,7 +24,7 @@ export default async function FineArtPrintsPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
-    .select("id, title, slug, product_type, description, price, currency, edition_size, edition_sold, stock_quantity, track_inventory, product_images(*)")
+    .select("id, title, slug, product_type, description, price, currency, edition_size, edition_sold, stock_quantity, track_inventory, product_images(*), artwork:artworks(title, artwork_images(*))")
     .eq("is_published", true)
     .eq("status", "active")
     .in("product_type", ["limited_print", "open_print"])
@@ -38,11 +38,19 @@ export default async function FineArtPrintsPage() {
     const images = [...(print.product_images || [])].sort((a, b) =>
       Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
     );
+    const artworkImages = [...(print.artwork?.artwork_images || [])].sort((a, b) =>
+      Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
+    );
     const cover = images[0];
+    const artworkCover = artworkImages[0];
     return {
       ...print,
-      imageUrl: cover ? supabase.storage.from("product-images").getPublicUrl(cover.storage_path).data.publicUrl : null,
-      imageAlt: cover?.alt_text || print.title,
+      imageUrl: cover
+        ? supabase.storage.from("product-images").getPublicUrl(cover.storage_path).data.publicUrl
+        : artworkCover
+          ? supabase.storage.from("artwork-images").getPublicUrl(artworkCover.storage_path).data.publicUrl
+          : null,
+      imageAlt: cover?.alt_text || artworkCover?.alt_text || print.title,
     };
   });
 
