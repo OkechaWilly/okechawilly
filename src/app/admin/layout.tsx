@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { signOut } from "./actions";
 
 export default async function AdminLayout({
   children,
@@ -36,6 +37,7 @@ export default async function AdminLayout({
             <Link href="/admin/journal">Journal</Link>
             <Link href="/admin/inquiries">Enquiries</Link>
             <Link href="/">View website ↗</Link>
+            <form action={signOut}><button type="submit" className="uppercase tracking-[.12em] transition-colors hover:text-[#9c8062]">Sign out</button></form>
           </nav>
         </div>
       </header>
