@@ -95,7 +95,6 @@ export function SiteFooter() {
           <div className="mt-4 flex flex-col gap-3 text-sm">
             <Link href="/artwork">Artwork</Link>
             <Link href="/shop">Shop</Link>
-            <Link href="/prints">Fine art prints</Link>
             <Link href="/faq">Collector FAQ</Link>
             <Link href="/about">About the artist</Link>
             <Link href="/contact">Commissions &amp; enquiries</Link>
