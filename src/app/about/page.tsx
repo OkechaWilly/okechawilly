@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import { storageUrl } from "@/lib/images";
 import Link from "next/link";
+import type { Metadata } from "next";
+import { pageMetadata, plainText, shareImage } from "@/lib/site";
 
 type Theme = { title: string; description: string };
 type GalleryItem = { path: string; alt?: string; caption?: string };
@@ -14,6 +16,21 @@ const fallbackIntro = "I am a Ugandan visual artist working across painting, dra
 const fallbackStatement = "I make work to look more closely at the things that shape our lives: the stories we inherit, the beliefs we carry, the environments we inhabit and the relationships we form with one another. I am drawn to subjects that hold more than one meaning, where the visible world can open a path toward memory, feeling or reflection.\n\nI approach painting and image-making as forms of inquiry. A church, a portrait, a landscape or an everyday object can become a starting point for thinking about belonging, power, faith, change and the passage of time. I want the work to remain open enough for viewers to bring their own experiences to it.\n\nWorking from Uganda, I draw from the textures and complexities of the world around me while remaining curious about the connections between local stories and wider human experience.";
 const fallbackBio = "My relationship with art began in childhood, making and experimenting alongside my four brothers. I returned to a more deliberate visual-art practice in 2019, while completing a Computer Science degree at Ndejje University.\n\nThat meeting of creative practice and technology continues to inform how I think about images, process and communication. It has also kept me curious about the possibilities of different materials and ways of telling stories.\n\nMy current painting direction includes an ongoing exploration of religion and its place in society, with particular attention to churches, church leaders and portraiture.";
 const imageUrl = (path: string) => storageUrl("artwork-images", path);
+
+export async function generateMetadata(): Promise<Metadata> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("artist_profile").select("*").eq("id", 1).maybeSingle();
+  const p = data?.is_published ? data : null;
+  const portrait = p?.portrait_path || "3732b0e8-e117-46b0-86ae-7158784b9d09/ff7cffa7-c05a-42cd-ade6-1402b1260a09.png";
+  const name = p?.display_name || "Okecha Willy";
+  return pageMetadata({
+    title: "About the artist",
+    description: plainText(p?.introduction || fallbackIntro),
+    path: "/about",
+    image: shareImage(imageUrl(portrait)),
+    imageAlt: `Portrait of ${name}`,
+  });
+}
 
 export default async function About() {
   const supabase = await createClient();
