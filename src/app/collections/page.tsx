@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import { pageMetadata } from "@/lib/site";
+import ShopPageBanner from "@/components/shop-page-banner";
 
 export const metadata = pageMetadata({
   title: "Collections",
@@ -29,17 +30,14 @@ export default async function Collections() {
   }));
 
   return (
-    <main className="container pb-24 pt-16 md:pt-24">
-      <div className="max-w-3xl">
-        <p className="eyebrow">The artist’s archive</p>
-        <h1 className="display mt-5 text-6xl leading-[.98] md:text-8xl">
-          Collections<span className="text-[#9c8062]">.</span>
-        </h1>
-        <p className="mt-7 max-w-xl text-sm leading-7 text-[#77736d] md:text-base">
-          Explore selected bodies of work, gathered around ideas, observations and recurring themes.
-          Each collection offers a closer look at a particular part of the practice.
-        </p>
-      </div>
+    <>
+      <ShopPageBanner
+        eyebrow="The artist’s archive"
+        title="Collections"
+        description="Explore selected bodies of work, gathered around ideas, observations and recurring themes. Each collection offers a closer look at a particular part of the practice."
+        aside={"Selected bodies of work\nIdeas, observations & recurring themes"}
+      />
+      <main className="container pb-24 pt-12 md:pt-16">
 
       <div className="mt-14 flex items-center justify-between border-y border-[#dedad2] py-4">
         <p className="eyebrow">Selected bodies of work</p>
@@ -94,6 +92,7 @@ export default async function Collections() {
           </Link>
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
