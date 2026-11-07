@@ -16,7 +16,7 @@ export default async function FineArtPrintsPage() {
     .from("products")
     .select("id, title, slug, product_type, description, price, currency, edition_size, edition_sold, stock_quantity, track_inventory, product_images(*), product_variants(price, currency, is_available, stock_quantity), artwork:artworks(title, artwork_images(*))")
     .eq("is_published", true)
-    .eq("status", "active")
+    .in("status", ["active", "sold_out"])
     .in("product_type", PRINT_TYPES)
     .order("created_at", { ascending: false });
 
