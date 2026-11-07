@@ -38,9 +38,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
     .eq("status", "active")
     .order("created_at", { ascending: false });
 
-  const available = (data || [])
-    .filter((product) => isCurrentlyAvailable(product))
-    .map((product) => {
+  const available = (data || []).map((product) => {
       const images = [...(product.product_images || [])].sort((a, b) =>
         Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
       );
@@ -61,7 +59,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
       };
     });
 
-  // Only categories that actually have something available are offered.
+  // Categories are based on all published catalogue entries, including sold-out works.
   const presentCategories = SHOP_CATEGORIES.filter((category) =>
     available.some((product) => categoryOfType(product.product_type)?.slug === category.slug),
   );
@@ -109,7 +107,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
           <div className="container py-16 md:py-20">
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <p className="eyebrow">Available now</p>
+                <p className="eyebrow">Studio catalogue</p>
                 <h2 className="display mt-3 text-4xl md:text-5xl">{activeCategory ? activeCategory.title : "Selected works"}.</h2>
               </div>
               <p className="max-w-sm text-sm leading-7 text-[#77736d]">Browse works currently listed by the studio. Availability is confirmed personally before any sale.</p>
@@ -143,10 +141,11 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
                     </div>
                     <p className="eyebrow mt-5">{PRODUCT_TYPE_LABELS[product.product_type] || "Artwork"}</p>
                     <h3 className="display mt-2 text-2xl">{product.title}</h3>
+                    {!isCurrentlyAvailable(product) && <span className="mt-3 inline-flex border border-[#d9d4ca] px-3 py-2 text-[9px] uppercase tracking-[.14em] text-[#77736d]">Sold out</span>}
                   </Link>
                   <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#ded9d0] pt-3 text-xs text-[#77736d]">
                     <span>{priceLabel(product)}</span>
-                    {product.product_type === "limited_print" && product.edition_size != null ? <span>{Math.max(0, product.edition_size - (product.edition_sold ?? 0))} remaining</span> : <Link href={`/shop/${product.slug}`} className="uppercase tracking-[.12em] !text-[#242320] transition-colors hover:!text-[#9c8062]">View details ↗</Link>}
+                    {!isCurrentlyAvailable(product) ? <span>Sold out</span> : product.product_type === "limited_print" && product.edition_size != null ? <span>{Math.max(0, product.edition_size - (product.edition_sold ?? 0))} remaining</span> : <Link href={`/shop/${product.slug}`} className="uppercase tracking-[.12em] !text-[#242320] transition-colors hover:!text-[#9c8062]">View details ↗</Link>}
                   </div>
                 </article>
               ))}
