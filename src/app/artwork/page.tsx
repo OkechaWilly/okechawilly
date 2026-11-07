@@ -1,5 +1,12 @@
 import { ArtworkGallery, type PublicArtwork } from "@/components/artwork-gallery";
 import { createClient } from "@/lib/supabase/server";
+import { pageMetadata } from "@/lib/site";
+
+export const metadata = pageMetadata({
+  title: "Artwork",
+  description: "A selection of paintings, visual studies and ongoing explorations by Okecha Willy.",
+  path: "/artwork",
+});
 
 export default async function Artwork() {
   const supabase = await createClient();

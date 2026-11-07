@@ -4,6 +4,32 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArtworkImageGallery } from "@/components/artwork-image-gallery";
 import { PRINT_TYPES, PRODUCT_TYPE_LABELS, isCurrentlyAvailable, priceLabel } from "@/lib/shop";
+import type { Metadata } from "next";
+import { JsonLd } from "@/components/json-ld";
+import { SITE_NAME, SITE_URL, absoluteUrl, pageMetadata, plainText, shareImage } from "@/lib/site";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: artwork } = await supabase
+    .from("artworks")
+    .select("*, artwork_images(*)")
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .single();
+  if (!artwork) return {};
+  const cover = [...(artwork.artwork_images ?? [])].sort(
+    (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order,
+  )[0];
+  const detail = [artwork.medium, artwork.year].filter(Boolean).join(", ");
+  return pageMetadata({
+    title: artwork.title,
+    description: plainText(artwork.description || artwork.story) || `${detail ? `${detail}. ` : ""}Original artwork by ${SITE_NAME}.`,
+    path: `/artwork/${artwork.slug}`,
+    image: cover ? shareImage(supabase.storage.from("artwork-images").getPublicUrl(cover.storage_path).data.publicUrl) : undefined,
+    imageAlt: cover?.alt_text || artwork.title,
+  });
+}
 
 export default async function ArtworkDetail({
   params,
@@ -72,8 +98,25 @@ export default async function ArtworkDetail({
 
   const enquirySubject = encodeURIComponent(`Enquiry about “${artwork.title}”`);
 
+  const dimensionValue = (value: number | string) => ({ "@type": "QuantitativeValue", value: Number(value), unitCode: "CMT" });
+  const artworkSchema = {
+    "@context": "https://schema.org",
+    "@type": "VisualArtwork",
+    name: artwork.title,
+    url: absoluteUrl(`/artwork/${artwork.slug}`),
+    creator: { "@type": "Person", name: SITE_NAME, url: SITE_URL },
+    ...(images[0] ? { image: shareImage(images[0].url) } : {}),
+    ...(artwork.description || artwork.story ? { description: plainText(artwork.description || artwork.story, 300) } : {}),
+    ...(artwork.medium ? { artMedium: artwork.medium } : {}),
+    ...(artwork.year ? { dateCreated: String(artwork.year) } : {}),
+    ...(artwork.width_cm ? { width: dimensionValue(artwork.width_cm) } : {}),
+    ...(artwork.height_cm ? { height: dimensionValue(artwork.height_cm) } : {}),
+    ...(artwork.depth_cm ? { depth: dimensionValue(artwork.depth_cm) } : {}),
+  };
+
   return (
     <main className="container pb-20 pt-10 md:pb-28 md:pt-14">
+      <JsonLd data={artworkSchema} />
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#e8e5de] pb-5">
         <Link
           href="/artwork"
