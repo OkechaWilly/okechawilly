@@ -34,11 +34,12 @@ export default async function ShopPageBanner({
       );
       return images[0] ? {
         title: artwork.title,
+        is_featured: artwork.is_featured,
         url: supabase.storage.from("artwork-images").getPublicUrl(images[0].storage_path).data.publicUrl,
       } : null;
     })
     .filter(Boolean);
-  const featured = artworks?.find((artwork: any) => artwork && (artwork as any).is_featured) || artworks?.[0];
+  const featured = artworks.find((artwork) => artwork?.is_featured) || artworks[0];
 
   return (
     <section className="relative isolate flex min-h-[320px] items-center overflow-hidden bg-[#242320] md:min-h-[350px]">
