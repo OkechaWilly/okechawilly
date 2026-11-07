@@ -6,7 +6,7 @@ import Image from "next/image";
 import { prepareImageForUpload } from "@/lib/image-resize";
 import { errorMessage } from "@/lib/errors";
 
-type Artwork = { id: string; title: string; year: number | null };
+type Artwork = { id: string; title: string; year: number | null; medium: string | null; width_cm: number | null; height_cm: number | null; depth_cm: number | null; description: string | null; artwork_images?: { storage_path: string; is_primary: boolean; sort_order: number; alt_text?: string | null }[] };
 type ProductVariant = { id?: string; label: string; size: string; finish: string; price: string; currency: string; stock_quantity: string; is_available: boolean };
 type ProductImage = { id: string; storage_path: string; is_primary: boolean; sort_order: number; alt_text?: string | null };
 type Product = {
@@ -76,6 +76,26 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     setStatus(item.status); setPublished(item.is_published); setImageFiles([]); setNotice(""); setOpen(true);
   }
   const publicUrl = (path: string) => supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
+
+  function linkArtwork(id: string) {
+    setArtworkId(id);
+    const artwork = artworks.find((item) => item.id === id);
+    if (!artwork) return;
+
+    // Bring across the artwork's catalogue information. Product-specific fields
+    // such as materials, framing, edition, price and stock remain independent.
+    setTitle(artwork.title);
+    setSlug(slugify(artwork.title));
+    setDescription(artwork.description || "");
+    setMedium(artwork.medium || "");
+    const dimensions = [
+      artwork.width_cm != null ? String(artwork.width_cm) : null,
+      artwork.height_cm != null ? String(artwork.height_cm) : null,
+      artwork.depth_cm != null ? String(artwork.depth_cm) : null,
+    ];
+    const presentDimensions = dimensions.filter((value) => value !== null);
+    setDimensions(presentDimensions.length ? `${presentDimensions.join(" × ")} cm` : "");
+  }
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -237,7 +257,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
         <label className={label}>Product title<input className={field} value={title} onChange={(e) => { setTitle(e.target.value); if (!editing) setSlug(slugify(e.target.value)); }} placeholder="Title of the work or product" required /></label>
         <label className={label}>URL slug<input className={field} value={slug} onChange={(e) => setSlug(e.target.value)} /></label>
         <label className={label}>Product type<select className={field} value={type} onChange={(e) => setType(e.target.value)}>{types.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-        <label className={label}>Linked artwork<select className={field} value={artworkId} onChange={(e) => setArtworkId(e.target.value)}><option value="">No linked artwork</option>{artworks.map((a) => <option key={a.id} value={a.id}>{a.title}{a.year ? ` (${a.year})` : ""}</option>)}</select></label>
+        <label className={label}>Linked artwork<select className={field} value={artworkId} onChange={(e) => linkArtwork(e.target.value)}><option value="">No linked artwork</option>{artworks.map((a) => <option key={a.id} value={a.id}>{a.title}{a.year ? ` (${a.year})` : ""}</option>)}</select><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Selecting an artwork fills its title, description, medium and dimensions. Its existing photographs are also used on the product page unless you upload separate product images.</span></label>
         <label className={label}>Price<input className={field} type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" /></label>
         <label className={label}>Currency<select className={field} value={currency} onChange={(e) => setCurrency(e.target.value)}><option value="UGX">UGX — Ugandan Shilling</option><option value="USD">USD — US Dollar</option></select></label>
         {type === "limited_print" && <><label className={label}>Edition size<input className={field} type="number" min="1" value={editionSize} onChange={(e) => setEditionSize(e.target.value)} required /></label><label className={label}>Already sold<input className={field} type="number" min="0" value={editionSold} onChange={(e) => setEditionSold(e.target.value)} /></label></>}
