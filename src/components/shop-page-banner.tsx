@@ -27,7 +27,7 @@ export default async function ShopPageBanner({
     .order("sort_order", { ascending: true })
     .limit(20);
 
-  const featured = (artworks || [])
+  const candidates = (artworks || [])
     .map((artwork) => {
       const images = [...(artwork.artwork_images || [])].sort(
         (a, b) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
@@ -38,8 +38,8 @@ export default async function ShopPageBanner({
         url: supabase.storage.from("artwork-images").getPublicUrl(images[0].storage_path).data.publicUrl,
       } : null;
     })
-    .filter(Boolean);
-  const featured = artworks.find((artwork) => artwork?.is_featured) || artworks[0];
+    .filter((item): item is { title: string; is_featured: boolean; url: string } => item !== null);
+  const featured = candidates.find((artwork) => artwork.is_featured) || candidates[0];
 
   return (
     <section className="relative isolate flex min-h-[320px] items-center overflow-hidden bg-[#242320] md:min-h-[350px]">
