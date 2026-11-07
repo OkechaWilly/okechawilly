@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import { PRODUCT_TYPE_LABELS, PRINT_TYPES, isCurrentlyAvailable, priceLabel } from "@/lib/shop";
 import { pageMetadata } from "@/lib/site";
+import ShopPageBanner from "@/components/shop-page-banner";
 
 export const metadata = pageMetadata({
   title: "Fine art prints",
@@ -43,21 +44,13 @@ export default async function FineArtPrintsPage() {
 
   return (
     <main>
-      <section className="container py-20 md:py-28">
-        <Link href="/shop" className="eyebrow transition-colors hover:text-[#9c8062]">← Back to the shop</Link>
-        <p className="eyebrow mt-10">Collect the work</p>
-        <h1 className="display mt-4 text-6xl md:text-8xl">Fine art prints<span className="text-[#9c8062]">.</span></h1>
-        <div className="mt-7 grid gap-8 md:grid-cols-[1fr_.7fr] md:items-end">
-          <p className="max-w-2xl text-base leading-8 text-[#77736d]">
-            A selection of prints drawn from my original works. Each listing includes
-            the available details on its format, materials and edition. For enquiries
-            and delivery outside Uganda, please get in touch with the studio.
-          </p>
-          <p className="text-xs leading-6 text-[#77736d] md:justify-self-end md:text-right">
-            Limited and open editions<br />Enquiries welcome worldwide
-          </p>
-        </div>
-      </section>
+      <ShopPageBanner
+        eyebrow="Collect the work"
+        title="Fine art prints"
+        description="A selection of prints drawn from my original works. Each listing includes the available details on its format, materials and edition. For enquiries and delivery outside Uganda, please get in touch with the studio."
+        aside={"Limited and open editions\nEnquiries welcome worldwide"}
+        backHref="/shop"
+      />
 
       <section className="border-y border-[#e7e3dc] bg-[#f1efe9]">
         <div className="container py-16 md:py-20">
