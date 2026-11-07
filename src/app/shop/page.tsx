@@ -3,6 +3,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/site";
+import ShopPageBanner from "@/components/shop-page-banner";
 import {
   PRODUCT_TYPE_LABELS,
   SHOP_CATEGORIES,
@@ -77,19 +78,12 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
 
   return (
     <main>
-      <section className="container py-20 md:py-28">
-        <p className="eyebrow">Collect art</p>
-        <h1 className="display mt-4 text-6xl md:text-8xl">The shop<span className="text-[#9c8062]">.</span></h1>
-        <div className="mt-7 grid gap-8 md:grid-cols-[1fr_.7fr] md:items-end">
-          <p className="max-w-2xl text-base leading-8 text-[#77736d]">
-            {intro} Each piece is presented with its story and details. To purchase or ask
-            about delivery, get in touch directly.
-          </p>
-          <p className="text-xs leading-6 text-[#77736d] md:justify-self-end md:text-right">
-            Based in Uganda<br />Enquiries welcome from collectors worldwide
-          </p>
-        </div>
-      </section>
+      <ShopPageBanner
+        eyebrow="Collect art"
+        title="The shop"
+        description={`${intro} Each piece is presented with its story and details. To purchase or ask about delivery, get in touch directly.`}
+        aside={"Based in Uganda\nEnquiries welcome from collectors worldwide"}
+      />
 
       {hasPrints && activeCategory?.slug !== "prints" && <section className="container -mt-6 pb-16 md:pb-20">
         <div className="flex flex-col gap-5 border border-[#e7e3dc] bg-[#f7f6f2] p-7 md:flex-row md:items-center md:justify-between md:p-9">
