@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { RemoteImage } from "@/components/remote-image";
 import { pageMetadata } from "@/lib/site";
+import ShopPageBanner from "@/components/shop-page-banner";
 
 export const metadata = pageMetadata({
   title: "Journal",
@@ -12,10 +13,14 @@ export const metadata = pageMetadata({
 export default async function Journal() {
   const supabase = await createClient();
   const { data: posts } = await supabase.from("journal_posts").select("id,title,slug,excerpt,cover_image,published_at").eq("status","published").order("published_at",{ascending:false});
-  return <main className="container py-20">
-    <p className="eyebrow">Notes from the practice</p>
-    <h1 className="display mt-4 text-6xl md:text-8xl">Journal<span className="text-[#9c8062]">.</span></h1>
-    <p className="mt-5 max-w-2xl text-sm leading-7 text-[#77736d]">Ideas, processes, materials and stories behind the work.</p>
+  return <>
+    <ShopPageBanner
+      eyebrow="Notes from the practice"
+      title="Journal"
+      description="Ideas, processes, materials and stories behind the work."
+      aside={"Notes from the studio\nResearch, process & reflection"}
+    />
+    <main className="container py-16 md:py-20">
     {posts?.length ? <div className="mt-16 grid gap-x-8 gap-y-14 md:grid-cols-2">
       {posts.map(post=><article key={post.id}>
         <Link href={`/journal/${post.slug}`} className="group block">
@@ -27,5 +32,6 @@ export default async function Journal() {
         </Link>
       </article>)}
     </div> : <div className="mt-14 max-w-2xl border-y border-[#e8e5de] py-8"><p className="eyebrow">The studio notebook</p><h2 className="serif mt-3 text-3xl">Ideas, processes and things worth looking at.</h2><p className="mt-4 text-sm leading-7 text-[#77736d]">New notes from the studio will appear here. In the meantime, explore the artwork archive.</p><Link href="/artwork" className="mt-6 inline-block text-[10px] uppercase tracking-[.14em] underline underline-offset-4">Explore artwork ↗</Link></div>}
-  </main>;
+    </main>
+  </>;
 }
