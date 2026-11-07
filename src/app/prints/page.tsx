@@ -2,6 +2,13 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import { PRODUCT_TYPE_LABELS, PRINT_TYPES, isCurrentlyAvailable, priceLabel } from "@/lib/shop";
+import { pageMetadata } from "@/lib/site";
+
+export const metadata = pageMetadata({
+  title: "Fine art prints",
+  description: "Available limited and open-edition fine art prints by Okecha Willy, with details on formats, materials and availability.",
+  path: "/prints",
+});
 
 export default async function FineArtPrintsPage() {
   const supabase = await createClient();

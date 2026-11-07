@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
+import { pageMetadata } from "@/lib/site";
+
+export const metadata = pageMetadata({
+  title: "Collections",
+  description: "Selected bodies of work gathered around ideas, observations and recurring themes.",
+  path: "/collections",
+});
 
 export default async function Collections() {
   const supabase = await createClient();

@@ -3,8 +3,36 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArtworkImageGallery } from "@/components/artwork-image-gallery";
 import ProductVariantPicker from "@/components/product-variant-picker";
-import { PRODUCT_TYPE_LABELS } from "@/lib/shop";
+import { PRODUCT_TYPE_LABELS, availableVariants, isCurrentlyAvailable } from "@/lib/shop";
+import type { Metadata } from "next";
+import { JsonLd } from "@/components/json-ld";
+import { SITE_NAME, absoluteUrl, pageMetadata, plainText, shareImage } from "@/lib/site";
 
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: product } = await supabase.from("products")
+    .select("*, product_images(*), product_variants(*), artwork:artworks(title, artwork_images(*))")
+    .eq("slug", slug).eq("is_published", true).eq("status", "active").single();
+  if (!product) return {};
+  const byPrimary = (a: any, b: any) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order;
+  const productCover = [...(product.product_images || [])].sort(byPrimary)[0];
+  const linkedArtwork = Array.isArray(product.artwork) ? product.artwork[0] : product.artwork;
+  const artworkCover = [...(linkedArtwork?.artwork_images || [])].sort(byPrimary)[0];
+  const coverUrl = productCover
+    ? supabase.storage.from("product-images").getPublicUrl(productCover.storage_path).data.publicUrl
+    : artworkCover
+      ? supabase.storage.from("artwork-images").getPublicUrl(artworkCover.storage_path).data.publicUrl
+      : undefined;
+  return pageMetadata({
+    title: product.title,
+    description: plainText(product.description) || `${PRODUCT_TYPE_LABELS[product.product_type] || "Studio product"} by ${SITE_NAME}.`,
+    path: `/shop/${product.slug}`,
+    image: shareImage(coverUrl),
+    imageAlt: productCover?.alt_text || artworkCover?.alt_text || product.title,
+  });
+}
 
 export default async function ShopProductDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -45,8 +73,33 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
     alt: image.alt,
   }));
 
+  // Structured data so Google can show the price and availability of this product.
+  const onOffer = availableVariants(product);
+  const offerPrices = onOffer.map((variant: any) => Number(variant.price));
+  const offerCurrency = onOffer[0]?.currency || product.currency || "UGX";
+  const productUrl = absoluteUrl(`/shop/${product.slug}`);
+  const offers = onOffer.length > 1 && Math.min(...offerPrices) !== Math.max(...offerPrices)
+    ? { "@type": "AggregateOffer", priceCurrency: offerCurrency, lowPrice: Math.min(...offerPrices), highPrice: Math.max(...offerPrices), offerCount: onOffer.length, availability: "https://schema.org/InStock", url: productUrl }
+    : onOffer.length > 0
+      ? { "@type": "Offer", priceCurrency: offerCurrency, price: offerPrices[0], availability: "https://schema.org/InStock", url: productUrl }
+      : product.price != null
+        ? { "@type": "Offer", priceCurrency: product.currency || "UGX", price: Number(product.price), availability: isCurrentlyAvailable(product) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", url: productUrl }
+        : undefined;
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    url: productUrl,
+    brand: { "@type": "Brand", name: SITE_NAME },
+    category: PRODUCT_TYPE_LABELS[product.product_type] || "Studio product",
+    ...(product.description ? { description: plainText(product.description, 300) } : {}),
+    ...(imageUrls.length ? { image: imageUrls.slice(0, 4).map((image) => shareImage(image.url)) } : {}),
+    ...(offers ? { offers } : {}),
+  };
+
   return (
     <main className="container py-14 md:py-20">
+      <JsonLd data={productSchema} />
       <Link href="/shop" className="eyebrow">← Back to shop</Link>
       <div className="mt-10 grid gap-12 md:grid-cols-[1.1fr_.9fr]">
         <div>

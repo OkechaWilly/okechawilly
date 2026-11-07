@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { RemoteImage } from "@/components/remote-image";
+import { pageMetadata } from "@/lib/site";
 
-export const metadata = {
-  title: "Journal | Okecha Willy",
+export const metadata = pageMetadata({
+  title: "Journal",
   description: "Notes on art, process, materials, research and ideas from the studio of Okecha Willy.",
-};
+  path: "/journal",
+});
 
 export default async function Journal() {
   const supabase = await createClient();

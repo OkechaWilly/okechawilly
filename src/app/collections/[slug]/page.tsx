@@ -3,6 +3,32 @@ import { createClient } from "@/lib/supabase/server";
 import { ArtworkCard } from "@/components/artwork-card";
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import type { Metadata } from "next";
+import { SITE_NAME, pageMetadata, plainText, shareImage } from "@/lib/site";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: collection } = await supabase
+    .from("collections")
+    .select("*, collection_artworks(artwork:artworks(*, artwork_images(*)))")
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .single();
+  if (!collection) return {};
+  const cover = collection.cover_image
+    ? collection.cover_image.startsWith("http")
+      ? collection.cover_image
+      : supabase.storage.from("artwork-images").getPublicUrl(collection.cover_image).data.publicUrl
+    : undefined;
+  return pageMetadata({
+    title: collection.title,
+    description: plainText(collection.description) || `A selected body of work by ${SITE_NAME}.`,
+    path: `/collections/${collection.slug}`,
+    image: shareImage(cover),
+    imageAlt: collection.title,
+  });
+}
 
 export default async function CollectionPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

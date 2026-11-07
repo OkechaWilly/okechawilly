@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { pageMetadata } from "@/lib/site";
 
 const questions = [
   {
@@ -30,6 +31,12 @@ const questions = [
     answer: "Yes. You can enquire about a sold work to learn more about it or discuss the possibility of a related commission. A sold original is not available for purchase, but it remains part of the artist’s portfolio.",
   },
 ];
+
+export const metadata = pageMetadata({
+  title: "Collector FAQ",
+  description: "Information about collecting original works and prints, making an enquiry and arranging delivery.",
+  path: "/faq",
+});
 
 export default function CollectorFAQ() {
   return (

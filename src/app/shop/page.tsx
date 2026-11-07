@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/site";
 import {
   PRODUCT_TYPE_LABELS,
   SHOP_CATEGORIES,
@@ -12,6 +14,18 @@ import {
 function joinWithAnd(items: string[]) {
   if (items.length <= 1) return items.join("");
   return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ category?: string }> }): Promise<Metadata> {
+  const { category } = await searchParams;
+  const active = SHOP_CATEGORIES.find((item) => item.slug === category);
+  return active
+    ? pageMetadata({ title: active.title, description: `Available ${active.noun} from the studio of Okecha Willy.`, path: `/shop?category=${active.slug}` })
+    : pageMetadata({
+        title: "Shop",
+        description: "Artwork and editions available from the studio of Okecha Willy. Enquiries welcome from collectors worldwide.",
+        path: "/shop",
+      });
 }
 
 export default async function Shop({ searchParams }: { searchParams: Promise<{ category?: string }> }) {

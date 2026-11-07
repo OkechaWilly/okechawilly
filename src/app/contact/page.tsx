@@ -1,6 +1,13 @@
 import Link from "next/link";
 import ContactForm from "@/components/contact-form";
 import { cleanSubject } from "@/lib/contact";
+import { pageMetadata } from "@/lib/site";
+
+export const metadata = pageMetadata({
+  title: "Contact",
+  description: "Enquire about artwork, commissions, collaborations or exhibitions with Okecha Willy. Collectors in Uganda and worldwide are welcome.",
+  path: "/contact",
+});
 
 export default async function Contact({ searchParams }: { searchParams: Promise<{ subject?: string }> }) {
   const params = await searchParams;
