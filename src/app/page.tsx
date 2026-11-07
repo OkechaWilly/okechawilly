@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ArtworkCard } from "@/components/artwork-card";
 import Image from "next/image";
 import { FeaturedArtworkHero } from "@/components/featured-artwork-hero";
+
+// Home keeps the site-wide title and description; it only needs to state its own address.
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const supabase = await createClient();
