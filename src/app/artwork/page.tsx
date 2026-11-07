@@ -1,6 +1,7 @@
 import { ArtworkGallery, type PublicArtwork } from "@/components/artwork-gallery";
 import { createClient } from "@/lib/supabase/server";
 import { pageMetadata } from "@/lib/site";
+import ShopPageBanner from "@/components/shop-page-banner";
 
 export const metadata = pageMetadata({
   title: "Artwork",
@@ -28,18 +29,20 @@ export default async function Artwork() {
   });
 
   return (
-    <main className="container py-20 md:py-24">
-      <p className="eyebrow">The portfolio</p>
-      <h1 className="display mt-4 text-6xl md:text-8xl">Artwork<span className="text-[#9c8062]">.</span></h1>
-      <p className="mt-6 max-w-xl text-sm leading-7 text-[#77736d]">
-        A selection of paintings, visual studies and ongoing explorations.
-        This archive brings together finished works and ideas in progress.
-      </p>
+    <>
+      <ShopPageBanner
+        eyebrow="The portfolio"
+        title="Artwork"
+        description="A selection of paintings, visual studies and ongoing explorations. This archive brings together finished works and ideas in progress."
+        aside={"Original works & visual studies\nFrom the studio in Uganda"}
+      />
+      <main className="container py-16 md:py-20">
       {error ? (
         <p className="mt-10 border border-[#d9b7a9] bg-[#fbf2ee] p-5 text-sm text-[#8b4937]">
           The artwork catalogue is temporarily unavailable. Please check back shortly.
         </p>
       ) : <ArtworkGallery artworks={artworks} />}
-    </main>
+      </main>
+    </>
   );
 }
