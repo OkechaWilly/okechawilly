@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const supabase = await createClient();
   const { data: product } = await supabase.from("products")
     .select("*, product_images(*), product_variants(*), artwork:artworks(title, artwork_images(*))")
-    .eq("slug", slug).eq("is_published", true).eq("status", "active").single();
+    .eq("slug", slug).eq("is_published", true).in("status", ["active", "sold_out"]).single();
   if (!product) return {};
   const byPrimary = (a: any, b: any) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order;
   const productCover = [...(product.product_images || [])].sort(byPrimary)[0];
