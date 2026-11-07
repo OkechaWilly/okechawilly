@@ -39,7 +39,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
   const supabase = await createClient();
   const { data: product } = await supabase.from("products")
     .select("*, product_images(*), product_variants(*), artwork:artworks(title, artwork_images(*))")
-    .eq("slug", slug).eq("is_published", true).eq("status", "active").single();
+    .eq("slug", slug).eq("is_published", true).in("status", ["active", "sold_out"]).single();
 
   if (!product) notFound();
 
@@ -107,7 +107,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
           <p className="eyebrow">{PRODUCT_TYPE_LABELS[product.product_type] || "Studio product"}</p>
           <h1 className="display mt-4 text-5xl md:text-6xl">{product.title}</h1>
           {!isCurrentlyAvailable(product) && <p className="mt-5 inline-flex border border-[#d9d4ca] px-4 py-3 text-[10px] uppercase tracking-[.15em] text-[#77736d]">Sold out · Enquiries welcome</p>}
-          <ProductVariantPicker productTitle={product.title} variants={(product.product_variants || []).sort((a: any, b: any) => a.sort_order - b.sort_order)} fallbackPrice={product.price == null ? null : Number(product.price)} fallbackCurrency={product.currency || "UGX"} />
+          <ProductVariantPicker productTitle={product.title} variants={(product.product_variants || []).sort((a: any, b: any) => a.sort_order - b.sort_order)} fallbackPrice={product.price == null ? null : Number(product.price)} fallbackCurrency={product.currency || "UGX"} isSoldOut={!isCurrentlyAvailable(product)} />
           {product.description && <p className="mt-6 whitespace-pre-line text-sm leading-7 text-[#77736d]">{product.description}</p>}
           {(product.medium || product.materials || product.dimensions || product.framing) && <div className="mt-8 border-t border-[#e8e5de] pt-5"><p className="eyebrow mb-3">Product details</p><dl className="divide-y divide-[#e8e5de] text-sm">
             {product.medium && <div className="flex justify-between gap-5 py-3"><dt className="text-[#77736d]">Medium</dt><dd className="text-right">{product.medium}</dd></div>}
