@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { prepareImageForUpload } from "@/lib/image-resize";
+import { errorMessage } from "@/lib/errors";
 
 type Artwork = { id: string; title: string; year: number | null };
 type ProductVariant = { id?: string; label: string; size: string; finish: string; price: string; currency: string; stock_quantity: string; is_available: boolean };
@@ -96,8 +97,11 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
       };
       let id = editing?.id;
       if (editing) {
-        const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
+        const { data: updatedRows, error } = await supabase.from("products").update(payload).eq("id", editing.id).select("id");
         if (error) throw error;
+        // The database reports "success" even when it silently changed nothing (for example when the
+        // sign-in has expired), so confirm that a row was really updated.
+        if (!updatedRows || updatedRows.length === 0) throw new Error("Nothing was saved. Your sign-in may have expired. Please sign out, sign in again and retry.");
       } else {
         const { data, error } = await supabase.from("products").insert(payload).select("id").single();
         if (error) throw error;
@@ -140,7 +144,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
       setProducts((current) => [updated, ...current.filter((item) => item.id !== id)]);
       reset(); setNotice("Product saved successfully. Checkout remains disabled.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Could not save this product.");
+      setNotice(errorMessage(error, "Could not save this product."));
     } finally { setBusy(false); }
   }
 
@@ -156,7 +160,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
       const next = { ...editing, product_images: nextImages };
       setEditing(next); setProducts((current) => current.map((item) => item.id === editing.id ? next : item));
       setNotice("Main product image updated.");
-    } catch (error) { setNotice(error instanceof Error ? error.message : "Could not update the main image."); }
+    } catch (error) { setNotice(errorMessage(error, "Could not update the main image.")); }
     finally { setBusy(false); }
   }
 
@@ -177,7 +181,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
       const next = {...editing,product_images:nextImages};
       setEditing(next); setProducts((current)=>current.map((item)=>item.id===editing.id?next:item));
       setNotice("Image order updated.");
-    } catch (error) { setNotice(error instanceof Error ? error.message : "Could not reorder images."); }
+    } catch (error) { setNotice(errorMessage(error, "Could not reorder images.")); }
     finally { setBusy(false); }
   }
 
@@ -203,7 +207,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
       const next = {...editing,product_images:nextImages};
       setEditing(next); setProducts((current)=>current.map((item)=>item.id===editing.id?next:item));
       setNotice("Product image removed.");
-    } catch (error) { setNotice(error instanceof Error ? error.message : "Could not remove this image."); }
+    } catch (error) { setNotice(errorMessage(error, "Could not remove this image.")); }
     finally { setBusy(false); }
   }
 
@@ -216,7 +220,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
       if (error) throw error;
       setProducts((current) => current.filter((entry) => entry.id !== item.id));
       setNotice("Product deleted.");
-    } catch (error) { setNotice(error instanceof Error ? error.message : "Could not delete this product."); }
+    } catch (error) { setNotice(errorMessage(error, "Could not delete this product.")); }
     finally { setBusy(false); }
   }
 

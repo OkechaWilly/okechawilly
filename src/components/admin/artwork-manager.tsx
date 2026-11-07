@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { prepareImageForUpload } from "@/lib/image-resize";
+import { errorMessage } from "@/lib/errors";
 
 type ImageRecord = {
   id: string;
@@ -224,7 +225,7 @@ export default function ArtworkManager({
       setFiles([]);
       setNotice("Artwork saved successfully.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Something went wrong while saving.");
+      setNotice(errorMessage(error, "Something went wrong while saving."));
     } finally {
       setBusy(false);
     }
@@ -246,7 +247,7 @@ export default function ArtworkManager({
       setNotice("Artwork deleted.");
       if (editing?.id === artwork.id) setEditing(null);
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Could not delete this artwork.");
+      setNotice(errorMessage(error, "Could not delete this artwork."));
     } finally {
       setBusy(false);
     }

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { prepareImageForUpload } from "@/lib/image-resize";
+import { errorMessage } from "@/lib/errors";
 
 type Artwork = { id: string; title: string; is_published: boolean };
 type Collection = {
@@ -84,7 +85,7 @@ export default function CollectionManager({ initialCollections, artworks }: { in
       setCollections((current) => [updated, ...current.filter((item) => item.id !== id)].sort((a, b) => a.sort_order - b.sort_order));
       reset(); setNotice("Collection saved successfully.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Could not save this collection.");
+      setNotice(errorMessage(error, "Could not save this collection."));
     } finally { setBusy(false); }
   }
 
@@ -97,7 +98,7 @@ export default function CollectionManager({ initialCollections, artworks }: { in
       setCollections((current) => current.filter((entry) => entry.id !== item.id));
       if (editing?.id === item.id) reset();
       setNotice("Collection deleted. Artwork records were kept.");
-    } catch (error) { setNotice(error instanceof Error ? error.message : "Could not delete this collection."); }
+    } catch (error) { setNotice(errorMessage(error, "Could not delete this collection.")); }
     finally { setBusy(false); }
   }
 

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { prepareImageForUpload } from "@/lib/image-resize";
+import { errorMessage } from "@/lib/errors";
 
 type Theme = { title: string; description: string };
 type GalleryItem = { path: string; alt: string; caption?: string };
@@ -60,7 +61,7 @@ export default function ArtistProfileManager({ initialProfile }: { initialProfil
       setProfile(payload); setPortrait(null); setGalleryFiles([]);
       setNotice("Artist profile saved.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Could not save the profile.");
+      setNotice(errorMessage(error, "Could not save the profile."));
     } finally { setBusy(false); }
   }
 
@@ -74,7 +75,7 @@ export default function ArtistProfileManager({ initialProfile }: { initialProfil
       update("gallery", profile.gallery.filter((_, i) => i !== index));
       setNotice("Image removed. Save the profile to publish the change.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Could not remove image.");
+      setNotice(errorMessage(error, "Could not remove image."));
     } finally { setBusy(false); }
   }
 
