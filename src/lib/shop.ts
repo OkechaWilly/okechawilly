@@ -10,6 +10,7 @@ export type ProductVariantLite = {
 
 export type SellableProduct = {
   product_type: string;
+  status?: string | null;
   price: number | string | null;
   currency: string | null;
   edition_size?: number | null;
@@ -63,6 +64,7 @@ export function availableVariants(product: SellableProduct) {
 
 /** True when a published listing should remain visible but cannot currently be purchased. */
 export function isSoldOut(product: SellableProduct) {
+  if (product.status === "sold_out") return true;
   if (product.product_type === "limited_print" && product.edition_size != null && (product.edition_sold ?? 0) >= product.edition_size) return true;
   if (product.track_inventory && product.stock_quantity === 0) return true;
   if ((product.product_variants ?? []).length > 0 && availableVariants(product).length === 0) return true;
