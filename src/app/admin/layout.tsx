@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
 
+export const metadata = { title: "Studio", robots: { index: false, follow: false } };
+
 export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
