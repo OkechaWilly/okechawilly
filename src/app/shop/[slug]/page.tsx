@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ArtworkImageGallery } from "@/components/artwork-image-gallery";
 import ProductVariantPicker from "@/components/product-variant-picker";
 import { PRODUCT_TYPE_LABELS, availableVariants, isCurrentlyAvailable } from "@/lib/shop";
