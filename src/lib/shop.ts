@@ -61,12 +61,17 @@ export function availableVariants(product: SellableProduct) {
   );
 }
 
-/** "Everything currently available": not sold out, in stock, and at least one format on offer. */
+/** True when a published listing should remain visible but cannot currently be purchased. */
+export function isSoldOut(product: SellableProduct) {
+  if (product.product_type === "limited_print" && product.edition_size != null && (product.edition_sold ?? 0) >= product.edition_size) return true;
+  if (product.track_inventory && product.stock_quantity === 0) return true;
+  if ((product.product_variants ?? []).length > 0 && availableVariants(product).length === 0) return true;
+  return false;
+}
+
+/** Availability is separate from visibility: sold-out published products stay in the catalogue. */
 export function isCurrentlyAvailable(product: SellableProduct) {
-  if (product.product_type === "limited_print" && product.edition_size != null && (product.edition_sold ?? 0) >= product.edition_size) return false;
-  if (product.track_inventory && product.stock_quantity === 0) return false;
-  if ((product.product_variants ?? []).length > 0 && availableVariants(product).length === 0) return false;
-  return true;
+  return !isSoldOut(product);
 }
 
 /** Price text for a list card: a variant's price, "From …" when formats differ, or the base price. */
