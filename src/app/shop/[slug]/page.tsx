@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ArtworkImageGallery } from "@/components/artwork-image-gallery";
 import ProductVariantPicker from "@/components/product-variant-picker";
 import { PRODUCT_TYPE_LABELS, availableVariants, isCurrentlyAvailable } from "@/lib/shop";
@@ -42,8 +41,6 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
     .eq("slug", slug).eq("is_published", true).eq("status", "active").single();
 
   if (!product) notFound();
-  if (product.track_inventory && product.stock_quantity === 0) notFound();
-  if (product.product_type === "limited_print" && product.edition_size != null && product.edition_sold >= product.edition_size) notFound();
 
   const productImages = [...(product.product_images || [])].sort((a, b) =>
     Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
@@ -108,6 +105,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
         <div className="pt-2 md:sticky md:top-24 md:self-start">
           <p className="eyebrow">{PRODUCT_TYPE_LABELS[product.product_type] || "Studio product"}</p>
           <h1 className="display mt-4 text-5xl md:text-6xl">{product.title}</h1>
+          {!isCurrentlyAvailable(product) && <p className="mt-5 inline-flex border border-[#d9d4ca] px-4 py-3 text-[10px] uppercase tracking-[.15em] text-[#77736d]">Sold out · Enquiries welcome</p>}
           <ProductVariantPicker productTitle={product.title} variants={(product.product_variants || []).sort((a: any, b: any) => a.sort_order - b.sort_order)} fallbackPrice={product.price == null ? null : Number(product.price)} fallbackCurrency={product.currency || "UGX"} />
           {product.description && <p className="mt-6 whitespace-pre-line text-sm leading-7 text-[#77736d]">{product.description}</p>}
           {(product.medium || product.materials || product.dimensions || product.framing) && <div className="mt-8 border-t border-[#e8e5de] pt-5"><p className="eyebrow mb-3">Product details</p><dl className="divide-y divide-[#e8e5de] text-sm">
