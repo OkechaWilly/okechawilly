@@ -22,7 +22,7 @@ export default async function ShopPageBanner({
   const supabase = await createClient();
   const { data: artworks } = await supabase
     .from("artworks")
-    .select("title, artwork_images(storage_path, is_primary, sort_order)")
+    .select("title, is_featured, artwork_images(storage_path, is_primary, sort_order)")
     .eq("is_published", true)
     .order("sort_order", { ascending: true })
     .limit(20);
@@ -37,7 +37,8 @@ export default async function ShopPageBanner({
         url: supabase.storage.from("artwork-images").getPublicUrl(images[0].storage_path).data.publicUrl,
       } : null;
     })
-    .find(Boolean);
+    .filter(Boolean);
+  const featured = artworks?.find((artwork: any) => artwork && (artwork as any).is_featured) || artworks?.[0];
 
   return (
     <section className="relative isolate flex min-h-[320px] items-center overflow-hidden bg-[#242320] md:min-h-[350px]">
