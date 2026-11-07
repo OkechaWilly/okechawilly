@@ -15,9 +15,7 @@ const navigation = [
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const darkHeader = ["/artwork", "/collections", "/shop", "/prints", "/journal"].some(
-    (route) => pathname === route || pathname.startsWith(route + "/")
-  );
+  const darkHeader = ["/artwork", "/collections", "/shop", "/prints", "/journal"].includes(pathname);
 
   function closeMenu() {
     setMenuOpen(false);
