@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const navigation = [
   { href: "/artwork", label: "Artwork" },
@@ -13,13 +14,17 @@ const navigation = [
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const darkHeader = ["/artwork", "/collections", "/shop", "/prints", "/journal"].some(
+    (route) => pathname === route || pathname.startsWith(route + "/")
+  );
 
   function closeMenu() {
     setMenuOpen(false);
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#e8e5de] bg-[#f7f6f2]/95 backdrop-blur">
+    <header className={`sticky top-0 z-50 border-b backdrop-blur transition-colors duration-300 ${darkHeader ? "border-white/10 bg-[#242320]/95 text-[#f7f6f2]" : "border-[#e8e5de] bg-[#f7f6f2]/95 text-[#242320]"}`}>
       <div className="container flex h-[76px] items-center justify-between gap-4">
         <Link href="/" onClick={closeMenu} className="serif shrink-0 text-[25px] tracking-[-.04em]">
           Okecha Willy<span className="text-[#9c8062]">.</span>
@@ -27,7 +32,7 @@ export function SiteHeader() {
 
         <nav aria-label="Main navigation" className="hidden items-center gap-9 text-[11px] uppercase tracking-[.13em] md:flex">
           {navigation.map((item) => (
-            <Link key={item.href} href={item.href} className="transition-colors hover:text-[#9c8062]">
+            <Link key={item.href} href={item.href} className={`transition-colors hover:text-[#d0aa83] ${darkHeader ? "text-[#f7f6f2]" : "text-[#242320]"}`}>
               {item.label}
             </Link>
           ))}
@@ -37,14 +42,14 @@ export function SiteHeader() {
           <Link
             href="/contact"
             onClick={closeMenu}
-            className="border border-[#242320] px-3 py-3 text-[9px] uppercase tracking-[.12em] text-[#242320] transition-colors hover:bg-[#242320] hover:!text-[#f7f6f2] sm:px-5 sm:text-[10px] sm:tracking-[.14em]"
+            className={`border px-3 py-3 text-[9px] uppercase tracking-[.12em] transition-colors sm:px-5 sm:text-[10px] sm:tracking-[.14em] ${darkHeader ? "border-white/60 text-[#f7f6f2] hover:bg-[#f7f6f2] hover:!text-[#242320]" : "border-[#242320] text-[#242320] hover:bg-[#242320] hover:!text-[#f7f6f2]"}`}
           >
             Get in touch <span aria-hidden="true">↗</span>
           </Link>
 
           <button
             type="button"
-            className="flex h-11 items-center gap-2 border border-[#e8e5de] px-3 text-[10px] uppercase tracking-[.12em] text-[#242320] md:hidden"
+            className={`flex h-11 items-center gap-2 border px-3 text-[10px] uppercase tracking-[.12em] md:hidden ${darkHeader ? "border-white/30 text-[#f7f6f2]" : "border-[#e8e5de] text-[#242320]"}`}
             aria-expanded={menuOpen}
             aria-controls="mobile-site-navigation"
             onClick={() => setMenuOpen((open) => !open)}
@@ -59,7 +64,7 @@ export function SiteHeader() {
         <nav
           id="mobile-site-navigation"
           aria-label="Mobile navigation"
-          className="border-t border-[#e8e5de] bg-[#f7f6f2] px-6 py-5 md:hidden"
+          className={`border-t px-6 py-5 md:hidden ${darkHeader ? "border-white/10 bg-[#242320] text-[#f7f6f2]" : "border-[#e8e5de] bg-[#f7f6f2] text-[#242320]"}`}
         >
           <div className="container flex flex-col">
             {navigation.map((item, index) => (
@@ -67,7 +72,7 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 onClick={closeMenu}
-                className="flex items-center justify-between border-b border-[#e8e5de] py-4 text-[12px] uppercase tracking-[.14em] transition-colors hover:text-[#9c8062]"
+                className={`flex items-center justify-between border-b py-4 text-[12px] uppercase tracking-[.14em] transition-colors hover:text-[#d0aa83] ${darkHeader ? "border-white/10" : "border-[#e8e5de]"}`}
               >
                 <span>{item.label}</span>
                 <span aria-hidden="true" className="text-[#9c8062]">0{index + 1}</span>
