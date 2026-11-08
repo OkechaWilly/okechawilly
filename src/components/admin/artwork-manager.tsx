@@ -198,7 +198,7 @@ export default function ArtworkManager({
           .from("artwork-images").upload(path, file, { upsert: false, contentType: file.type || undefined });
         if (uploadError) throw uploadError;
 
-        const { data: imageData, error: imageError } = await supabase
+        const { error: imageError } = await supabase
           .from("artwork_images")
           .insert({
             artwork_id: artworkId,

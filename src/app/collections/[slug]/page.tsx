@@ -5,6 +5,18 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { SITE_NAME, pageMetadata, plainText, shareImage } from "@/lib/site";
+import { byPrimaryThenOrder, type OrderedImage } from "@/lib/media";
+
+// The parts of an artwork this page reads from the database.
+type CollectionArtwork = {
+  slug: string;
+  title: string;
+  year: number | string | null;
+  medium: string | null;
+  status: string;
+  is_published: boolean;
+  artwork_images?: Array<OrderedImage & { storage_path: string | null }>;
+};
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -42,13 +54,11 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
 
   if (!collection) notFound();
 
-  const artworks = (collection.collection_artworks ?? [])
-    .map((entry: any) => entry.artwork)
-    .filter((artwork: any) => artwork && artwork.is_published)
-    .map((artwork: any) => {
-      const images = [...(artwork.artwork_images ?? [])].sort(
-        (a: any, b: any) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
-      );
+  const artworks = ((collection.collection_artworks ?? []) as Array<{ artwork: CollectionArtwork | null }>)
+    .map((entry) => entry.artwork)
+    .filter((artwork): artwork is CollectionArtwork => Boolean(artwork?.is_published))
+    .map((artwork) => {
+      const images = [...(artwork.artwork_images ?? [])].sort(byPrimaryThenOrder);
       const image = images[0]?.storage_path
         ? supabase.storage.from("artwork-images").getPublicUrl(images[0].storage_path).data.publicUrl
         : "";
@@ -114,7 +124,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
         </div>
         {artworks.length ? (
           <div className="mt-8 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
-            {artworks.map((artwork: any) => <ArtworkCard key={artwork.slug} item={artwork} />)}
+            {artworks.map((artwork) => <ArtworkCard key={artwork.slug} item={artwork} />)}
           </div>
         ) : (
           <div className="py-16 text-center">

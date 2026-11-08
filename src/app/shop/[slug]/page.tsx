@@ -7,6 +7,7 @@ import { PRODUCT_TYPE_LABELS, availability, availableVariants, isCurrentlyAvaila
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/json-ld";
 import { SITE_NAME, absoluteUrl, pageMetadata, plainText, shareImage } from "@/lib/site";
+import { byPrimaryThenOrder } from "@/lib/media";
 
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -16,10 +17,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .select("*, product_images(*), product_variants(*), artwork:artworks(title, artwork_images(*))")
     .eq("slug", slug).eq("is_published", true).in("status", ["active", "sold_out"]).single();
   if (!product) return {};
-  const byPrimary = (a: any, b: any) => Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order;
-  const productCover = [...(product.product_images || [])].sort(byPrimary)[0];
+  const productCover = [...(product.product_images || [])].sort(byPrimaryThenOrder)[0];
   const linkedArtwork = Array.isArray(product.artwork) ? product.artwork[0] : product.artwork;
-  const artworkCover = [...(linkedArtwork?.artwork_images || [])].sort(byPrimary)[0];
+  const artworkCover = [...(linkedArtwork?.artwork_images || [])].sort(byPrimaryThenOrder)[0];
   const coverUrl = productCover
     ? supabase.storage.from("product-images").getPublicUrl(productCover.storage_path).data.publicUrl
     : artworkCover
@@ -73,7 +73,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
 
   // Structured data so Google can show the price and availability of this product.
   const onOffer = availableVariants(product);
-  const offerPrices = onOffer.map((variant: any) => Number(variant.price));
+  const offerPrices = onOffer.map((variant) => Number(variant.price));
   const offerCurrency = onOffer[0]?.currency || product.currency || "UGX";
   const productUrl = absoluteUrl(`/shop/${product.slug}`);
   // A sold or unavailable product must never be reported to Google as "in stock", even when its
@@ -114,7 +114,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
           <p className="eyebrow">{PRODUCT_TYPE_LABELS[product.product_type] || "Studio product"}</p>
           <h1 className="display mt-4 text-5xl md:text-6xl">{product.title}</h1>
           {availability(product) && <p className="mt-5 inline-flex border border-[#d9d4ca] px-4 py-3 text-[10px] uppercase tracking-[.15em] text-[#77736d]">{availability(product)?.label} · Enquiries welcome</p>}
-          <ProductVariantPicker productTitle={product.title} variants={(product.product_variants || []).sort((a: any, b: any) => a.sort_order - b.sort_order)} fallbackPrice={product.price == null ? null : Number(product.price)} fallbackCurrency={product.currency || "UGX"} isSoldOut={!isCurrentlyAvailable(product)} />
+          <ProductVariantPicker productTitle={product.title} variants={(product.product_variants || []).sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order)} fallbackPrice={product.price == null ? null : Number(product.price)} fallbackCurrency={product.currency || "UGX"} isSoldOut={!isCurrentlyAvailable(product)} />
           {product.description && <p className="mt-6 whitespace-pre-line text-sm leading-7 text-[#77736d]">{product.description}</p>}
           {(product.medium || product.materials || product.dimensions || product.framing) && <div className="mt-8 border-t border-[#e8e5de] pt-5"><p className="eyebrow mb-3">Product details</p><dl className="divide-y divide-[#e8e5de] text-sm">
             {product.medium && <div className="flex justify-between gap-5 py-3"><dt className="text-[#77736d]">Medium</dt><dd className="text-right">{product.medium}</dd></div>}
