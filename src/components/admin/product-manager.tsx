@@ -24,8 +24,15 @@ const types = [
   { value: "limited_print", label: "Limited-edition print" },
   { value: "open_print", label: "Open-edition print" },
   { value: "wearable", label: "Wearable (t-shirt, clothing)" },
-  { value: "merchandise", label: "Object / merchandise" },
+  { value: "merchandise", label: "Accessory / merchandise" },
   { value: "art_object", label: "Art object" },
+];
+
+const productCategories = [
+  { slug: "originals", title: "Originals", description: "Original paintings and physical artworks.", defaultType: "original", types: ["original"] },
+  { slug: "prints", title: "Fine Art Prints", description: "Limited and open-edition reproductions.", defaultType: "limited_print", types: ["limited_print", "open_print"] },
+  { slug: "wearables", title: "Wearables", description: "T-shirts, hoodies and clothing featuring your art.", defaultType: "wearable", types: ["wearable"] },
+  { slug: "objects", title: "Accessories & Objects", description: "Bags, phone cases, mugs and other art-bearing items.", defaultType: "merchandise", types: ["merchandise", "art_object"] },
 ];
 
 export default function ProductManager({ initialProducts, artworks }: { initialProducts: Product[]; artworks: Artwork[] }) {
@@ -77,6 +84,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     setStatus(item.status); setPublished(item.is_published); setImageFiles([]); setNotice(""); setOpen(true);
   }
   const publicUrl = (path: string) => supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
+  const selectedCategory = productCategories.find((category) => category.types.includes(type)) || productCategories[0];
 
   function linkArtwork(id: string) {
     setArtworkId(id);
@@ -257,7 +265,24 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
       <div className="mt-7 grid gap-5 md:grid-cols-2">
         <label className={label}>Product title<input className={field} value={title} onChange={(e) => { setTitle(e.target.value); if (!editing) setSlug(slugify(e.target.value)); }} placeholder="Title of the work or product" required /></label>
         <label className={label}>URL slug<input className={field} value={slug} onChange={(e) => setSlug(e.target.value)} /></label>
-        <label className={label}>Product type<select className={field} value={type} onChange={(e) => setType(e.target.value)}>{types.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+        <div className="md:col-span-2">
+          <p className={label}>Shop category</p>
+          <div className="mt-2 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {productCategories.map((category) => {
+              const active = selectedCategory.slug === category.slug;
+              return <button key={category.slug} type="button" onClick={() => setType(category.defaultType)} aria-pressed={active} className={`border p-4 text-left transition-colors ${active ? "border-[#9c8062] bg-[#eee9df]" : "border-[#d9d4ca] bg-white hover:border-[#9c8062]"}`}>
+                <span className="block text-xs font-medium uppercase tracking-[.12em] text-[#242320]">{category.title}</span>
+                <span className="mt-2 block text-[11px] leading-5 normal-case tracking-normal text-[#77736d]">{category.description}</span>
+                {active && <span className="mt-3 block text-[9px] uppercase tracking-[.14em] text-[#9c8062]">Selected category</span>}
+              </button>;
+            })}
+          </div>
+          {selectedCategory.types.length > 1 && <label className={label + " mt-5 block"}>{selectedCategory.slug === "prints" ? "Print edition" : "Product format"}
+            <select className={field} value={type} onChange={(e) => setType(e.target.value)}>
+              {types.filter((item) => selectedCategory.types.includes(item.value)).map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </select>
+          </label>}
+        </div>
         <label className={label}>Linked artwork<select className={field} value={artworkId} onChange={(e) => linkArtwork(e.target.value)}><option value="">No linked artwork</option>{artworks.map((a) => <option key={a.id} value={a.id}>{a.title}{a.year ? ` (${a.year})` : ""}</option>)}</select><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Selecting an artwork fills its title, description, medium and dimensions. Its existing photographs are also used on the product page unless you upload separate product images.</span></label>
         <label className={label}>Price<input className={field} type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" /></label>
         <label className={label}>Currency<select className={field} value={currency} onChange={(e) => setCurrency(e.target.value)}><option value="UGX">UGX — Ugandan Shilling</option><option value="USD">USD — US Dollar</option></select></label>
