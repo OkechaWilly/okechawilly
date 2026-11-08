@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { prepareImageForUpload } from "@/lib/image-resize";
 import { errorMessage } from "@/lib/errors";
+import { EMPTY_LINK_FIELDS, planArtworkLink, type LinkFields } from "@/lib/product-link";
 import { shopVisibility } from "@/lib/shop";
 
 type Artwork = { id: string; title: string; year: number | null; medium: string | null; width_cm: number | null; height_cm: number | null; depth_cm: number | null; description: string | null; artwork_images?: { storage_path: string; is_primary: boolean; sort_order: number; alt_text?: string | null }[] };
@@ -52,6 +53,8 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("UGX");
   const [artworkId, setArtworkId] = useState("");
+  // What was last copied in from a linked artwork, so text the person has typed is never overwritten.
+  const lastCopied = useRef<LinkFields>(EMPTY_LINK_FIELDS);
   const [editionSize, setEditionSize] = useState("");
   const [editionSold, setEditionSold] = useState("0");
   const [sku, setSku] = useState("");
@@ -66,6 +69,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
   const [notice, setNotice] = useState("");
 
   function reset() {
+    lastCopied.current = EMPTY_LINK_FIELDS;
     setEditing(null); setTitle(""); setSlug(""); setType("original"); setDescription(""); setMedium(""); setMaterials(""); setDimensions(""); setFraming(""); setShippingInformation("");
     setPrice(""); setCurrency("UGX"); setArtworkId(""); setEditionSize(""); setEditionSold("0");
     setSku(""); setStock(""); setTrackInventory(true); setOptions(""); setStatus("draft");
@@ -73,6 +77,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
   }
   function createNew() { reset(); setNotice(""); setOpen(true); }
   function edit(item: Product) {
+    lastCopied.current = EMPTY_LINK_FIELDS;
     setEditing(item); setTitle(item.title); setSlug(item.slug); setType(item.product_type);
     setDescription(item.description || ""); setMedium(item.medium || ""); setMaterials(item.materials || ""); setDimensions(item.dimensions || ""); setFraming(item.framing || ""); setShippingInformation(item.shipping_information || ""); setPrice(item.price == null ? "" : String(item.price));
     setCurrency(item.currency || "UGX"); setArtworkId(item.artwork_id || "");
@@ -91,19 +96,21 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     const artwork = artworks.find((item) => item.id === id);
     if (!artwork) return;
 
-    // Bring across the artwork's catalogue information. Product-specific fields
-    // such as materials, framing, edition, price and stock remain independent.
-    setTitle(artwork.title);
-    setSlug(slugify(artwork.title));
-    setDescription(artwork.description || "");
-    setMedium(artwork.medium || "");
-    const dimensions = [
-      artwork.width_cm != null ? String(artwork.width_cm) : null,
-      artwork.height_cm != null ? String(artwork.height_cm) : null,
-      artwork.depth_cm != null ? String(artwork.depth_cm) : null,
-    ];
-    const presentDimensions = dimensions.filter((value) => value !== null);
-    setDimensions(presentDimensions.length ? `${presentDimensions.join(" × ")} cm` : "");
+    // Bring across the artwork's catalogue information without overwriting anything the person has
+    // written. On a product that already exists, its title and web address never change.
+    const plan = planArtworkLink({
+      isExistingProduct: Boolean(editing),
+      current: { title, slug, description, medium, dimensions },
+      lastCopied: lastCopied.current,
+      artwork,
+    });
+    lastCopied.current = plan.copied;
+    if (plan.updates.title !== undefined) setTitle(plan.updates.title);
+    if (plan.updates.slug !== undefined) setSlug(plan.updates.slug);
+    if (plan.updates.description !== undefined) setDescription(plan.updates.description);
+    if (plan.updates.medium !== undefined) setMedium(plan.updates.medium);
+    if (plan.updates.dimensions !== undefined) setDimensions(plan.updates.dimensions);
+    setNotice(plan.summary);
   }
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
