@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const supabase = await createClient();
   const { data: product } = await supabase.from("products")
-    .select("*, product_images(*), product_variants(*), artwork:artworks(title, artwork_images(*))")
+    .select("*, product_images(*), product_variants(*), artwork:artworks(title, slug, is_published, artwork_images(*))")
     .eq("slug", slug).eq("is_published", true).in("status", ["active", "sold_out"]).single();
   if (!product) return {};
   const productCover = [...(product.product_images || [])].sort(byPrimaryThenOrder)[0];
@@ -38,7 +38,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
   const { slug } = await params;
   const supabase = await createClient();
   const { data: product } = await supabase.from("products")
-    .select("*, product_images(*), product_variants(*), artwork:artworks(title, artwork_images(*))")
+    .select("*, product_images(*), product_variants(*), artwork:artworks(title, slug, is_published, artwork_images(*))")
     .eq("slug", slug).eq("is_published", true).in("status", ["active", "sold_out"]).single();
 
   if (!product) notFound();
@@ -116,6 +116,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
           {availability(product) && <p className="mt-5 inline-flex border border-[#d9d4ca] px-4 py-3 text-[10px] uppercase tracking-[.15em] text-[#77736d]">{availability(product)?.label} · Enquiries welcome</p>}
           <ProductVariantPicker productTitle={product.title} variants={(product.product_variants || []).sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order)} fallbackPrice={product.price == null ? null : Number(product.price)} fallbackCurrency={product.currency || "UGX"} isSoldOut={!isCurrentlyAvailable(product)} />
           {product.description && <p className="mt-6 whitespace-pre-line text-sm leading-7 text-[#77736d]">{product.description}</p>}
+          {linkedArtwork?.is_published && linkedArtwork?.slug && <div className="mt-7 border-l border-[#c9b59e] pl-4"><p className="eyebrow">From the artwork archive</p><Link href={`/artwork/${linkedArtwork.slug}`} className="mt-2 inline-flex items-center gap-2 text-sm transition-colors hover:text-[#9c8062]">Explore the original artwork: {linkedArtwork.title} <span aria-hidden="true">↗</span></Link></div>}
           {(product.medium || product.materials || product.dimensions || product.framing) && <div className="mt-8 border-t border-[#e8e5de] pt-5"><p className="eyebrow mb-3">Product details</p><dl className="divide-y divide-[#e8e5de] text-sm">
             {product.medium && <div className="flex justify-between gap-5 py-3"><dt className="text-[#77736d]">Medium</dt><dd className="text-right">{product.medium}</dd></div>}
             {product.materials && <div className="flex justify-between gap-5 py-3"><dt className="text-[#77736d]">Materials</dt><dd className="text-right">{product.materials}</dd></div>}
