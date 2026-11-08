@@ -10,7 +10,7 @@ function formatPrice(price: number, currency: string) {
   catch { return `${currency} ${Number(price).toLocaleString("en-UG")}`; }
 }
 
-export default function ProductVariantPicker({ productTitle, variants, fallbackPrice, fallbackCurrency, isSoldOut = false }: { productTitle: string; variants: Variant[]; fallbackPrice: number | null; fallbackCurrency: string; isSoldOut?: boolean }) {
+export default function ProductVariantPicker({ productTitle, productType, variants, fallbackPrice, fallbackCurrency, isSoldOut = false }: { productTitle: string; productType: string; variants: Variant[]; fallbackPrice: number | null; fallbackCurrency: string; isSoldOut?: boolean }) {
   const available = useMemo(() => isSoldOut ? [] : variants.filter((v) => v.is_available && (v.stock_quantity == null || v.stock_quantity > 0)), [variants, isSoldOut]);
   const [selectedSize, setSelectedSize] = useState(available[0]?.size || "");
   const [selectedFinish, setSelectedFinish] = useState(available[0]?.finish || "");
@@ -30,13 +30,13 @@ export default function ProductVariantPicker({ productTitle, variants, fallbackP
   return <div>
     {available.length > 0 && <div className="mt-7 space-y-4">
       {sizeOptions.length > 0 && <div>
-        <label htmlFor="product-size" className="eyebrow">Choose size</label>
+        <label htmlFor="product-size" className="eyebrow">{productType === "limited_print" || productType === "open_print" ? "Choose print size" : "Choose size"}</label>
         <select id="product-size" value={selectedSize} onChange={(e) => changeSize(e.target.value)} className="mt-3 w-full border border-[#d9d4ca] bg-white px-4 py-4 text-sm outline-none focus:border-[#9c8062]">
           {sizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}
         </select>
       </div>}
       {finishOptions.length > 0 && <div>
-        <label htmlFor="product-finish" className="eyebrow">Choose colour / finish</label>
+        <label htmlFor="product-finish" className="eyebrow">{productType === "limited_print" || productType === "open_print" ? "Choose paper / presentation" : "Choose colour / finish"}</label>
         <select id="product-finish" value={selectedFinish} onChange={(e) => setSelectedFinish(e.target.value)} className="mt-3 w-full border border-[#d9d4ca] bg-white px-4 py-4 text-sm outline-none focus:border-[#9c8062]">
           {finishOptions.map((finish) => <option key={finish} value={finish}>{finish}</option>)}
         </select>
