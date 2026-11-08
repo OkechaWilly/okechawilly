@@ -12,18 +12,41 @@ function formatPrice(price: number, currency: string) {
 
 export default function ProductVariantPicker({ productTitle, variants, fallbackPrice, fallbackCurrency, isSoldOut = false }: { productTitle: string; variants: Variant[]; fallbackPrice: number | null; fallbackCurrency: string; isSoldOut?: boolean }) {
   const available = useMemo(() => isSoldOut ? [] : variants.filter((v) => v.is_available && (v.stock_quantity == null || v.stock_quantity > 0)), [variants, isSoldOut]);
-  const [selectedId, setSelectedId] = useState(available[0]?.id || "");
-  const selected = available.find((v) => v.id === selectedId) || null;
+  const [selectedSize, setSelectedSize] = useState(available[0]?.size || "");
+  const [selectedFinish, setSelectedFinish] = useState(available[0]?.finish || "");
+  const sizeOptions = [...new Set(available.map((v) => v.size).filter((v): v is string => Boolean(v)))];
+  const finishOptions = [...new Set(available.filter((v) => !selectedSize || !v.size || v.size === selectedSize).map((v) => v.finish).filter((v): v is string => Boolean(v)))];
+  const selected = available.find((v) => (!sizeOptions.length || v.size === selectedSize) && (!finishOptions.length || v.finish === selectedFinish)) || available[0] || null;
+  const hasSeparateChoices = sizeOptions.length > 0 || finishOptions.length > 0;
   const price = isSoldOut ? "Currently unavailable" : selected ? formatPrice(selected.price, selected.currency) : variants.length > 0 ? "Currently unavailable" : fallbackPrice == null ? "Price on request" : formatPrice(fallbackPrice, fallbackCurrency);
-  const details = selected ? [selected.size, selected.finish].filter(Boolean).join(" · ") : "";
   const subject = selected ? `Enquiry about ${productTitle} — ${selected.label}` : `Enquiry about ${productTitle}`;
+
+  function changeSize(value: string) {
+    setSelectedSize(value);
+    const matchingFinishes = available.filter((v) => v.size === value).map((v) => v.finish).filter((v): v is string => Boolean(v));
+    if (selectedFinish && !matchingFinishes.includes(selectedFinish)) setSelectedFinish(matchingFinishes[0] || "");
+  }
+
   return <div>
-    {available.length > 0 && <div className="mt-7">
-      <label htmlFor="print-option" className="eyebrow">Choose a format</label>
-      <select id="print-option" value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="mt-3 w-full border border-[#d9d4ca] bg-white px-4 py-4 text-sm outline-none focus:border-[#9c8062]">
-        {available.map((variant) => <option key={variant.id} value={variant.id}>{variant.label}</option>)}
-      </select>
-      {details && <p className="mt-2 text-xs text-[#77736d]">{details}</p>}
+    {available.length > 0 && <div className="mt-7 space-y-4">
+      {sizeOptions.length > 0 && <div>
+        <label htmlFor="product-size" className="eyebrow">Choose size</label>
+        <select id="product-size" value={selectedSize} onChange={(e) => changeSize(e.target.value)} className="mt-3 w-full border border-[#d9d4ca] bg-white px-4 py-4 text-sm outline-none focus:border-[#9c8062]">
+          {sizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}
+        </select>
+      </div>}
+      {finishOptions.length > 0 && <div>
+        <label htmlFor="product-finish" className="eyebrow">Choose colour / finish</label>
+        <select id="product-finish" value={selectedFinish} onChange={(e) => setSelectedFinish(e.target.value)} className="mt-3 w-full border border-[#d9d4ca] bg-white px-4 py-4 text-sm outline-none focus:border-[#9c8062]">
+          {finishOptions.map((finish) => <option key={finish} value={finish}>{finish}</option>)}
+        </select>
+      </div>}
+      {!hasSeparateChoices && <div>
+        <label htmlFor="print-option" className="eyebrow">Choose a format</label>
+        <select id="print-option" value={selected?.id || ""} onChange={(e) => { const choice = available.find((v) => v.id === e.target.value); if (choice) { setSelectedSize(choice.size || ""); setSelectedFinish(choice.finish || ""); } }} className="mt-3 w-full border border-[#d9d4ca] bg-white px-4 py-4 text-sm outline-none focus:border-[#9c8062]">
+          {available.map((variant) => <option key={variant.id} value={variant.id}>{variant.label}</option>)}
+        </select>
+      </div>}
     </div>}
     <p className="mt-5 text-lg font-medium">{price}</p>
     {isSoldOut && <p className="mt-2 text-xs text-[#9b5947]">This listing is not available to buy at the moment. You can still contact the studio about the work, something similar, or future availability.</p>}
