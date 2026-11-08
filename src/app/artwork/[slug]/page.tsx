@@ -53,6 +53,7 @@ export default async function ArtworkDetail({
     .eq("artwork_id", artwork.id)
     .eq("is_published", true)
     .eq("status", "active")
+    .in("product_type", ["limited_print", "open_print", "wearable", "merchandise", "art_object"])
     .order("created_at", { ascending: false });
 
   const linkedProducts = (linkedProductsData ?? []).filter((product) => isCurrentlyAvailable(product)).map((product) => {
