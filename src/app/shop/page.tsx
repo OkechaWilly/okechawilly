@@ -7,8 +7,8 @@ import ShopPageBanner from "@/components/shop-page-banner";
 import {
   PRODUCT_TYPE_LABELS,
   SHOP_CATEGORIES,
+  availability,
   categoryOfType,
-  isCurrentlyAvailable,
   priceLabel,
 } from "@/lib/shop";
 
@@ -27,6 +27,39 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
         description: "Artwork and editions available from the studio of Okecha Willy. Enquiries welcome from collectors worldwide.",
         path: "/shop",
       });
+}
+
+type ShopProduct = {
+  slug: string;
+  title: string;
+  product_type: string;
+  edition_size: number | null;
+  edition_sold: number | null;
+  imageUrl: string | null;
+  imageAlt: string;
+} & Parameters<typeof priceLabel>[0];
+
+// One card, used for work on sale and for sold work.
+function ProductCard({ product }: { product: ShopProduct }) {
+  const state = availability(product);
+  return (
+    <article>
+      <Link href={`/shop/${product.slug}`} className="group block">
+        <div className="relative aspect-[4/5] overflow-hidden bg-[#e6e2da]">
+          {product.imageUrl ? <Image src={product.imageUrl} alt={product.imageAlt} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-contain p-5 transition duration-500 group-hover:scale-[1.025] sm:p-7" /> : <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-widest text-[#89847c]">Image coming soon</div>}
+        </div>
+        <p className="eyebrow mt-5">{PRODUCT_TYPE_LABELS[product.product_type] || "Artwork"}</p>
+        <h3 className="display mt-2 text-2xl">{product.title}</h3>
+        {state && <span className="mt-3 inline-flex border border-[#d9d4ca] px-3 py-2 text-[9px] uppercase tracking-[.14em] text-[#77736d]">{state.label}</span>}
+      </Link>
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#ded9d0] pt-3 text-xs text-[#77736d]">
+        {state ? <span /> : <span>{priceLabel(product)}</span>}
+        {!state && product.product_type === "limited_print" && product.edition_size != null
+          ? <span>{Math.max(0, product.edition_size - (product.edition_sold ?? 0))} remaining</span>
+          : <Link href={`/shop/${product.slug}`} className="uppercase tracking-[.12em] !text-[#242320] transition-colors hover:!text-[#9c8062]">View details ↗</Link>}
+      </div>
+    </article>
+  );
 }
 
 export default async function Shop({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
@@ -60,7 +93,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
       };
     });
 
-  // Categories are based on all published catalogue entries, including sold-out works.
+  // Categories are based on all published catalogue entries, including sold works.
   const presentCategories = SHOP_CATEGORIES.filter((category) =>
     available.some((product) => categoryOfType(product.product_type)?.slug === category.slug),
   );
@@ -68,6 +101,10 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
   const visible = activeCategory
     ? available.filter((product) => categoryOfType(product.product_type)?.slug === activeCategory.slug)
     : available;
+  // Works that can be bought come first; sold works follow in their own section so they never push
+  // available work out of sight.
+  const onSale = visible.filter((product) => !availability(product));
+  const soldWorks = visible.filter((product) => availability(product));
   // A filter is only useful when there is more than one kind of thing to filter.
   const showFilter = presentCategories.length > 1;
   const hasPrints = available.some((product) => categoryOfType(product.product_type)?.slug === "prints");
@@ -85,7 +122,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
         aside={"Based in Uganda\nEnquiries welcome from collectors worldwide"}
       />
 
-      {hasPrints && activeCategory?.slug !== "prints" && <section className="container -mt-6 pb-16 md:pb-20">
+      {hasPrints && activeCategory?.slug !== "prints" && <section className="container pt-14 pb-16 md:pt-16 md:pb-20">
         <div className="flex flex-col gap-5 border border-[#e7e3dc] bg-[#f7f6f2] p-7 md:flex-row md:items-center md:justify-between md:p-9">
           <div>
             <p className="eyebrow">For print collectors</p>
@@ -126,24 +163,26 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
               </nav>
             )}
 
-            <div className="mt-12 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-              {visible.map((product) => (
-                <article key={product.id}>
-                  <Link href={`/shop/${product.slug}`} className="group block">
-                    <div className="relative aspect-[4/5] overflow-hidden bg-[#e6e2da]">
-                      {product.imageUrl ? <Image src={product.imageUrl} alt={product.imageAlt} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-contain p-5 transition duration-500 group-hover:scale-[1.025] sm:p-7" /> : <div className="flex h-full items-center justify-center text-[10px] uppercase tracking-widest text-[#89847c]">Image coming soon</div>}
-                    </div>
-                    <p className="eyebrow mt-5">{PRODUCT_TYPE_LABELS[product.product_type] || "Artwork"}</p>
-                    <h3 className="display mt-2 text-2xl">{product.title}</h3>
-                    {!isCurrentlyAvailable(product) && <span className="mt-3 inline-flex border border-[#d9d4ca] px-3 py-2 text-[9px] uppercase tracking-[.14em] text-[#77736d]">Sold out</span>}
-                  </Link>
-                  <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#ded9d0] pt-3 text-xs text-[#77736d]">
-                    <span>{priceLabel(product)}</span>
-                    {!isCurrentlyAvailable(product) ? <span>Sold out</span> : product.product_type === "limited_print" && product.edition_size != null ? <span>{Math.max(0, product.edition_size - (product.edition_sold ?? 0))} remaining</span> : <Link href={`/shop/${product.slug}`} className="uppercase tracking-[.12em] !text-[#242320] transition-colors hover:!text-[#9c8062]">View details ↗</Link>}
-                  </div>
-                </article>
-              ))}
-            </div>
+            {onSale.length > 0 ? (
+              <div className="mt-12 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+                {onSale.map((product) => <ProductCard key={product.id} product={product} />)}
+              </div>
+            ) : (
+              <p className="mt-12 max-w-xl text-sm leading-7 text-[#77736d]">
+                Nothing {activeCategory ? `in ${activeCategory.title.toLowerCase()} ` : ""}is available to buy right now. New work is added regularly, and you are welcome to <Link href="/contact" className="underline underline-offset-4">get in touch</Link> about something similar.
+              </p>
+            )}
+
+            {soldWorks.length > 0 && (
+              <div className={onSale.length > 0 ? "mt-24 border-t border-[#ded9d0] pt-14" : "mt-14"}>
+                <p className="eyebrow">Sold works</p>
+                <h3 className="display mt-3 text-3xl md:text-4xl">Works that have found a home.</h3>
+                <p className="mt-3 max-w-xl text-sm leading-7 text-[#77736d]">A record of work already collected. If one of these speaks to you, get in touch about something similar or a print.</p>
+                <div className="mt-10 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+                  {soldWorks.map((product) => <ProductCard key={product.id} product={product} />)}
+                </div>
+              </div>
+            )}
           </div>
         </section>
       ) : (

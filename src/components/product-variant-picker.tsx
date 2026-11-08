@@ -26,7 +26,7 @@ export default function ProductVariantPicker({ productTitle, variants, fallbackP
       {details && <p className="mt-2 text-xs text-[#77736d]">{details}</p>}
     </div>}
     <p className="mt-5 text-lg font-medium">{price}</p>
-    {isSoldOut && <p className="mt-2 text-xs text-[#9b5947]">This listing is sold out. You can still contact the studio about the work or future availability.</p>}
+    {isSoldOut && <p className="mt-2 text-xs text-[#9b5947]">This listing is not available to buy at the moment. You can still contact the studio about the work, something similar, or future availability.</p>}
     {!isSoldOut && variants.length > 0 && available.length === 0 && <p className="mt-2 text-xs text-[#9b5947]">All configured formats are currently unavailable. Please contact the studio about future availability.</p>}
     <Link href={`/contact?subject=${encodeURIComponent(subject)}`} className="mt-7 inline-block bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] !text-[#f7f6f2] transition-colors hover:bg-[#9c8062]">Enquire about this product ↗</Link>
   </div>;

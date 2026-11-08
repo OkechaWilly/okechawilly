@@ -42,7 +42,7 @@ export default async function ShopPageBanner({
   const featured = candidates.find((artwork) => artwork.is_featured) || candidates[0];
 
   return (
-    <section className="relative isolate flex min-h-[320px] items-center overflow-hidden bg-[#242320] md:min-h-[350px]">
+    <section className="relative isolate -mt-[77px] flex min-h-[397px] items-center overflow-hidden bg-[#242320] pt-[77px] md:min-h-[427px]">
       {featured?.url && (
         <Image
           src={featured.url}
@@ -55,6 +55,7 @@ export default async function ShopPageBanner({
       )}
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#171614]/90 via-[#171614]/70 to-[#171614]/35" />
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#171614]/35 via-transparent to-[#171614]/20" />
+      <div className="absolute inset-x-0 top-0 -z-10 h-40 bg-gradient-to-b from-[#171614]/55 to-transparent" />
       <div className="container relative py-12 text-[#f7f6f2] md:py-14">
         {backHref && (
           <Link href={backHref} className="eyebrow inline-flex text-[#f7f6f2]/75 transition-colors hover:text-white">
@@ -67,7 +68,7 @@ export default async function ShopPageBanner({
         </h1>
         <div className="mt-5 grid gap-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
           <p className="max-w-2xl text-sm leading-7 text-white/80 md:text-base">{description}</p>
-          {aside && <p className="text-[10px] leading-6 text-white/75 md:text-right">{aside}</p>}
+          {aside && <p className="whitespace-pre-line text-[10px] leading-6 text-white/75 md:text-right">{aside}</p>}
         </div>
       </div>
     </section>

@@ -5,7 +5,7 @@ export type ProductVariantLite = {
   price: number | string;
   currency: string | null;
   is_available: boolean;
-  stock_quantity: number | null;
+  stock_quantity: number | string | null;
 };
 
 export type SellableProduct = {
@@ -58,17 +58,43 @@ export function formatPrice(price: number | null, currency: string | null) {
 /** Formats a collector can currently choose (switched on and in stock). */
 export function availableVariants(product: SellableProduct) {
   return (product.product_variants ?? []).filter(
-    (variant) => variant.is_available && (variant.stock_quantity == null || variant.stock_quantity > 0),
+    (variant) =>
+      variant.is_available &&
+      (variant.stock_quantity == null || variant.stock_quantity === "" || Number(variant.stock_quantity) > 0),
   );
+}
+
+/**
+ * Why a published listing cannot currently be bought, or null when it can.
+ * "Sold" / "Sold out" mean the work is gone; "Currently unavailable" means the
+ * formats are only switched off, so the visitor is not told something false.
+ */
+export function availability(product: SellableProduct): { label: string; reason: string } | null {
+  const soldWord = product.product_type === "original" ? "Sold" : "Sold out";
+  if (product.status === "sold_out") return { label: soldWord, reason: "its status is set to Sold out" };
+  if (product.product_type === "limited_print" && product.edition_size != null && (product.edition_sold ?? 0) >= product.edition_size) {
+    return { label: "Sold out", reason: "every copy of the edition is sold" };
+  }
+  if (product.track_inventory && product.stock_quantity === 0) return { label: soldWord, reason: "its stock is 0" };
+  if ((product.product_variants ?? []).length > 0 && availableVariants(product).length === 0) {
+    return { label: "Currently unavailable", reason: "every format is switched off or out of stock" };
+  }
+  return null;
 }
 
 /** True when a published listing should remain visible but cannot currently be purchased. */
 export function isSoldOut(product: SellableProduct) {
-  if (product.status === "sold_out") return true;
-  if (product.product_type === "limited_print" && product.edition_size != null && (product.edition_sold ?? 0) >= product.edition_size) return true;
-  if (product.track_inventory && product.stock_quantity === 0) return true;
-  if ((product.product_variants ?? []).length > 0 && availableVariants(product).length === 0) return true;
-  return false;
+  return availability(product) !== null;
+}
+
+/** What a visitor can see of a product, in plain words, for the admin product list. */
+export function shopVisibility(product: SellableProduct & { is_published: boolean }): { label: string; tone: "visible" | "sold" | "hidden" } {
+  if (!product.is_published) return { label: "Not in the shop: switch Published on", tone: "hidden" };
+  if (product.status === "draft") return { label: "Not in the shop: status is Draft", tone: "hidden" };
+  if (product.status === "archived") return { label: "Not in the shop: status is Archived", tone: "hidden" };
+  const state = availability(product);
+  if (state) return { label: `In the shop, shown as “${state.label}” because ${state.reason}`, tone: "sold" };
+  return { label: "In the shop and available to buy", tone: "visible" };
 }
 
 /** Availability is separate from visibility: sold-out published products stay in the catalogue. */

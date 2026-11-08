@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { absoluteUrl } from "@/lib/site";
-import { isCurrentlyAvailable } from "@/lib/shop";
 
 // Rebuilt at most once an hour, so new artworks reach search engines without a redeploy.
 export const revalidate = 3600;
@@ -24,17 +23,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     supabase.from("artworks").select("slug, updated_at").eq("is_published", true),
     supabase
       .from("products")
-      .select("slug, updated_at, product_type, price, currency, edition_size, edition_sold, stock_quantity, track_inventory, product_variants(price, currency, is_available, stock_quantity)")
+      .select("slug, updated_at")
       .eq("is_published", true)
-      .eq("status", "active"),
+      .in("status", ["active", "sold_out"]),
     supabase.from("collections").select("slug, updated_at").eq("is_published", true),
     supabase.from("journal_posts").select("slug, updated_at, published_at").eq("status", "published"),
   ]);
 
   for (const row of artworks.data ?? []) entries.push({ url: absoluteUrl(`/artwork/${row.slug}`), lastModified: modified(row.updated_at) });
-  for (const row of products.data ?? []) {
-    if (isCurrentlyAvailable(row)) entries.push({ url: absoluteUrl(`/shop/${row.slug}`), lastModified: modified(row.updated_at) });
-  }
+  // Sold work stays on the site, so it stays in the sitemap too.
+  for (const row of products.data ?? []) entries.push({ url: absoluteUrl(`/shop/${row.slug}`), lastModified: modified(row.updated_at) });
   for (const row of collections.data ?? []) entries.push({ url: absoluteUrl(`/collections/${row.slug}`), lastModified: modified(row.updated_at) });
   for (const row of posts.data ?? []) entries.push({ url: absoluteUrl(`/journal/${row.slug}`), lastModified: modified(row.updated_at ?? row.published_at) });
 
