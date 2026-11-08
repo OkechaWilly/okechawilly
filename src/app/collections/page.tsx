@@ -14,7 +14,7 @@ export default async function Collections() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("collections")
-    .select("*, collection_artworks(count)")
+    .select("*, collection_artworks(artwork:artworks(is_published))")
     .eq("is_published", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
@@ -26,7 +26,7 @@ export default async function Collections() {
         ? collection.cover_image
         : supabase.storage.from("artwork-images").getPublicUrl(collection.cover_image).data.publicUrl
       : "",
-    artworkCount: collection.collection_artworks?.[0]?.count ?? 0,
+    artworkCount: (collection.collection_artworks ?? []).filter((entry: { artwork: { is_published?: boolean } | null }) => entry.artwork?.is_published === true).length,
   }));
 
   return (
