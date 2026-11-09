@@ -117,6 +117,14 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     event.preventDefault();
     if (!title.trim()) { setNotice("Please enter a product title."); return; }
     if (type === "limited_print" && (!editionSize || Number(editionSize) < 1)) { setNotice("Enter a valid edition size for a limited print."); return; }
+    // Check the options before writing anything, so a half-filled option can never leave a product
+    // saved without its options (or make a second attempt fail because the web address now exists).
+    const filledRows = variants.filter((v) => v.label.trim() || v.size.trim() || v.finish.trim() || v.price !== "");
+    const cleanVariants = variants.filter((v) => v.label.trim() && v.price !== "" && Number.isFinite(Number(v.price)) && Number(v.price) >= 0);
+    if (type !== "original" && cleanVariants.length !== filledRows.length) {
+      setNotice("Each option needs a label and a valid price. Complete it, or remove the empty row, then save again.");
+      return;
+    }
     setBusy(true); setNotice("");
     try {
       const payload = {
@@ -144,9 +152,13 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
         id = data.id;
       }
       if (!id) throw new Error("Product could not be identified.");
-      if (type !== "original") {
-        const cleanVariants = variants.filter((v) => v.label.trim() && v.price !== "" && Number.isFinite(Number(v.price)) && Number(v.price) >= 0);
-        if (cleanVariants.length !== variants.filter((v) => v.label.trim() || v.size.trim() || v.finish.trim() || v.price !== "").length) throw new Error("Complete each print option with a label and valid price, or remove the empty row.");
+      if (type === "original") {
+        // An original has no options. Remove any left over from when it was another kind of product.
+        if (editing) {
+          const { error: removeOptionsError } = await supabase.from("product_variants").delete().eq("product_id", id);
+          if (removeOptionsError) throw removeOptionsError;
+        }
+      } else {
         const { error: clearVariantsError } = await supabase.from("product_variants").delete().eq("product_id", id);
         if (clearVariantsError) throw clearVariantsError;
         if (cleanVariants.length) {
@@ -290,7 +302,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
             </select>
           </label>}
         </div>
-        <label className={label}>Linked artwork<select className={field} value={artworkId} onChange={(e) => linkArtwork(e.target.value)}><option value="">No linked artwork</option>{artworks.map((a) => <option key={a.id} value={a.id}>{a.title}{a.year ? ` (${a.year})` : ""}</option>)}</select><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Selecting an artwork fills its title, description, medium and dimensions. Its existing photographs are also used on the product page unless you upload separate product images.</span></label>
+        <label className={label}>Linked artwork<select className={field} value={artworkId} onChange={(e) => linkArtwork(e.target.value)}><option value="">No linked artwork</option>{artworks.map((a) => <option key={a.id} value={a.id}>{a.title}{a.year ? ` (${a.year})` : ""}</option>)}</select><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Linking an artwork fills in any empty description, medium and dimensions (and the title on a new product). It never changes the title or web address of a product that already exists. Its photographs are also used on the product page unless you upload separate product images.</span></label>
         <label className={label}>Price<input className={field} type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" /></label>
         <label className={label}>Currency<select className={field} value={currency} onChange={(e) => setCurrency(e.target.value)}><option value="UGX">UGX — Ugandan Shilling</option><option value="USD">USD — US Dollar</option></select></label>
         {type === "limited_print" && <><label className={label}>Edition size<input className={field} type="number" min="1" value={editionSize} onChange={(e) => setEditionSize(e.target.value)} required /></label><label className={label}>Already sold<input className={field} type="number" min="0" value={editionSold} onChange={(e) => setEditionSold(e.target.value)} /></label></>}
@@ -321,8 +333,8 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
           <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="eyebrow">{type === "limited_print" || type === "open_print" ? "Print formats & pricing" : type === "wearable" ? "Sizes, colours & pricing" : "Product options & pricing"}</p><p className="mt-2 text-xs leading-6 text-[#89847c]">{type === "limited_print" || type === "open_print" ? "Add one option for each print size. Enter the image dimensions as the size and set its price. For the first release, leave Finish blank so collectors choose a size only. Add a paper or presentation option later only if you offer more than one." : "Add each selectable version as a separate option. Set its price and, if needed, its stock and availability. Leave the general product price blank if all pricing comes from these options."}</p></div><button type="button" onClick={() => setVariants((current) => [...current, { label: "", size: "", finish: "", price: "", currency, stock_quantity: "", is_available: true }])} className="border border-[#242320] px-4 py-3 text-[10px] uppercase tracking-wider">+ Add option</button></div>
           {variants.length ? <div className="mt-5 space-y-4">{variants.map((variant, index) => <div key={variant.id || index} className="grid gap-3 border border-[#dedad2] bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
             <label className={label}>Option label<input className={field} value={variant.label} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,label:e.target.value} : v))} placeholder={type === "wearable" ? "e.g. Black · Medium" : type === "merchandise" || type === "art_object" ? "e.g. Standard · Black" : "e.g. A3 · Unframed"} /></label>
-            <label className={label}>{type === "wearable" ? "Clothing size" : type === "merchandise" || type === "art_object" ? "Model / size" : type === "limited_print" || type === "open_print" ? "Print size" : "Size"}<input className={field} value={variant.size} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,size:e.target.value} : v))} placeholder={type === "limited_print" || type === "open_print" ? "e.g. 30 × 40 cm image" : "e.g. A3"} /></label>
-            <label className={label}>{type === "wearable" ? "Colour" : type === "merchandise" || type === "art_object" ? "Colour / finish" : type === "limited_print" || type === "open_print" ? "Paper / presentation (optional)" : "Finish / frame"}<input className={field} value={variant.finish} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,finish:e.target.value} : v))} placeholder={type === "limited_print" || type === "open_print" ? "Leave blank for fine-art paper only" : "e.g. Unframed"} /></label>
+            <label className={label}>{type === "wearable" ? "Clothing size" : type === "merchandise" || type === "art_object" ? "Model / size" : type === "limited_print" || type === "open_print" ? "Print size" : "Size"}<input className={field} value={variant.size} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,size:e.target.value} : v))} placeholder={type === "limited_print" || type === "open_print" ? "e.g. 30 × 40 cm image" : type === "wearable" ? "e.g. Medium" : type === "merchandise" || type === "art_object" ? "e.g. Standard" : "e.g. A3"} /></label>
+            <label className={label}>{type === "wearable" ? "Colour" : type === "merchandise" || type === "art_object" ? "Colour / finish" : type === "limited_print" || type === "open_print" ? "Paper / presentation (optional)" : "Finish / frame"}<input className={field} value={variant.finish} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,finish:e.target.value} : v))} placeholder={type === "limited_print" || type === "open_print" ? "Leave blank for fine-art paper only" : type === "wearable" ? "e.g. Black" : type === "merchandise" || type === "art_object" ? "e.g. White" : "e.g. Unframed"} /></label>
             <label className={label}>Price<input className={field} type="number" min="0" step="0.01" value={variant.price} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,price:e.target.value} : v))} placeholder="Set price" /></label>
             <label className={label}>Currency<select className={field} value={variant.currency} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,currency:e.target.value} : v))}><option value="UGX">UGX</option><option value="USD">USD</option></select></label>
             <label className={label}>Stock (optional)<input className={field} type="number" min="0" value={variant.stock_quantity} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,stock_quantity:e.target.value} : v))} placeholder="Not tracked" /></label>
