@@ -23,7 +23,8 @@ export async function verifyFlutterwaveTransaction(transactionId: string, expect
     p_currency: String(payment.currency),
   });
   if (error) throw new Error(error.message);
-  const order = data as { order_number: string; payment_status: string };
+  const order = data as { order_number: string; customer_name: string; customer_email: string; payment_status: string };
+  await sendOrderEmail(order.customer_email, "Payment received · " + order.order_number, orderEmailShell("<h2>Payment confirmed</h2><p>Thank you. We have received payment for order <strong>" + emailText(order.order_number) + "</strong>.</p><p>The studio will now proceed with fulfilment and keep you updated.</p>"));
   const notify = process.env.ORDER_NOTIFICATION_EMAIL;
   if (notify) await sendOrderEmail(notify, "Payment received · " + order.order_number, orderEmailShell("<h2>Payment verified</h2><p>Flutterwave confirmed payment for <strong>" + emailText(order.order_number) + "</strong>.</p><p>Open Studio → Orders to continue fulfilment.</p>"));
   return order;

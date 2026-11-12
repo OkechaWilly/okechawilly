@@ -21,13 +21,6 @@ begin
 end;
 $$;
 
-create or replace function public.save_flutterwave_checkout_url(p_tx_ref text, p_url text)
-returns boolean language plpgsql security definer set search_path = public
-as $$ begin
-  update public.orders set payment_checkout_url = p_url where payment_reference = p_tx_ref and payment_provider = 'flutterwave' and payment_status = 'pending';
-  return found;
-end; $$;
-
 create or replace function public.reset_flutterwave_payment(p_tx_ref text)
 returns boolean language plpgsql security definer set search_path = public
 as $$ begin
@@ -43,17 +36,15 @@ begin
   if coalesce(auth.role(), '') <> 'service_role' then raise exception 'NOT_AUTHORIZED'; end if;
   select * into v_order from public.orders where payment_reference = p_tx_ref and payment_provider = 'flutterwave' for update;
   if not found then raise exception 'PAYMENT_NOT_FOUND'; end if;
-  if v_order.payment_status = 'paid' then return jsonb_build_object('order_number',v_order.order_number,'payment_status','paid'); end if;
+  if v_order.payment_status = 'paid' then return jsonb_build_object('order_number',v_order.order_number,'customer_name',v_order.customer_name,'customer_email',v_order.customer_email,'payment_status','paid'); end if;
   if v_order.payment_status <> 'pending' or p_amount is distinct from v_order.total or upper(coalesce(p_currency,'')) <> upper(v_order.currency) or p_transaction_id is null then raise exception 'PAYMENT_DETAILS_MISMATCH'; end if;
   update public.orders set payment_status = 'paid', payment_transaction_id = p_transaction_id, payment_checkout_url = null, payment_checkout_expires_at = null where id = v_order.id;
-  return jsonb_build_object('order_number',v_order.order_number,'payment_status','paid');
+  return jsonb_build_object('order_number',v_order.order_number,'customer_name',v_order.customer_name,'customer_email',v_order.customer_email,'payment_status','paid');
 end;
 $$;
 
 revoke all on function public.prepare_flutterwave_payment(text,text) from public;
-revoke all on function public.save_flutterwave_checkout_url(text,text) from public;
 revoke all on function public.reset_flutterwave_payment(text) from public;
 revoke all on function public.complete_flutterwave_payment(text,text,numeric,text) from public;
 grant execute on function public.prepare_flutterwave_payment(text,text) to anon, authenticated;
-grant execute on function public.save_flutterwave_checkout_url(text,text) to anon, authenticated;
 grant execute on function public.reset_flutterwave_payment(text) to anon, authenticated;
