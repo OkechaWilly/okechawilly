@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function OrderQuoteResponse({ token, status }: { token: string; status: string }) {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [decision, setDecision] = useState(status);
@@ -17,6 +19,7 @@ export default function OrderQuoteResponse({ token, status }: { token: string; s
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "We could not record your response.");
       setDecision(result.decision);
+      router.refresh();
       setMessage(next === "accepted"
         ? "Thank you. Your approval has been sent to the studio. We will follow up with payment instructions; no payment has been taken."
         : "Your response has been sent to the studio. We will be in touch if needed.");
