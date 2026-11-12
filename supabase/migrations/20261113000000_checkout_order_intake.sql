@@ -121,9 +121,7 @@ begin
       v_unit_price * v_quantity,
       jsonb_strip_nulls(jsonb_build_object(
         'variant_id', v_variant_id,
-        'variant_label', v_variant_label,
-        'size', case when v_variant_id is not null then v_variant.size end,
-        'finish', case when v_variant_id is not null then v_variant.finish end
+        'variant_label', v_variant_label
       ))
     );
     v_subtotal := v_subtotal + (v_unit_price * v_quantity);
