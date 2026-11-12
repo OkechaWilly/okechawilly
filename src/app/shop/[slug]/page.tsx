@@ -114,7 +114,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
           <p className="eyebrow">{PRODUCT_TYPE_LABELS[product.product_type] || "Studio product"}</p>
           <h1 className="display mt-4 text-5xl md:text-6xl">{product.title}</h1>
           {availability(product) && <p className="mt-5 inline-flex border border-[#d9d4ca] px-4 py-3 text-[10px] uppercase tracking-[.15em] text-[#77736d]">{availability(product)?.label} · Enquiries welcome</p>}
-          <ProductVariantPicker productTitle={product.title} productType={product.product_type} variants={(product.product_variants || []).sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order)} fallbackPrice={product.price == null ? null : Number(product.price)} fallbackCurrency={product.currency || "UGX"} isSoldOut={!isCurrentlyAvailable(product)} />
+          <ProductVariantPicker productId={product.id} productSlug={product.slug} productImage={imageUrls[0]?.url || null} productTitle={product.title} productType={product.product_type} variants={(product.product_variants || []).sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order)} fallbackPrice={product.price == null ? null : Number(product.price)} fallbackCurrency={product.currency || "UGX"} isSoldOut={!isCurrentlyAvailable(product)} />
           {product.description && <p className="mt-6 whitespace-pre-line text-sm leading-7 text-[#77736d]">{product.description}</p>}
           {linkedArtwork?.is_published && linkedArtwork?.slug && <div className="mt-7 border-l border-[#c9b59e] pl-4"><p className="eyebrow">From the artwork archive</p><Link href={`/artwork/${linkedArtwork.slug}`} className="mt-2 inline-flex items-center gap-2 text-sm transition-colors hover:text-[#9c8062]">Explore the original artwork: {linkedArtwork.title} <span aria-hidden="true">↗</span></Link></div>}
           {(product.medium || product.materials || product.dimensions || product.framing) && <div className="mt-8 border-t border-[#e8e5de] pt-5"><p className="eyebrow mb-3">{product.product_type === "limited_print" || product.product_type === "open_print" ? "Print details" : "Product details"}</p><dl className="divide-y divide-[#e8e5de] text-sm">
@@ -131,7 +131,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
             {product.track_inventory && product.stock_quantity != null && <div className="flex justify-between py-2"><span className="text-[#77736d]">Availability</span><span>{product.stock_quantity > 0 ? "Available" : "Out of stock"}</span></div>}
             {Array.isArray(product.options) && product.options.length > 0 && <div className="flex justify-between gap-5 py-2"><span className="text-[#77736d]">Options</span><span className="text-right">{product.options.join(", ")}</span></div>}
           </div>
-          <div className="border-t border-[#e8e5de] pt-5"><p className="eyebrow">Purchasing this work</p><p className="mt-3 text-xs leading-6 text-[#77736d]">To purchase this work or confirm delivery options, contact the studio. I will personally confirm availability, delivery and the next steps. Online checkout is not yet available.</p></div>
+          <div className="border-t border-[#e8e5de] pt-5"><p className="eyebrow">Delivery & payment</p><p className="mt-3 text-xs leading-6 text-[#77736d]">Delivery is calculated individually. The studio will confirm the delivery fee and full total with you before payment is requested.</p></div>
         </div>
       </div>
     </main>
