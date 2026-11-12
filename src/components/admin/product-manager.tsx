@@ -90,6 +90,18 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
   }
   const publicUrl = (path: string) => supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
   const selectedCategory = productCategories.find((category) => category.types.includes(type)) || productCategories[0];
+  const isPrint = type === "limited_print" || type === "open_print";
+
+  function setProductType(nextType: string) {
+    const switchingToPrint = nextType === "limited_print" || nextType === "open_print";
+    if (switchingToPrint) {
+      // Avoid carrying an original painting's medium and dimensions into print specifications.
+      if (medium === lastCopied.current.medium) setMedium("");
+      if (dimensions === lastCopied.current.dimensions) setDimensions("");
+      lastCopied.current = { ...lastCopied.current, medium: "", dimensions: "" };
+    }
+    setType(nextType);
+  }
 
   function linkArtwork(id: string) {
     setArtworkId(id);
@@ -102,7 +114,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
       isExistingProduct: Boolean(editing),
       current: { title, slug, description, medium, dimensions },
       lastCopied: lastCopied.current,
-      artwork,
+      artwork: type === "limited_print" || type === "open_print" ? { ...artwork, medium: null, width_cm: null, height_cm: null, depth_cm: null } : artwork,
     });
     lastCopied.current = plan.copied;
     if (plan.updates.title !== undefined) setTitle(plan.updates.title);
@@ -289,7 +301,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
           <div className="mt-2 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {productCategories.map((category) => {
               const active = selectedCategory.slug === category.slug;
-              return <button key={category.slug} type="button" onClick={() => setType(category.defaultType)} aria-pressed={active} className={`border p-4 text-left transition-colors ${active ? "border-[#9c8062] bg-[#eee9df]" : "border-[#d9d4ca] bg-white hover:border-[#9c8062]"}`}>
+              return <button key={category.slug} type="button" onClick={() => setProductType(category.defaultType)} aria-pressed={active} className={`border p-4 text-left transition-colors ${active ? "border-[#9c8062] bg-[#eee9df]" : "border-[#d9d4ca] bg-white hover:border-[#9c8062]"}`}>
                 <span className="block text-xs font-medium uppercase tracking-[.12em] text-[#242320]">{category.title}</span>
                 <span className="mt-2 block text-[11px] leading-5 normal-case tracking-normal text-[#77736d]">{category.description}</span>
                 {active && <span className="mt-3 block text-[9px] uppercase tracking-[.14em] text-[#9c8062]">Selected category</span>}
@@ -297,24 +309,24 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
             })}
           </div>
           {selectedCategory.types.length > 1 && <label className={label + " mt-5 block"}>{selectedCategory.slug === "prints" ? "Print edition" : "Product format"}
-            <select className={field} value={type} onChange={(e) => setType(e.target.value)}>
+            <select className={field} value={type} onChange={(e) => setProductType(e.target.value)}>
               {types.filter((item) => selectedCategory.types.includes(item.value)).map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
           </label>}
         </div>
         <label className={label}>Linked artwork<select className={field} value={artworkId} onChange={(e) => linkArtwork(e.target.value)}><option value="">No linked artwork</option>{artworks.map((a) => <option key={a.id} value={a.id}>{a.title}{a.year ? ` (${a.year})` : ""}</option>)}</select><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Linking an artwork fills in any empty description, medium and dimensions (and the title on a new product). It never changes the title or web address of a product that already exists. Its photographs are also used on the product page unless you upload separate product images.</span></label>
-        <label className={label}>Price<input className={field} type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0.00" /></label>
+        <label className={label}>{isPrint ? "General price (optional)" : "Price"}<input className={field} type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder={isPrint ? "Leave blank if each size has its own price" : "0.00"} />{isPrint && <span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">For prints, enter prices under each size below. Leave this blank when sizes have different prices.</span>}</label>
         <label className={label}>Currency<select className={field} value={currency} onChange={(e) => setCurrency(e.target.value)}><option value="UGX">UGX — Ugandan Shilling</option><option value="USD">USD — US Dollar</option></select></label>
-        {type === "limited_print" && <><label className={label}>Edition size<input className={field} type="number" min="1" value={editionSize} onChange={(e) => setEditionSize(e.target.value)} required /></label><label className={label}>Already sold<input className={field} type="number" min="0" value={editionSold} onChange={(e) => setEditionSold(e.target.value)} /></label></>}
+        {type === "limited_print" && <><label className={label}>Total edition size (all print sizes combined)<input className={field} type="number" min="1" value={editionSize} onChange={(e) => setEditionSize(e.target.value)} required /><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">One shared edition across the available sizes. Set the total number of prints in this edition.</span></label><label className={label}>Copies sold (all sizes combined)<input className={field} type="number" min="0" value={editionSold} onChange={(e) => setEditionSold(e.target.value)} /><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Update this as copies are sold, regardless of size.</span></label></>}
         <label className={label}>SKU / reference<input className={field} value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Optional product code" /></label>
         <label className={label}>Stock quantity<input className={field} type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="Leave blank if not tracked" /></label>
         <label className={label + " md:col-span-2"}>Description<textarea className={field + " min-h-28"} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the product for collectors." /></label>
-        <div className="md:col-span-2 mt-2 border-t border-[#dedad2] pt-5"><p className="eyebrow">Artwork & product details</p><p className="mt-2 text-xs text-[#89847c]">Add the practical details collectors need. Leave any field blank if it does not apply.</p></div>
-        <label className={label}>Medium<input className={field} value={medium} onChange={(e) => setMedium(e.target.value)} placeholder="e.g. Oil on canvas" /></label>
-        <label className={label}>Materials<input className={field} value={materials} onChange={(e) => setMaterials(e.target.value)} placeholder="e.g. Cotton canvas, archival ink" /></label>
-        <label className={label}>Dimensions<input className={field} value={dimensions} onChange={(e) => setDimensions(e.target.value)} placeholder="e.g. 60 × 80 cm" /></label>
-        <label className={label}>Framing<input className={field} value={framing} onChange={(e) => setFraming(e.target.value)} placeholder="e.g. Unframed / Framed in natural wood" /></label>
-        <label className={label + " md:col-span-2"}>Shipping & delivery information<textarea className={field + " min-h-20"} value={shippingInformation} onChange={(e) => setShippingInformation(e.target.value)} placeholder="e.g. Carefully packaged. International delivery arranged and quoted separately." /></label>
+        <div className="md:col-span-2 mt-2 border-t border-[#dedad2] pt-5"><p className="eyebrow">{isPrint ? "Print specifications" : "Artwork & product details"}</p><p className="mt-2 text-xs text-[#89847c]">{isPrint ? "Enter only confirmed details about the print itself. Do not copy the original artwork’s medium or dimensions here." : "Add the practical details collectors need. Leave any field blank if it does not apply."}</p></div>
+        <label className={label}>{isPrint ? "Printing process (when confirmed)" : "Medium"}<input className={field} value={medium} onChange={(e) => setMedium(e.target.value)} placeholder={isPrint ? "Leave blank until the print process is confirmed" : "e.g. Oil on canvas"} /></label>
+        <label className={label}>{isPrint ? "Paper type & materials" : "Materials"}<input className={field} value={materials} onChange={(e) => setMaterials(e.target.value)} placeholder={isPrint ? "Enter the confirmed paper type and weight" : "e.g. Cotton canvas, archival ink"} /></label>
+        <label className={label}>{isPrint ? "Paper size & image area" : "Dimensions"}<input className={field} value={dimensions} onChange={(e) => setDimensions(e.target.value)} placeholder={isPrint ? "Paper dimensions; image area if different" : "e.g. 60 × 80 cm"} /></label>
+        <label className={label}>{isPrint ? "Presentation / border" : "Framing"}<input className={field} value={framing} onChange={(e) => setFraming(e.target.value)} placeholder={isPrint ? "e.g. Unframed; white border details if applicable" : "e.g. Unframed / Framed in natural wood"} /></label>
+        <label className={label + " md:col-span-2"}>{isPrint ? "Print packaging & delivery" : "Shipping & delivery information"}<textarea className={field + " min-h-20"} value={shippingInformation} onChange={(e) => setShippingInformation(e.target.value)} placeholder={isPrint ? "Add confirmed packaging, dispatch and delivery information when available." : "e.g. Carefully packaged. International delivery arranged and quoted separately."} /></label>
         <div className="md:col-span-2">
           <label className={label}>Product images<input className={field} type="file" accept="image/*" multiple onChange={(e) => setImageFiles(Array.from(e.target.files || []))} /><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Select multiple images. The first image is used as the main image unless you choose another below.</span></label>
           {editing?.product_images?.length ? <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{[...editing.product_images].sort((a,b)=>a.sort_order-b.sort_order).map((img,index,arr)=><div key={img.id} className="border border-[#dedad2] bg-white p-2">
@@ -330,7 +342,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
           {imageFiles.length > 0 && <p className="mt-3 text-xs text-[#625e57]">{imageFiles.length} new image(s) selected — they will upload when you save.</p>}
         </div>
         {type !== "original" ? <div className="md:col-span-2 border-t border-[#dedad2] pt-5">
-          <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="eyebrow">{type === "limited_print" || type === "open_print" ? "Print formats & pricing" : type === "wearable" ? "Sizes, colours & pricing" : "Product options & pricing"}</p><p className="mt-2 text-xs leading-6 text-[#89847c]">{type === "limited_print" || type === "open_print" ? "Add one option for each print size. Enter the image dimensions as the size and set its price. For the first release, leave Finish blank so collectors choose a size only. Add a paper or presentation option later only if you offer more than one." : "Add each selectable version as a separate option. Set its price and, if needed, its stock and availability. Leave the general product price blank if all pricing comes from these options."}</p></div><button type="button" onClick={() => setVariants((current) => [...current, { label: "", size: "", finish: "", price: "", currency, stock_quantity: "", is_available: true }])} className="border border-[#242320] px-4 py-3 text-[10px] uppercase tracking-wider">+ Add option</button></div>
+          <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="eyebrow">{type === "limited_print" || type === "open_print" ? "Print formats & pricing" : type === "wearable" ? "Sizes, colours & pricing" : "Product options & pricing"}</p><p className="mt-2 text-xs leading-6 text-[#89847c]">{isPrint ? "Add one option for each size you can actually produce. Put the paper dimensions in Print size and set that size’s price. Leave Paper / presentation blank for the initial fine-art paper range. The limited-edition total is shared across all sizes." : "Add each selectable version as a separate option. Set its price and, if needed, its stock and availability. Leave the general product price blank if all pricing comes from these options."}</p></div><button type="button" onClick={() => setVariants((current) => [...current, { label: "", size: "", finish: "", price: "", currency, stock_quantity: "", is_available: true }])} className="border border-[#242320] px-4 py-3 text-[10px] uppercase tracking-wider">+ Add option</button></div>
           {variants.length ? <div className="mt-5 space-y-4">{variants.map((variant, index) => <div key={variant.id || index} className="grid gap-3 border border-[#dedad2] bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
             <label className={label}>Option label<input className={field} value={variant.label} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,label:e.target.value} : v))} placeholder={type === "wearable" ? "e.g. Black · Medium" : type === "merchandise" || type === "art_object" ? "e.g. Standard · Black" : "e.g. A3 · Unframed"} /></label>
             <label className={label}>{type === "wearable" ? "Clothing size" : type === "merchandise" || type === "art_object" ? "Model / size" : type === "limited_print" || type === "open_print" ? "Print size" : "Size"}<input className={field} value={variant.size} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,size:e.target.value} : v))} placeholder={type === "limited_print" || type === "open_print" ? "e.g. 30 × 40 cm image" : type === "wearable" ? "e.g. Medium" : type === "merchandise" || type === "art_object" ? "e.g. Standard" : "e.g. A3"} /></label>
