@@ -9,7 +9,8 @@ type Order = {
   currency: string; subtotal: number; shipping_total: number; total: number;
   shipping_address: Record<string, unknown> | null; status: string; payment_status: string;
   payment_provider: string | null; payment_reference: string | null; customer_note: string | null;
-  shipping_quote_status?: string; shipping_quote_total?: number | null; shipping_quote_currency?: string | null; shipping_quote_note?: string | null; shipping_quote_sent_at?: string | null;\n  created_at: string; order_items: Item[];
+  shipping_quote_status?: string; shipping_quote_total?: number | null; shipping_quote_currency?: string | null; shipping_quote_note?: string | null; shipping_quote_sent_at?: string | null;
+  created_at: string; order_items: Item[];
 };
 const statuses = ["pending", "confirmed", "processing", "shipped", "completed", "cancelled", "refunded"];
 const label = (value: string) => value.replaceAll("_", " ");
