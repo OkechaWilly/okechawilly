@@ -30,7 +30,6 @@ export default function OrdersManager({ initialOrders }: { initialOrders: Order[
   const [quoteAmount, setQuoteAmount] = useState("");
   const [quoteNote, setQuoteNote] = useState("");
   const [quoteLink, setQuoteLink] = useState("");
-  const [quoteLink, setQuoteLink] = useState("");
 
   useEffect(() => {
     setQuoteAmount(selected?.shipping_quote_total == null ? "" : String(selected.shipping_quote_total));
