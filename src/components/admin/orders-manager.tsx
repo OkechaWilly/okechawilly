@@ -77,7 +77,7 @@ export default function OrdersManager({ initialOrders }: { initialOrders: Order[
       <select className={field} value={filter} onChange={(e) => setFilter(e.target.value)}><option value="all">All statuses</option>{statuses.map((s) => <option key={s} value={s}>{label(s)}</option>)}</select>
     </div>
     {visible.length ? <div className="divide-y divide-[#e2ded6]">
-      {visible.map((order) => <button key={order.id} onClick={() => setSelected(order)} className="grid w-full gap-3 py-5 text-left transition-colors hover:bg-[#f7f6f2] sm:grid-cols-[1fr_1fr_auto] sm:items-center">
+      {visible.map((order) => <button key={order.id} onClick={() => { setQuoteLink(""); setSelected(order); }} className="grid w-full gap-3 py-5 text-left transition-colors hover:bg-[#f7f6f2] sm:grid-cols-[1fr_1fr_auto] sm:items-center">
         <div><p className="text-[10px] uppercase tracking-[.14em] text-[#9c8062]">{order.order_number}</p><p className="display mt-1 text-xl">{order.customer_name}</p><p className="mt-1 text-xs text-[#89847c]">{order.customer_email}</p></div>
         <div><p className="text-xs">{order.order_items?.length || 0} line item(s) · {new Date(order.created_at).toLocaleDateString("en-UG", { day: "numeric", month: "short", year: "numeric" })}</p><p className="mt-1 text-xs text-[#89847c]">Payment: {label(order.payment_status)} · Delivery: {label(order.shipping_quote_status || "not_requested")}</p></div>
         <div className="flex items-center justify-between gap-4 sm:justify-end"><span className="text-sm">{money(order.total, order.currency)}</span><span className="border border-[#d9d4ca] px-3 py-1 text-[9px] uppercase tracking-[.12em]">{label(order.status)}</span></div>
