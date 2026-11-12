@@ -29,6 +29,7 @@ export default function OrdersManager({ initialOrders }: { initialOrders: Order[
   const [notice, setNotice] = useState("");
   const [quoteAmount, setQuoteAmount] = useState("");
   const [quoteNote, setQuoteNote] = useState("");
+  const [quoteLink, setQuoteLink] = useState("");
 
   useEffect(() => {
     setQuoteAmount(selected?.shipping_quote_total == null ? "" : String(selected.shipping_quote_total));
@@ -55,17 +56,39 @@ export default function OrdersManager({ initialOrders }: { initialOrders: Order[
     const amount = Number(quoteAmount);
     if (!Number.isFinite(amount) || amount < 0 || quoteAmount.trim() === "") { setNotice("Enter a valid delivery amount, including 0 if delivery is complimentary."); return; }
     setBusy(order.id); setNotice("");
-    const patch = { shipping_total: amount, total: Number(order.subtotal) + amount, shipping_quote_total: amount, shipping_quote_currency: order.currency, shipping_quote_note: quoteNote.trim() || null, shipping_quote_status: "quoted", shipping_quote_sent_at: new Date().toISOString() };
-    const { error } = await supabase.from("orders").update(patch).eq("id", order.id);
-    if (error) setNotice(error.message);
-    else { const updated = { ...order, ...patch }; setOrders((current) => current.map((item) => item.id === order.id ? updated : item)); setSelected(updated); setNotice("Delivery quote saved. Send the final total and quote note to the customer; payment is not enabled yet."); }
-    setBusy("");
+    try {
+      const response = await fetch(`/api/admin/orders/${order.id}/quote`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, note: quoteNote.trim() }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not prepare the delivery quote.");
+      const quote = result.quote;
+      const updated = {
+        ...order,
+        shipping_total: Number(quote.shipping_total),
+        total: Number(quote.total),
+        shipping_quote_total: Number(quote.shipping_total),
+        shipping_quote_currency: quote.currency,
+        shipping_quote_note: quote.shipping_quote_note,
+        shipping_quote_status: "quoted",
+        shipping_quote_sent_at: new Date().toISOString(),
+      };
+      setOrders((current) => current.map((item) => item.id === order.id ? updated : item));
+      setSelected(updated);
+      setQuoteLink(result.quoteUrl);
+      setNotice(result.emailSent
+        ? "Delivery quote saved and emailed to the customer."
+        : "Delivery quote saved. Email is not configured yet; copy the secure link below and share it manually.");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Could not prepare the delivery quote.");
+    } finally { setBusy(""); }
   }
 
   return <section>
     <p className="eyebrow">Studio workspace</p>
     <h1 className="display mt-3 text-5xl md:text-6xl">Orders.</h1>
-    <p className="mt-4 max-w-2xl text-sm leading-7 text-[#77736d]">Review customer orders and follow each one through confirmation, preparation and delivery. Payment records are shown separately from fulfilment.</p>
+    <p className="mt-4 max-w-2xl text-sm leading-7 text-[#77736d]">Review customer orders and follow each one through confirmation, preparation and delivery. Payment records are shown separately from fulfilment. Delivery quotes can now be securely sent for customer approval.</p>
     {notice && <p className="mt-6 border border-[#d9d4ca] bg-white px-4 py-3 text-sm text-[#625e57]">{notice}</p>}
     <div className="mt-9 grid gap-3 sm:grid-cols-3">
       <div className="border border-[#dedad2] bg-white p-5"><p className="eyebrow">All orders</p><p className="display mt-2 text-3xl">{orders.length}</p></div>
@@ -89,7 +112,7 @@ export default function OrdersManager({ initialOrders }: { initialOrders: Order[
         <div className="mt-8 border-y border-[#dedad2] py-5"><p className="eyebrow">Customer</p><p className="mt-3 text-sm">{selected.customer_name}</p><p className="mt-1 text-sm text-[#77736d]">{selected.customer_email}</p>{selected.customer_phone && <p className="mt-1 text-sm text-[#77736d]">{selected.customer_phone}</p>}</div>
         <div className="py-6"><p className="eyebrow">Items</p>{(selected.order_items || []).map((item) => <div key={item.id} className="flex justify-between gap-4 border-b border-[#e6e2da] py-4 text-sm"><div><p>{item.product_title}</p><p className="mt-1 text-xs text-[#89847c]">Qty {item.quantity}{item.sku ? " · " + item.sku : ""}</p></div><p className="whitespace-nowrap">{money(item.line_total, selected.currency)}</p></div>)}</div>
         <div className="space-y-2 border-b border-[#dedad2] pb-6 text-sm"><div className="flex justify-between"><span className="text-[#77736d]">Subtotal</span><span>{money(selected.subtotal, selected.currency)}</span></div><div className="flex justify-between"><span className="text-[#77736d]">Shipping</span><span>{money(selected.shipping_total, selected.currency)}</span></div><div className="flex justify-between pt-2 font-medium"><span>Total</span><span>{money(selected.total, selected.currency)}</span></div></div>
-        <div className="border-t border-[#dedad2] py-6"><p className="eyebrow">Delivery quote</p><p className="mt-2 text-xs leading-5 text-[#77736d]">Enter the delivery fee after checking the destination. Saving sets the complete order total, but does not request or record payment.</p><label className="mt-4 block text-xs">Delivery fee ({selected.currency})<input type="number" min="0" step="1" value={quoteAmount} onChange={(e) => setQuoteAmount(e.target.value)} className={field + " mt-2 w-full"} /></label><label className="mt-4 block text-xs">Message / delivery details<textarea rows={3} maxLength={1000} value={quoteNote} onChange={(e) => setQuoteNote(e.target.value)} className={field + " mt-2 w-full"} /></label><div className="mt-4 flex justify-between text-sm"><span className="text-[#77736d]">Final total</span><strong>{money(Number(selected.subtotal) + (Number(quoteAmount) || 0), selected.currency)}</strong></div><button disabled={busy === selected.id} onClick={() => saveShippingQuote(selected)} className="mt-4 w-full bg-[#242320] px-4 py-3 text-[10px] uppercase tracking-[.14em] text-white disabled:opacity-50">{busy === selected.id ? "Saving…" : "Save delivery quote"}</button>{selected.shipping_quote_status === "quoted" && <p className="mt-3 text-[10px] leading-5 text-[#77736d]">Quote saved {selected.shipping_quote_sent_at ? "on " + new Date(selected.shipping_quote_sent_at).toLocaleString("en-UG") : ""}. Customer approval and payment integration are the next steps.</p>}</div>
+        <div className="border-t border-[#dedad2] py-6"><p className="eyebrow">Delivery quote</p><p className="mt-2 text-xs leading-5 text-[#77736d]">Enter the delivery fee after checking the destination. Saving sets the complete order total, but does not request or record payment.</p><label className="mt-4 block text-xs">Delivery fee ({selected.currency})<input type="number" min="0" step="1" value={quoteAmount} onChange={(e) => setQuoteAmount(e.target.value)} className={field + " mt-2 w-full"} /></label><label className="mt-4 block text-xs">Message / delivery details<textarea rows={3} maxLength={1000} value={quoteNote} onChange={(e) => setQuoteNote(e.target.value)} className={field + " mt-2 w-full"} /></label><div className="mt-4 flex justify-between text-sm"><span className="text-[#77736d]">Final total</span><strong>{money(Number(selected.subtotal) + (Number(quoteAmount) || 0), selected.currency)}</strong></div><button disabled={busy === selected.id} onClick={() => saveShippingQuote(selected)} className="mt-4 w-full bg-[#242320] px-4 py-3 text-[10px] uppercase tracking-[.14em] text-white disabled:opacity-50">{busy === selected.id ? "Saving…" : "Save delivery quote"}</button>{quoteLink && <div className="mt-4 border border-[#dedad2] bg-white p-3"><p className="text-[10px] uppercase tracking-[.12em] text-[#77736d]">Secure customer quote link</p><p className="mt-2 break-all text-xs">{quoteLink}</p><button onClick={() => { void navigator.clipboard.writeText(quoteLink); setNotice("Quote link copied."); }} className="mt-3 text-[10px] uppercase tracking-[.12em] underline underline-offset-4">Copy quote link</button></div>}{selected.shipping_quote_status === "quoted" && <p className="mt-3 text-[10px] leading-5 text-[#77736d]">Quote saved {selected.shipping_quote_sent_at ? "on " + new Date(selected.shipping_quote_sent_at).toLocaleString("en-UG") : ""}. Customer approval is pending.</p>}</div>
         <div className="py-6"><p className="eyebrow">Fulfilment status</p><select disabled={busy === selected.id} className={field + " mt-3 w-full"} value={selected.status} onChange={(e) => updateStatus(selected, e.target.value)}>{statuses.map((s) => <option key={s} value={s}>{label(s)}</option>)}</select><p className="mt-2 text-[10px] leading-5 text-[#89847c]">Changing this updates fulfilment only. It does not mark a payment as received.</p></div>
         <div className="border-t border-[#dedad2] py-6"><p className="eyebrow">Payment record</p><p className="mt-3 text-sm">Status: <span className="capitalize">{label(selected.payment_status)}</span></p>{selected.payment_provider && <p className="mt-1 text-xs text-[#77736d]">Provider: {selected.payment_provider}</p>}{selected.payment_reference && <p className="mt-1 text-xs text-[#77736d]">Reference: {selected.payment_reference}</p>}</div>
         {selected.customer_note && <div className="border-t border-[#dedad2] py-6"><p className="eyebrow">Customer note</p><p className="mt-3 whitespace-pre-line text-sm leading-6">{selected.customer_note}</p></div>}
