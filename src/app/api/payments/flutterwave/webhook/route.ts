@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
-import { verifyFlutterwaveTransaction } from "../verify/route";
+import { verifyFlutterwaveTransaction } from "@/lib/flutterwave";
 
 export const runtime = "nodejs";
 
