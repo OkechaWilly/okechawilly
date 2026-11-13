@@ -153,7 +153,7 @@ $$;
 
 create or replace function public.reset_flutterwave_payment(p_tx_ref text)
 returns boolean language plpgsql security definer set search_path=public,pg_temp
-as $
+as $$
 declare v_order_id uuid;
 begin
   select id into v_order_id from public.orders where payment_reference=p_tx_ref and payment_status='pending' for update;
@@ -162,7 +162,7 @@ begin
   update public.orders set payment_status='unpaid',payment_provider=null,payment_reference=null,payment_checkout_url=null,payment_checkout_expires_at=null where id=v_order_id and payment_status='pending';
   return found;
 end;
-$;
+$$;
 
 create or replace function public.complete_flutterwave_payment(p_tx_ref text,p_transaction_id text,p_amount numeric,p_currency text)
 returns jsonb language plpgsql security definer set search_path=public,extensions,pg_temp
