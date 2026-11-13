@@ -22,7 +22,7 @@ export default function ProductVariantPicker({ productId, productSlug, productIm
   const selected = available.find((v) => (!sizeOptions.length || v.size === selectedSize) && (!finishOptions.length || v.finish === selectedFinish)) || available[0] || null;
   const hasSeparateChoices = sizeOptions.length > 0 || finishOptions.length > 0;
   const selectedPrice = selected ? (currency === "UGX" ? selected.price_ugx ?? (selected.currency === "UGX" ? selected.price : null) : selected.price_usd ?? (selected.currency === "USD" ? selected.price : null)) : (currency === "UGX" ? fallbackPriceUGX ?? (fallbackCurrency === "UGX" ? fallbackPrice : null) : fallbackPriceUSD ?? (fallbackCurrency === "USD" ? fallbackPrice : null));
-  const price = isSoldOut ? "Currently unavailable" : selected && selectedPrice != null ? formatPrice(Number(selectedPrice), currency) : selected || variants.length === 0 ? (selectedPrice == null ? `Not yet priced in ${currency}` : formatPrice(Number(selectedPrice), currency)) : "Currently unavailable";
+  const price = isSoldOut ? "Currently unavailable" : productType === "original" ? "Price on request" : selected && selectedPrice != null ? formatPrice(Number(selectedPrice), currency) : selected || variants.length === 0 ? (selectedPrice == null ? `Not yet priced in ${currency}` : formatPrice(Number(selectedPrice), currency)) : "Currently unavailable";
   const subject = selected ? `Enquiry about ${productTitle} — ${selected.label}` : `Enquiry about ${productTitle}`;
   const canAdd = productType !== "original" && !isSoldOut && selectedPrice !== null && selectedPrice !== undefined && (selected !== null || variants.length === 0);
   const chosenPrice = selectedPrice;

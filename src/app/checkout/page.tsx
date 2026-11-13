@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart-provider";
 
 const inputClass = "mt-2 w-full border border-[#d9d4ca] bg-white px-4 py-3 text-sm outline-none focus:border-[#9c8062]";
+function money(value: number, currency: string) { try { return new Intl.NumberFormat("en-UG", { style: "currency", currency, maximumFractionDigits: 0 }).format(value); } catch { return currency + " " + value.toLocaleString("en-UG"); } }
 export default function CheckoutPage() {
   const { items, clearCart, currency } = useCart();
   const router = useRouter();
@@ -58,7 +59,7 @@ export default function CheckoutPage() {
         <button disabled={busy} className="bg-[#242320] px-8 py-4 text-[10px] uppercase tracking-[.15em] text-white transition-colors hover:bg-[#9c8062] disabled:opacity-50">{busy ? "Submitting order…" : "Submit order request ↗"}</button>
       </div>
       <aside className="h-fit border border-[#dedad2] bg-[#f7f6f2] p-6">
-        <p className="eyebrow">Your order · {currency}</p>{items.map((item)=><div key={item.key} className="flex justify-between gap-4 border-b border-[#dedad2] py-4 text-sm"><div><p>{item.title}</p><p className="mt-1 text-xs text-[#77736d]">Qty {item.quantity}{item.variantLabel ? " · "+item.variantLabel : ""}</p></div><span className="whitespace-nowrap">{(item.unitPrice*item.quantity).toLocaleString("en-UG")} {item.currency}</span></div>)}
+        <p className="eyebrow">Your order · {currency}</p>{items.map((item)=><div key={item.key} className="flex justify-between gap-4 border-b border-[#dedad2] py-4 text-sm"><div><p>{item.title}</p><p className="mt-1 text-xs text-[#77736d]">Qty {item.quantity}{item.variantLabel ? " · "+item.variantLabel : ""}</p></div><span className="whitespace-nowrap">{money(item.unitPrice*item.quantity, currency)}</span></div>)}
         <p className="mt-5 text-xs leading-6 text-[#77736d]">No payment is collected at this stage. Your final total will include delivery only after the studio confirms the quote with you.</p>
       </aside>
     </form>
