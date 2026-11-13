@@ -11,8 +11,8 @@ export function CartProvider({children}:{children:ReactNode}) {
   let savedItems:CartItem[]=[];
   try { const saved=window.localStorage.getItem(STORAGE_KEY); if(saved){const parsed=JSON.parse(saved);if(Array.isArray(parsed)) savedItems=parsed.filter((i)=>i&&typeof i.productId==="string"&&typeof i.unitPrice==="number"&&(i.currency==="UGX"||i.currency==="USD")&&Number.isInteger(i.quantity));} setItems(savedItems); } catch {window.localStorage.removeItem(STORAGE_KEY);}
   const preferred=window.localStorage.getItem(CURRENCY_KEY);
-  if(preferred==="UGX"||preferred==="USD"){setCurrencyState(preferred);setCurrencyReady(true);}
-  else if(savedItems.length){setCurrencyState(savedItems[0].currency);setCurrencyReady(true);}
+  if(savedItems.length){const cartCurrency=savedItems[0].currency;setItems(savedItems.filter((item)=>item.currency===cartCurrency));setCurrencyState(cartCurrency);window.localStorage.setItem(CURRENCY_KEY,cartCurrency);document.cookie="okecha-willy-currency="+cartCurrency+"; path=/; max-age=31536000; samesite=lax";setCurrencyReady(true);}
+  else if(preferred==="UGX"||preferred==="USD"){setCurrencyState(preferred);document.cookie="okecha-willy-currency="+preferred+"; path=/; max-age=31536000; samesite=lax";setCurrencyReady(true);}
   else {fetch("/api/shop/currency",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(v=>{const next=v.currency==="USD"?"USD":"UGX";setCurrencyState(next);document.cookie="okecha-willy-currency="+next+"; path=/; max-age=31536000; samesite=lax";}).catch(()=>setCurrencyError("We couldn't detect your region. Uganda pricing is selected by default.")).finally(()=>setCurrencyReady(true));}
   setReady(true);
  },[]);
