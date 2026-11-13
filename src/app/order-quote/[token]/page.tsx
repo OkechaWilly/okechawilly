@@ -25,7 +25,7 @@ export default async function OrderQuotePage({ params }: { params: Promise<{ tok
   return <main className="container min-h-[65vh] py-14 md:py-20">
     <p className="eyebrow">Okecha Willy · Order {quote.order_number}</p>
     <h1 className="display mt-3 max-w-3xl text-5xl md:text-6xl">Your delivery quote.</h1>
-    <p className="mt-5 max-w-2xl text-sm leading-7 text-[#77736d]">Hello {quote.customer_name}, here is the complete amount for your order. Please review the delivery details and approve or decline below. No payment is collected on this page.</p>
+    <p className="mt-5 max-w-2xl text-sm leading-7 text-[#77736d]">Hello {quote.customer_name}, here is the complete amount for your order. Please review the delivery details and approve or decline below. If you approve, secure online payment will be available here when enabled.</p>
     <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_340px]">
       <section>
         <h2 className="display text-2xl">Order items</h2>
@@ -43,7 +43,7 @@ export default async function OrderQuotePage({ params }: { params: Promise<{ tok
         <div className="mt-3 flex justify-between gap-4 text-sm"><span>Delivery</span><span>{money(quote.shipping_total, quote.currency)}</span></div>
         <div className="mt-5 flex justify-between gap-4 border-t border-[#dedad2] pt-5 text-base font-medium"><span>Total</span><span>{money(quote.total, quote.currency)}</span></div>
         {quote.shipping_quote_expires_at && <p className="mt-5 text-xs leading-6 text-[#77736d]">Please respond by {new Date(quote.shipping_quote_expires_at).toLocaleDateString("en-UG", { day: "numeric", month: "long", year: "numeric" })}.</p>}
-        <p className="mt-4 text-xs leading-6 text-[#77736d]">Payment instructions will be provided by the studio after you approve the quote.</p>
+        <p className="mt-4 text-xs leading-6 text-[#77736d]">After approval, you can complete payment securely through Flutterwave when online payments are enabled. Your order is not paid until payment is verified.</p>
       </aside>
     </div>
     <Link href="/shop" className="mt-12 inline-block text-xs underline underline-offset-4">Return to the shop ↗</Link>
