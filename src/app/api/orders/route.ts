@@ -21,6 +21,7 @@ export async function POST(request: Request) {
       p_customer_phone: customer.phone.trim(),
       p_shipping_address: address,
       p_customer_note: typeof body.note === "string" ? body.note.slice(0, 1000) : null,
+      p_currency: body.currency === "USD" ? "USD" : "UGX",
       p_items: items,
     });
     if (error) {

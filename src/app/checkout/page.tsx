@@ -7,7 +7,7 @@ import { useCart } from "@/components/cart-provider";
 
 const inputClass = "mt-2 w-full border border-[#d9d4ca] bg-white px-4 py-3 text-sm outline-none focus:border-[#9c8062]";
 export default function CheckoutPage() {
-  const { items, clearCart } = useCart();
+  const { items, clearCart, currency } = useCart();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -16,12 +16,14 @@ export default function CheckoutPage() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!items.length || busy) return;
+    if (items.some((item) => item.currency !== currency)) { setError("Your bag contains mixed currencies. Please return to the bag and resolve this before checkout."); return; }
     setBusy(true); setError("");
     try {
       const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         customer: { name: form.name, email: form.email, phone: form.phone },
         shippingAddress: { country: form.country, address: form.address, city: form.city, postalCode: form.postalCode },
         note: form.note,
+        currency,
         items: items.map((item) => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity })),
       }) });
       const result = await response.json();
@@ -55,7 +57,7 @@ export default function CheckoutPage() {
         <button disabled={busy} className="bg-[#242320] px-8 py-4 text-[10px] uppercase tracking-[.15em] text-white transition-colors hover:bg-[#9c8062] disabled:opacity-50">{busy ? "Submitting order…" : "Submit order request ↗"}</button>
       </div>
       <aside className="h-fit border border-[#dedad2] bg-[#f7f6f2] p-6">
-        <p className="eyebrow">Your order</p>{items.map((item)=><div key={item.key} className="flex justify-between gap-4 border-b border-[#dedad2] py-4 text-sm"><div><p>{item.title}</p><p className="mt-1 text-xs text-[#77736d]">Qty {item.quantity}{item.variantLabel ? " · "+item.variantLabel : ""}</p></div><span className="whitespace-nowrap">{(item.unitPrice*item.quantity).toLocaleString("en-UG")} {item.currency}</span></div>)}
+        <p className="eyebrow">Your order · {currency}</p>{items.map((item)=><div key={item.key} className="flex justify-between gap-4 border-b border-[#dedad2] py-4 text-sm"><div><p>{item.title}</p><p className="mt-1 text-xs text-[#77736d]">Qty {item.quantity}{item.variantLabel ? " · "+item.variantLabel : ""}</p></div><span className="whitespace-nowrap">{(item.unitPrice*item.quantity).toLocaleString("en-UG")} {item.currency}</span></div>)}
         <p className="mt-5 text-xs leading-6 text-[#77736d]">No payment is collected at this stage. Your final total will include delivery only after the studio confirms the quote with you.</p>
       </aside>
     </form>

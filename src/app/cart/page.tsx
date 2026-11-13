@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "@/components/cart-provider";
+import { CurrencySelector } from "@/components/currency-selector";
 
 function money(value: number, currency: string) {
   try { return new Intl.NumberFormat("en-UG", { style: "currency", currency, maximumFractionDigits: 0 }).format(value); }
@@ -9,11 +10,11 @@ function money(value: number, currency: string) {
 }
 
 export default function CartPage() {
-  const { items, setQuantity, removeItem } = useCart();
+  const { items, setQuantity, removeItem, currency, currencyReady, currencyError } = useCart();
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const currency = items[0]?.currency || "UGX";
   return <main className="container min-h-[55vh] py-14 md:py-20">
-    <p className="eyebrow">Your selection</p>
+    <div className="flex items-center justify-between gap-4"><p className="eyebrow">Your selection</p><CurrencySelector /></div>
     <h1 className="display mt-3 text-5xl md:text-6xl">Shopping bag.</h1>
     {!items.length ? <div className="mt-12 border-t border-[#e8e5de] py-12"><p className="display text-2xl">Your bag is currently empty.</p><Link href="/shop" className="mt-6 inline-block bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] text-white">Explore the shop ↗</Link></div> :
     <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_340px]">
@@ -37,6 +38,9 @@ export default function CartPage() {
         <div className="mt-5 flex justify-between text-sm"><span>Subtotal</span><span>{money(subtotal, currency)}</span></div>
         <div className="mt-3 flex justify-between text-sm"><span>Delivery</span><span className="text-[#77736d]">Quoted after order</span></div>
         <p className="mt-5 border-t border-[#dedad2] pt-4 text-xs leading-6 text-[#77736d]">The studio will confirm delivery cost and your final total before you are asked to pay.</p>
+        {currencyError && <p className="mt-3 text-[10px] text-[#77736d]">{currencyError}</p>}
+        {items.length > 0 && items.some((item) => item.currency !== currency) && <p className="mt-3 text-xs text-[#9b5947]">Your bag contains a different currency. Remove the items before switching currency.</p>}
+        <p className="mt-3 text-[10px] text-[#77736d]">Currency is locked while your bag contains items, so prices cannot be mixed.</p>
         <Link href="/checkout" className="mt-6 block bg-[#242320] px-6 py-4 text-center text-[10px] uppercase tracking-[.15em] text-white transition-colors hover:bg-[#9c8062]">Continue to checkout ↗</Link>
         <Link href="/shop" className="mt-4 block text-center text-xs text-[#77736d] underline underline-offset-4">Continue browsing</Link>
       </aside>
