@@ -4,6 +4,8 @@
 export type ProductVariantLite = {
   price: number | string;
   currency: string | null;
+  price_ugx?: number | string | null;
+  price_usd?: number | string | null;
   is_available: boolean;
   stock_quantity: number | string | null;
 };
@@ -13,6 +15,8 @@ export type SellableProduct = {
   status?: string | null;
   price: number | string | null;
   currency: string | null;
+  price_ugx?: number | string | null;
+  price_usd?: number | string | null;
   edition_size?: number | null;
   edition_sold?: number | null;
   stock_quantity?: number | null;
@@ -103,13 +107,20 @@ export function isCurrentlyAvailable(product: SellableProduct) {
 }
 
 /** Price text for a list card: a variant's price, "From …" when formats differ, or the base price. */
-export function priceLabel(product: SellableProduct) {
+export function priceLabel(product: SellableProduct, currency: "UGX" | "USD" = (product.currency === "USD" ? "USD" : "UGX")) {
   const variants = availableVariants(product);
   if (variants.length > 0) {
-    const prices = variants.map((variant) => Number(variant.price));
+    const prices = variants.map((variant) => currency === "UGX"
+      ? variant.price_ugx ?? (variant.currency === "UGX" ? variant.price : null)
+      : variant.price_usd ?? (variant.currency === "USD" ? variant.price : null))
+      .filter((price): price is number | string => price != null)
+      .map(Number);
+    if (!prices.length) return `Not yet priced in ${currency}`;
     const lowest = Math.min(...prices);
-    const currency = variants[0].currency || product.currency;
     return lowest === Math.max(...prices) ? formatPrice(lowest, currency) : `From ${formatPrice(lowest, currency)}`;
   }
-  return formatPrice(product.price == null ? null : Number(product.price), product.currency);
+  const price = currency === "UGX"
+    ? product.price_ugx ?? (product.currency === "UGX" ? product.price : null)
+    : product.price_usd ?? (product.currency === "USD" ? product.price : null);
+  return formatPrice(price == null ? null : Number(price), currency);
 }

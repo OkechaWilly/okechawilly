@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCart } from "@/components/cart-provider";
+import { CurrencySelector } from "@/components/currency-selector";
 
 const navigation = [
   { href: "/artwork", label: "Artwork" },
@@ -14,6 +16,7 @@ const navigation = [
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { count } = useCart();
   const pathname = usePathname();
   const darkHeader = ["/artwork", "/collections", "/shop", "/prints", "/journal"].includes(pathname);
   const [scrolled, setScrolled] = useState(false);
@@ -60,6 +63,8 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="hidden sm:block"><CurrencySelector compact dark={darkHeader} /></div>
+          <Link href="/cart" onClick={closeMenu} aria-label={`Shopping bag, ${count} items`} className="border border-current/40 px-3 py-3 text-[9px] uppercase tracking-[.12em] transition-colors hover:border-[#9c8062] hover:text-[#d0aa83]">Bag ({count})</Link>
           <Link
             href="/contact"
             onClick={closeMenu}
@@ -100,6 +105,8 @@ export function SiteHeader() {
                 <span aria-hidden="true" className="text-[#9c8062]">0{index + 1}</span>
               </Link>
             ))}
+            <div className="flex items-center justify-between border-b border-current/10 py-4"><span className="text-[12px] uppercase tracking-[.14em]">Shop currency</span><CurrencySelector compact dark={darkHeader} /></div>
+            <Link href="/cart" onClick={closeMenu} className="flex items-center justify-between border-b border-current/10 py-4 text-[12px] uppercase tracking-[.14em]">Shopping bag <span className="text-[#9c8062]">{count} items</span></Link>
           </div>
         </nav>
       )}

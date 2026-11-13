@@ -9,11 +9,11 @@ import { EMPTY_LINK_FIELDS, planArtworkLink, type LinkFields } from "@/lib/produ
 import { shopVisibility } from "@/lib/shop";
 
 type Artwork = { id: string; title: string; year: number | null; medium: string | null; width_cm: number | null; height_cm: number | null; depth_cm: number | null; description: string | null; artwork_images?: { storage_path: string; is_primary: boolean; sort_order: number; alt_text?: string | null }[] };
-type ProductVariant = { id?: string; label: string; size: string; finish: string; price: string; currency: string; stock_quantity: string; is_available: boolean };
+type ProductVariant = { id?: string; label: string; size: string; finish: string; price: string; currency: string; price_ugx: string; price_usd: string; stock_quantity: string; is_available: boolean };
 type ProductImage = { id: string; storage_path: string; is_primary: boolean; sort_order: number; alt_text?: string | null };
 type Product = {
   id: string; title: string; slug: string; product_type: string; description: string | null;
-  price: number | null; currency: string; artwork_id: string | null; edition_size: number | null;
+  price: number | null; currency: string; price_ugx: number | null; price_usd: number | null; artwork_id: string | null; edition_size: number | null;
   edition_sold: number; sku: string | null; stock_quantity: number | null; track_inventory: boolean;
   options: string[]; product_variants?: ProductVariant[]; medium: string | null; materials: string | null; dimensions: string | null; framing: string | null; shipping_information: string | null; status: string; is_published: boolean; product_images: ProductImage[];
 };
@@ -52,6 +52,8 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
   const [shippingInformation, setShippingInformation] = useState("");
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("UGX");
+  const [priceUGX, setPriceUGX] = useState("");
+  const [priceUSD, setPriceUSD] = useState("");
   const [artworkId, setArtworkId] = useState("");
   // What was last copied in from a linked artwork, so text the person has typed is never overwritten.
   const lastCopied = useRef<LinkFields>(EMPTY_LINK_FIELDS);
@@ -71,7 +73,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
   function reset() {
     lastCopied.current = EMPTY_LINK_FIELDS;
     setEditing(null); setTitle(""); setSlug(""); setType("original"); setDescription(""); setMedium(""); setMaterials(""); setDimensions(""); setFraming(""); setShippingInformation("");
-    setPrice(""); setCurrency("UGX"); setArtworkId(""); setEditionSize(""); setEditionSold("0");
+    setPrice(""); setCurrency("UGX"); setPriceUGX(""); setPriceUSD(""); setArtworkId(""); setEditionSize(""); setEditionSold("0");
     setSku(""); setStock(""); setTrackInventory(true); setOptions(""); setStatus("draft");
     setPublished(false); setImageFiles([]); setVariants([]); setOpen(false);
   }
@@ -80,12 +82,12 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     lastCopied.current = EMPTY_LINK_FIELDS;
     setEditing(item); setTitle(item.title); setSlug(item.slug); setType(item.product_type);
     setDescription(item.description || ""); setMedium(item.medium || ""); setMaterials(item.materials || ""); setDimensions(item.dimensions || ""); setFraming(item.framing || ""); setShippingInformation(item.shipping_information || ""); setPrice(item.price == null ? "" : String(item.price));
-    setCurrency(item.currency || "UGX"); setArtworkId(item.artwork_id || "");
+    setCurrency(item.currency || "UGX"); setPriceUGX(item.price_ugx == null ? (item.currency === "UGX" && item.price != null ? String(item.price) : "") : String(item.price_ugx)); setPriceUSD(item.price_usd == null ? (item.currency === "USD" && item.price != null ? String(item.price) : "") : String(item.price_usd)); setArtworkId(item.artwork_id || "");
     setEditionSize(item.edition_size == null ? "" : String(item.edition_size));
     setEditionSold(String(item.edition_sold ?? 0)); setSku(item.sku || "");
     setStock(item.stock_quantity == null ? "" : String(item.stock_quantity));
     setTrackInventory(item.track_inventory); setOptions((item.options || []).join(", "));
-    setVariants((item.product_variants || []).map((v) => ({ id: v.id, label: v.label, size: v.size || "", finish: v.finish || "", price: String(v.price ?? ""), currency: v.currency || item.currency || "UGX", stock_quantity: v.stock_quantity == null ? "" : String(v.stock_quantity), is_available: v.is_available !== false })));
+    setVariants((item.product_variants || []).map((v) => ({ id: v.id, label: v.label, size: v.size || "", finish: v.finish || "", price: String(v.price ?? ""), currency: v.currency || item.currency || "UGX", price_ugx: v.price_ugx == null ? (v.currency === "UGX" ? String(v.price ?? "") : "") : String(v.price_ugx), price_usd: v.price_usd == null ? (v.currency === "USD" ? String(v.price ?? "") : "") : String(v.price_usd), stock_quantity: v.stock_quantity == null ? "" : String(v.stock_quantity), is_available: v.is_available !== false })));
     setStatus(item.status); setPublished(item.is_published); setImageFiles([]); setNotice(""); setOpen(true);
   }
   const publicUrl = (path: string) => supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
@@ -131,17 +133,17 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     if (type === "limited_print" && (!editionSize || Number(editionSize) < 1)) { setNotice("Enter a valid edition size for a limited print."); return; }
     // Check the options before writing anything, so a half-filled option can never leave a product
     // saved without its options (or make a second attempt fail because the web address now exists).
-    const filledRows = variants.filter((v) => v.label.trim() || v.size.trim() || v.finish.trim() || v.price !== "");
-    const cleanVariants = variants.filter((v) => v.label.trim() && v.price !== "" && Number.isFinite(Number(v.price)) && Number(v.price) >= 0);
+    const filledRows = variants.filter((v) => v.label.trim() || v.size.trim() || v.finish.trim() || v.price_ugx !== "" || v.price_usd !== "" || v.price !== "");
+    const cleanVariants = variants.filter((v) => v.label.trim() && (v.price_ugx !== "" || v.price_usd !== "") && [v.price_ugx, v.price_usd].filter((p) => p !== "").every((p) => Number.isFinite(Number(p)) && Number(p) >= 0));
     if (type !== "original" && cleanVariants.length !== filledRows.length) {
-      setNotice("Each option needs a label and a valid price. Complete it, or remove the empty row, then save again.");
+      setNotice("Each option needs a label and at least one valid UGX or USD price. Complete it, or remove the empty row, then save again.");
       return;
     }
     setBusy(true); setNotice("");
     try {
       const payload = {
         title: title.trim(), slug: slugify(slug || title), product_type: type,
-        description: description.trim() || null, medium: medium.trim() || null, materials: materials.trim() || null, dimensions: dimensions.trim() || null, framing: framing.trim() || null, shipping_information: shippingInformation.trim() || null, price: price ? Number(price) : null, currency,
+        description: description.trim() || null, medium: medium.trim() || null, materials: materials.trim() || null, dimensions: dimensions.trim() || null, framing: framing.trim() || null, shipping_information: shippingInformation.trim() || null, price: price !== "" ? Number(price) : priceUGX !== "" ? Number(priceUGX) : priceUSD !== "" ? Number(priceUSD) : null, currency: price !== "" ? currency : priceUGX !== "" ? "UGX" : priceUSD !== "" ? "USD" : currency, price_ugx: priceUGX === "" ? null : Number(priceUGX), price_usd: priceUSD === "" ? null : Number(priceUSD),
         artwork_id: artworkId || null,
         edition_size: type === "limited_print" ? Number(editionSize) : null,
         edition_sold: type === "limited_print" ? Number(editionSold || 0) : 0,
@@ -174,7 +176,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
         const { error: clearVariantsError } = await supabase.from("product_variants").delete().eq("product_id", id);
         if (clearVariantsError) throw clearVariantsError;
         if (cleanVariants.length) {
-          const { error: variantsError } = await supabase.from("product_variants").insert(cleanVariants.map((v, index) => ({ product_id: id, label: v.label.trim(), size: v.size.trim() || null, finish: v.finish.trim() || null, price: Number(v.price), currency: v.currency || currency, stock_quantity: v.stock_quantity === "" ? null : Number(v.stock_quantity), is_available: v.is_available, sort_order: index })));
+          const { error: variantsError } = await supabase.from("product_variants").insert(cleanVariants.map((v, index) => ({ product_id: id, label: v.label.trim(), size: v.size.trim() || null, finish: v.finish.trim() || null, price: Number(v.price_ugx !== "" ? v.price_ugx : v.price_usd !== "" ? v.price_usd : v.price), currency: v.price_ugx !== "" ? "UGX" : v.price_usd !== "" ? "USD" : v.currency || currency, price_ugx: v.price_ugx === "" ? null : Number(v.price_ugx), price_usd: v.price_usd === "" ? null : Number(v.price_usd), stock_quantity: v.stock_quantity === "" ? null : Number(v.stock_quantity), is_available: v.is_available, sort_order: index })));
           if (variantsError) throw variantsError;
         }
       }
@@ -202,7 +204,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
       }
       const updated: Product = { id, ...payload, product_images: images, product_variants: variants };
       setProducts((current) => [updated, ...current.filter((item) => item.id !== id)]);
-      reset(); setNotice("Product saved successfully. Checkout remains disabled.");
+      reset(); setNotice("Product saved successfully. Regional prices are stored independently.");
     } catch (error) {
       setNotice(errorMessage(error, "Could not save this product."));
     } finally { setBusy(false); }
@@ -315,8 +317,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
           </label>}
         </div>
         <label className={label}>Linked artwork<select className={field} value={artworkId} onChange={(e) => linkArtwork(e.target.value)}><option value="">No linked artwork</option>{artworks.map((a) => <option key={a.id} value={a.id}>{a.title}{a.year ? ` (${a.year})` : ""}</option>)}</select><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Linking an artwork fills in any empty description, medium and dimensions (and the title on a new product). It never changes the title or web address of a product that already exists. Its photographs are also used on the product page unless you upload separate product images.</span></label>
-        <label className={label}>{isPrint ? "General price (optional)" : "Price"}<input className={field} type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder={isPrint ? "Leave blank if each size has its own price" : "0.00"} />{isPrint && <span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">For prints, enter prices under each size below. Leave this blank when sizes have different prices.</span>}</label>
-        <label className={label}>Currency<select className={field} value={currency} onChange={(e) => setCurrency(e.target.value)}><option value="UGX">UGX — Ugandan Shilling</option><option value="USD">USD — US Dollar</option></select></label>
+        <div className="md:col-span-2 grid gap-4 rounded border border-[#dedad2] bg-white p-4 sm:grid-cols-2"><div className="sm:col-span-2"><p className={label}>Independent regional pricing</p><p className="mt-1 text-[10px] leading-5 text-[#89847c]">Set each market price yourself. Prices are not converted automatically. Leave a currency blank until you are ready to sell in that market.</p></div><label className={label}>Uganda price (UGX)<input className={field} type="number" min="0" step="1" value={priceUGX} onChange={(e) => setPriceUGX(e.target.value)} placeholder="UGX price" /></label><label className={label}>International price (USD)<input className={field} type="number" min="0" step="0.01" value={priceUSD} onChange={(e) => setPriceUSD(e.target.value)} placeholder="USD price" /></label><label className={label}>Legacy display price (optional)<input className={field} type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="For older catalogue views" /></label><label className={label}>Legacy currency<select className={field} value={currency} onChange={(e) => setCurrency(e.target.value)}><option value="UGX">UGX</option><option value="USD">USD</option></select></label></div>
         {type === "limited_print" && <><label className={label}>Total edition size (all print sizes combined)<input className={field} type="number" min="1" value={editionSize} onChange={(e) => setEditionSize(e.target.value)} required /><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">One shared edition across the available sizes. Set the total number of prints in this edition.</span></label><label className={label}>Copies sold (all sizes combined)<input className={field} type="number" min="0" value={editionSold} onChange={(e) => setEditionSold(e.target.value)} /><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Update this as copies are sold, regardless of size.</span></label></>}
         <label className={label}>SKU / reference<input className={field} value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Optional product code" /></label>
         <label className={label}>Stock quantity<input className={field} type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="Leave blank if not tracked" /></label>
@@ -342,13 +343,13 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
           {imageFiles.length > 0 && <p className="mt-3 text-xs text-[#625e57]">{imageFiles.length} new image(s) selected — they will upload when you save.</p>}
         </div>
         {type !== "original" ? <div className="md:col-span-2 border-t border-[#dedad2] pt-5">
-          <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="eyebrow">{type === "limited_print" || type === "open_print" ? "Print formats & pricing" : type === "wearable" ? "Sizes, colours & pricing" : "Product options & pricing"}</p><p className="mt-2 text-xs leading-6 text-[#89847c]">{isPrint ? "Add one option for each size you can actually produce. Put the paper dimensions in Print size and set that size’s price. Leave Paper / presentation blank for the initial fine-art paper range. The limited-edition total is shared across all sizes." : "Add each selectable version as a separate option. Set its price and, if needed, its stock and availability. Leave the general product price blank if all pricing comes from these options."}</p></div><button type="button" onClick={() => setVariants((current) => [...current, { label: "", size: "", finish: "", price: "", currency, stock_quantity: "", is_available: true }])} className="border border-[#242320] px-4 py-3 text-[10px] uppercase tracking-wider">+ Add option</button></div>
+          <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="eyebrow">{type === "limited_print" || type === "open_print" ? "Print formats & pricing" : type === "wearable" ? "Sizes, colours & pricing" : "Product options & pricing"}</p><p className="mt-2 text-xs leading-6 text-[#89847c]">{isPrint ? "Add one option for each size you can actually produce. Put the paper dimensions in Print size and set that size’s price. Leave Paper / presentation blank for the initial fine-art paper range. The limited-edition total is shared across all sizes." : "Add each selectable version as a separate option. Set its price and, if needed, its stock and availability. Leave the general product price blank if all pricing comes from these options."}</p></div><button type="button" onClick={() => setVariants((current) => [...current, { label: "", size: "", finish: "", price: "", currency, price_ugx: "", price_usd: "", stock_quantity: "", is_available: true }])} className="border border-[#242320] px-4 py-3 text-[10px] uppercase tracking-wider">+ Add option</button></div>
           {variants.length ? <div className="mt-5 space-y-4">{variants.map((variant, index) => <div key={variant.id || index} className="grid gap-3 border border-[#dedad2] bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
             <label className={label}>Option label<input className={field} value={variant.label} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,label:e.target.value} : v))} placeholder={type === "wearable" ? "e.g. Black · Medium" : type === "merchandise" || type === "art_object" ? "e.g. Standard · Black" : "e.g. A3 · Unframed"} /></label>
             <label className={label}>{type === "wearable" ? "Clothing size" : type === "merchandise" || type === "art_object" ? "Model / size" : type === "limited_print" || type === "open_print" ? "Print size" : "Size"}<input className={field} value={variant.size} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,size:e.target.value} : v))} placeholder={type === "limited_print" || type === "open_print" ? "e.g. 30 × 40 cm image" : type === "wearable" ? "e.g. Medium" : type === "merchandise" || type === "art_object" ? "e.g. Standard" : "e.g. A3"} /></label>
             <label className={label}>{type === "wearable" ? "Colour" : type === "merchandise" || type === "art_object" ? "Colour / finish" : type === "limited_print" || type === "open_print" ? "Paper / presentation (optional)" : "Finish / frame"}<input className={field} value={variant.finish} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,finish:e.target.value} : v))} placeholder={type === "limited_print" || type === "open_print" ? "Leave blank for fine-art paper only" : type === "wearable" ? "e.g. Black" : type === "merchandise" || type === "art_object" ? "e.g. White" : "e.g. Unframed"} /></label>
-            <label className={label}>Price<input className={field} type="number" min="0" step="0.01" value={variant.price} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,price:e.target.value} : v))} placeholder="Set price" /></label>
-            <label className={label}>Currency<select className={field} value={variant.currency} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,currency:e.target.value} : v))}><option value="UGX">UGX</option><option value="USD">USD</option></select></label>
+            <label className={label}>Uganda price (UGX)<input className={field} type="number" min="0" step="1" value={variant.price_ugx} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,price_ugx:e.target.value} : v))} placeholder="Optional" /></label>
+            <label className={label}>International price (USD)<input className={field} type="number" min="0" step="0.01" value={variant.price_usd} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,price_usd:e.target.value} : v))} placeholder="Optional" /></label>
             <label className={label}>Stock (optional)<input className={field} type="number" min="0" value={variant.stock_quantity} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,stock_quantity:e.target.value} : v))} placeholder="Not tracked" /></label>
             <label className="flex items-center gap-2 self-end pb-3 text-xs"><input type="checkbox" checked={variant.is_available} onChange={(e) => setVariants((rows) => rows.map((v,i) => i===index ? {...v,is_available:e.target.checked} : v))} className="accent-[#9c8062]" /> Available</label>
             <button type="button" onClick={() => setVariants((rows) => rows.filter((_,i) => i!==index))} className="self-end pb-3 text-left text-[10px] uppercase tracking-wider text-[#9b5947] underline">Remove option</button>
@@ -362,7 +363,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
         <button disabled={busy} className="bg-[#242320] px-6 py-3 text-[10px] uppercase tracking-[.16em] !text-[#f7f6f2] transition-colors hover:bg-[#9c8062] disabled:opacity-50">{busy ? "Saving..." : "Save product"}</button>
         <button type="button" onClick={reset} className="text-[10px] uppercase tracking-[.14em] underline underline-offset-4">Cancel</button>
       </div>
-      <p className="mt-4 text-[10px] leading-5 text-[#89847c]">Publishing makes the product visible in the catalogue when the public shop is connected. This does not activate payment or checkout.</p>
+      <p className="mt-4 text-[10px] leading-5 text-[#89847c]">Set UGX and USD prices independently. Existing prices were preserved in their original currency; no exchange-rate conversion is applied.</p>
     </form>}
     <div className="mt-10 flex items-center justify-between border-b border-[#dedad2] pb-4"><p className="eyebrow">{products.length} products</p><p className="text-[10px] uppercase tracking-[.12em] text-[#89847c]">Catalogue management</p></div>
     {products.length ? <div className="mt-3 divide-y divide-[#e2ded6]">{products.map((item, index) => {
