@@ -10,7 +10,7 @@ function money(value: number, currency: string) {
 }
 
 export default function CartPage() {
-  const { items, setQuantity, removeItem, currency, currencyReady, currencyError } = useCart();
+  const { items, setQuantity, removeItem, currency, currencyError } = useCart();
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   return <main className="container min-h-[55vh] py-14 md:py-20">
     <div className="flex items-center justify-between gap-4"><p className="eyebrow">Your selection</p><CurrencySelector /></div>

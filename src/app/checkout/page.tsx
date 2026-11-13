@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart-provider";
@@ -12,6 +12,7 @@ export default function CheckoutPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", country: "Uganda", address: "", city: "", postalCode: "", note: "" });
+  useEffect(() => { fetch("/api/shop/currency", { cache: "no-store" }).then((r) => r.ok ? r.json() : null).then((data) => { if (data?.countryName) setForm((current) => current.country === "Uganda" ? { ...current, country: data.countryName } : current); }).catch(() => {}); }, []);
   function update(key: keyof typeof form, value: string) { setForm((current) => ({ ...current, [key]: value })); }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

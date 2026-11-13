@@ -13,14 +13,14 @@ export function CartProvider({children}:{children:ReactNode}) {
   const preferred=window.localStorage.getItem(CURRENCY_KEY);
   if(preferred==="UGX"||preferred==="USD"){setCurrencyState(preferred);setCurrencyReady(true);}
   else if(savedItems.length){setCurrencyState(savedItems[0].currency);setCurrencyReady(true);}
-  else {fetch("/api/shop/currency",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(v=>setCurrencyState(v.currency==="USD"?"USD":"UGX")).catch(()=>setCurrencyError("We couldn't detect your region. Uganda pricing is selected by default.")).finally(()=>setCurrencyReady(true));}
+  else {fetch("/api/shop/currency",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(v=>{const next=v.currency==="USD"?"USD":"UGX";setCurrencyState(next);document.cookie="okecha-willy-currency="+next+"; path=/; max-age=31536000; samesite=lax";}).catch(()=>setCurrencyError("We couldn't detect your region. Uganda pricing is selected by default.")).finally(()=>setCurrencyReady(true));}
   setReady(true);
  },[]);
  useEffect(()=>{if(ready)window.localStorage.setItem(STORAGE_KEY,JSON.stringify(items));},[items,ready]);
  const value=useMemo<CartContextValue>(()=>({
   items,count:items.reduce((n,i)=>n+i.quantity,0),currency,currencyReady,currencyError,
   addItem:(item)=>{if(item.currency!==currency)return false;setItems(current=>{const key=item.productId+":"+(item.variantId||"base"),found=current.find(x=>x.key===key);if(found)return current.map(x=>x.key===key?{...x,quantity:Math.min(20,x.quantity+1)}:x);return [...current,{...item,key,quantity:1}];});return true;},
-  setCurrency:(next)=>{if(items.length)return false;setCurrencyState(next);window.localStorage.setItem(CURRENCY_KEY,next);return true;},
+  setCurrency:(next)=>{if(items.length)return false;setCurrencyState(next);window.localStorage.setItem(CURRENCY_KEY,next);document.cookie="okecha-willy-currency="+next+"; path=/; max-age=31536000; samesite=lax";return true;},
   setQuantity:(key,q)=>setItems(current=>current.map(i=>i.key===key?{...i,quantity:Math.max(1,Math.min(20,Math.floor(q)||1))}:i)),
   removeItem:(key)=>setItems(current=>current.filter(i=>i.key!==key)),clearCart:()=>setItems([])
  }),[items,currency,currencyReady,currencyError]);

@@ -165,7 +165,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
 
             {onSale.length > 0 ? (
               <div className="mt-12 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-                {onSale.map((product) => <ProductCard key={product.id} product={product} />)}
+                {onSale.map((product) => <ProductCard key={product.id} product={product} currency={currency} />)}
               </div>
             ) : (
               <p className="mt-12 max-w-xl text-sm leading-7 text-[#77736d]">
@@ -179,7 +179,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
                 <h3 className="display mt-3 text-3xl md:text-4xl">Works that have found a home.</h3>
                 <p className="mt-3 max-w-xl text-sm leading-7 text-[#77736d]">A record of work already collected. If one of these speaks to you, get in touch about something similar or a print.</p>
                 <div className="mt-10 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-                  {soldWorks.map((product) => <ProductCard key={product.id} product={product} />)}
+                  {soldWorks.map((product) => <ProductCard key={product.id} product={product} currency={currency} />)}
                 </div>
               </div>
             )}
