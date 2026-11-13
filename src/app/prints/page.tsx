@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { cookies, headers } from "next/headers";
 import Image from "next/image";
 import { PRODUCT_TYPE_LABELS, PRINT_TYPES, isCurrentlyAvailable, priceLabel } from "@/lib/shop";
 import { pageMetadata } from "@/lib/site";
@@ -12,10 +13,15 @@ export const metadata = pageMetadata({
 });
 
 export default async function FineArtPrintsPage() {
+  const cookieStore = await cookies();
+  const requestHeaders = await headers();
+  const savedCurrency = cookieStore.get("okecha-willy-currency")?.value;
+  const detectedCountry = (requestHeaders.get("x-vercel-ip-country") || "").toUpperCase();
+  const currency: "UGX" | "USD" = savedCurrency === "UGX" || savedCurrency === "USD" ? savedCurrency : detectedCountry && detectedCountry !== "UG" ? "USD" : "UGX";
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
-    .select("id, title, slug, product_type, description, price, currency, edition_size, edition_sold, stock_quantity, track_inventory, product_images(*), product_variants(price, currency, is_available, stock_quantity), artwork:artworks(title, artwork_images(*))")
+    .select("id, title, slug, product_type, description, price, currency, price_ugx, price_usd, edition_size, edition_sold, stock_quantity, track_inventory, product_images(*), product_variants(price, currency, price_ugx, price_usd, is_available, stock_quantity), artwork:artworks(title, artwork_images(*))")
     .eq("is_published", true)
     .in("status", ["active", "sold_out"])
     .in("product_type", PRINT_TYPES)
@@ -79,7 +85,7 @@ export default async function FineArtPrintsPage() {
                     {!isCurrentlyAvailable(print) && <span className="mt-3 inline-flex border border-[#d9d4ca] px-3 py-2 text-[9px] uppercase tracking-[.14em] text-[#77736d]">Sold out</span>}
                   </Link>
                   <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#ded9d0] pt-3 text-xs text-[#77736d]">
-                    <span>{priceLabel(print)}</span>
+                    <span>{priceLabel(print, currency)}</span>
                     {!isCurrentlyAvailable(print) ? (
                       <span>Sold out</span>
                     ) : print.product_type === "limited_print" && print.edition_size != null ? (
