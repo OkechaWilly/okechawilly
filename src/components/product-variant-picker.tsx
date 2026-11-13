@@ -24,7 +24,7 @@ export default function ProductVariantPicker({ productId, productSlug, productIm
   const selectedPrice = selected ? (currency === "UGX" ? selected.price_ugx ?? (selected.currency === "UGX" ? selected.price : null) : selected.price_usd ?? (selected.currency === "USD" ? selected.price : null)) : (currency === "UGX" ? fallbackPriceUGX ?? (fallbackCurrency === "UGX" ? fallbackPrice : null) : fallbackPriceUSD ?? (fallbackCurrency === "USD" ? fallbackPrice : null));
   const price = isSoldOut ? "Currently unavailable" : selected && selectedPrice != null ? formatPrice(Number(selectedPrice), currency) : selected || variants.length === 0 ? (selectedPrice == null ? `Not yet priced in ${currency}` : formatPrice(Number(selectedPrice), currency)) : "Currently unavailable";
   const subject = selected ? `Enquiry about ${productTitle} — ${selected.label}` : `Enquiry about ${productTitle}`;
-  const canAdd = !isSoldOut && selectedPrice !== null && selectedPrice !== undefined && (selected !== null || variants.length === 0);
+  const canAdd = productType !== "original" && !isSoldOut && selectedPrice !== null && selectedPrice !== undefined && (selected !== null || variants.length === 0);
   const chosenPrice = selectedPrice;
   const chosenCurrency = currency;
 
