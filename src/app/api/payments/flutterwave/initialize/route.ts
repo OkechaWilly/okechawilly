@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const { data, error } = await supabase.rpc("prepare_flutterwave_payment", { p_token: body.token, p_tx_ref: txRef });
     if (error || !data) return NextResponse.json({ error: error?.message.includes("QUOTE_") ? error.message.replaceAll("_", " ").toLowerCase() : "This order is not ready for payment." }, { status: 400 });
     const order = data as { order_number: string; customer_name: string; customer_email: string; customer_phone: string; currency: string; amount: number };
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+    const origin = new URL(request.url).origin;
     const response = await fetch("https://api.flutterwave.com/v3/payments", {
       method: "POST",
       headers: { Authorization: "Bearer " + secret, "Content-Type": "application/json" },
