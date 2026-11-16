@@ -112,11 +112,23 @@ begin
   select * into v_case from public.payment_reconciliation_cases
   where id=p_case_id for update;
   if not found then raise exception 'RECONCILIATION_CASE_NOT_FOUND'; end if;
+  if v_case.status=p_outcome then
+    return jsonb_build_object('case_id',v_case.id,'order_number',v_case.order_number,'status',v_case.status);
+  end if;
+  if (p_outcome='refund_initiated' and v_case.status<>'pending_review')
+     or (p_outcome='dismissed' and v_case.status<>'pending_review')
+     or (p_outcome='refunded' and v_case.status not in ('pending_review','refund_initiated')) then
+    raise exception 'RECONCILIATION_CASE_ALREADY_RESOLVED';
+  end if;
 
   if p_outcome='refunded' then
     update public.orders set payment_status='refunded'
-    where id=v_case.order_id and payment_status <> 'paid';
-    if not found then raise exception 'RECONCILIATION_ORDER_STATE_MISMATCH'; end if;
+    where id=v_case.order_id and payment_status not in ('paid','refunded');
+    if not found then
+      if not exists(select 1 from public.orders where id=v_case.order_id and payment_status='refunded') then
+        raise exception 'RECONCILIATION_ORDER_STATE_MISMATCH';
+      end if;
+    end if;
   end if;
 
   update public.payment_reconciliation_cases
