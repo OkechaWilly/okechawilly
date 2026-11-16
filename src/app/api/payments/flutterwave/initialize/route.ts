@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   const secret = process.env.FLW_SECRET_KEY;
-  if (!secret || !process.env.SUPABASE_SERVICE_ROLE_KEY) return NextResponse.json({ error: "Online payment is not available yet. The studio will send payment instructions." }, { status: 503 });
+  if (process.env.ONLINE_PAYMENTS_ENABLED !== "true" || !secret || !process.env.SUPABASE_SERVICE_ROLE_KEY) return NextResponse.json({ error: "Online payment is not enabled yet. The studio will contact you with the next steps." }, { status: 503 });
   try {
     const body = await request.json();
     if (typeof body.token !== "string" || !/^[a-f0-9]{64}$/.test(body.token)) return NextResponse.json({ error: "Invalid quote link." }, { status: 400 });
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const txRef = "OW-" + randomUUID();
     const { data, error } = await supabase.rpc("prepare_flutterwave_payment", { p_token: body.token, p_tx_ref: txRef });
     if (error || !data) return NextResponse.json({ error: error?.message.includes("QUOTE_") ? error.message.replaceAll("_", " ").toLowerCase() : "This order is not ready for payment." }, { status: 400 });
