@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useCart } from "@/components/cart-provider";
 import { CurrencySelector } from "@/components/currency-selector";
 
@@ -19,7 +20,7 @@ export default function CartPage() {
     <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_340px]">
       <div className="divide-y divide-[#e8e5de] border-y border-[#e8e5de]">
         {items.map((item) => <article key={item.key} className="flex gap-5 py-6">
-          {item.image ? <img src={item.image} alt="" className="h-28 w-24 bg-[#efede7] object-cover" /> : <div className="h-28 w-24 bg-[#efede7]" />}
+          {item.image ? <div className="relative h-28 w-24 shrink-0 bg-[#efede7]"><Image src={item.image} alt={item.title} fill sizes="96px" className="object-contain p-2" /></div> : <div className="h-28 w-24 shrink-0 bg-[#efede7]" />}
           <div className="min-w-0 flex-1">
             <Link href={`/shop/${item.slug}`} className="display text-xl hover:text-[#9c8062]">{item.title}</Link>
             {item.variantLabel && <p className="mt-1 text-xs text-[#77736d]">{item.variantLabel}</p>}
