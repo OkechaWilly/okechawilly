@@ -23,11 +23,18 @@ create index if not exists payment_reconciliation_status_created_idx
 alter table public.payment_reconciliation_cases enable row level security;
 revoke all on public.payment_reconciliation_cases from public, anon;
 grant select on public.payment_reconciliation_cases to authenticated;
+grant update (status,admin_note,updated_at,resolved_at) on public.payment_reconciliation_cases to authenticated;
 
 drop policy if exists "Admins can view payment reconciliation cases" on public.payment_reconciliation_cases;
 create policy "Admins can view payment reconciliation cases"
   on public.payment_reconciliation_cases for select to authenticated
   using (public.is_admin());
+
+drop policy if exists "Admins can update payment reconciliation cases" on public.payment_reconciliation_cases;
+create policy "Admins can update payment reconciliation cases"
+  on public.payment_reconciliation_cases for update to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
 
 create or replace function public.record_flutterwave_reconciliation(
   p_tx_ref text,
