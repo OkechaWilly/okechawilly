@@ -4,15 +4,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 
-async function findPendingReference(supabase: ReturnType<typeof createAdminClient>, tokenHash: string) {
-  const { data } = await supabase.from("orders")
-    .select("payment_reference")
-    .eq("shipping_quote_token_hash", tokenHash)
-    .eq("payment_status", "pending")
-    .maybeSingle();
-  return data?.payment_reference || "";
-}
-
 export async function POST(request: Request) {
   const secret = process.env.FLW_SECRET_KEY;
   if (process.env.ONLINE_PAYMENTS_ENABLED !== "true" || !secret || !process.env.SUPABASE_SERVICE_ROLE_KEY) return NextResponse.json({ error: "Online payment is not enabled yet. The studio will contact you with the next steps." }, { status: 503 });
@@ -23,7 +14,7 @@ export async function POST(request: Request) {
     const tokenHash = createHash("sha256").update(body.token).digest("hex");
     const { data: existingOrder, error: existingOrderError } = await supabase
       .from("orders")
-      .select("payment_status,payment_checkout_url,payment_checkout_expires_at,shipping_quote_status")
+      .select("payment_status,payment_reference,payment_checkout_url,payment_checkout_expires_at,shipping_quote_status")
       .eq("shipping_quote_token_hash", tokenHash)
       .maybeSingle();
     if (existingOrderError || !existingOrder) return NextResponse.json({ error: "This order could not be found." }, { status: 404 });
@@ -34,7 +25,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ paymentUrl: existingOrder.payment_checkout_url, reused: true });
     }
     if (existingOrder.payment_status === "pending") {
-      const { error: resetError } = await supabase.rpc("reset_flutterwave_payment", { p_tx_ref: await findPendingReference(supabase, tokenHash) });
+      const { error: resetError } = await supabase.rpc("reset_flutterwave_payment", { p_tx_ref: existingOrder.payment_reference });
       if (resetError) return NextResponse.json({ error: "A previous payment attempt is still being reconciled. Please contact the studio." }, { status: 409 });
     }
     const txRef = "OW-" + randomUUID();
