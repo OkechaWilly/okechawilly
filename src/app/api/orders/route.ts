@@ -10,12 +10,17 @@ export async function POST(request: Request) {
     const customer = body?.customer;
     const address = body?.shippingAddress;
     const items = body?.items;
+    const requestId = body?.requestId;
+    if (typeof requestId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)) {
+      return NextResponse.json({ error: "This checkout session has expired. Please refresh and try again." }, { status: 400 });
+    }
     if (!customer || typeof customer.name !== "string" || typeof customer.email !== "string" ||
         typeof customer.phone !== "string" || !address || !Array.isArray(items) || items.length < 1 || items.length > 30) {
       return NextResponse.json({ error: "Please provide valid contact, delivery and order details." }, { status: 400 });
     }
     const supabase = await createClient();
-    const { data, error } = await supabase.rpc("submit_public_order", {
+    const { data, error } = await supabase.rpc("submit_public_order_idempotent", {
+      p_request_id: requestId,
       p_customer_name: customer.name.trim(),
       p_customer_email: customer.email.trim().toLowerCase(),
       p_customer_phone: customer.phone.trim(),
