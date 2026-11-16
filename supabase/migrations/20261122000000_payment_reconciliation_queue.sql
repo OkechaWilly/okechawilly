@@ -105,7 +105,7 @@ declare
   v_case public.payment_reconciliation_cases%rowtype;
 begin
   if not public.is_admin() then raise exception 'NOT_AUTHORIZED'; end if;
-  if p_outcome not in ('refund_initiated','refunded','dismissed') then
+  if p_outcome is null or p_outcome not in ('refund_initiated','refunded','dismissed') then
     raise exception 'RECONCILIATION_INVALID_OUTCOME';
   end if;
 
@@ -181,8 +181,8 @@ begin
   end if;
   select * into v_order from public.orders where id=p_order_id for update;
   if not found then raise exception 'ORDER_NOT_FOUND'; end if;
-  if v_order.payment_status<>'pending' or v_order.payment_provider<>'flutterwave'
-     or v_order.payment_checkout_expires_at is null
+  if v_order.payment_status is distinct from 'pending' or v_order.payment_provider is distinct from 'flutterwave'
+     or v_order.payment_reference is null or v_order.payment_checkout_expires_at is null
      or v_order.payment_checkout_expires_at>now() then
     raise exception 'PAYMENT_SESSION_NOT_EXPIRED';
   end if;
