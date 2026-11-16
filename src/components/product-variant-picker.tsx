@@ -17,10 +17,13 @@ export default function ProductVariantPicker({ productId, productSlug, productIm
   const available = useMemo(() => isSoldOut ? [] : variants.filter((v) => v.is_available && (v.stock_quantity == null || v.stock_quantity > 0)), [variants, isSoldOut]);
   const [selectedSize, setSelectedSize] = useState(available[0]?.size || "");
   const [selectedFinish, setSelectedFinish] = useState(available[0]?.finish || "");
+  const [selectedVariantId, setSelectedVariantId] = useState(available[0]?.id || "");
   const sizeOptions = [...new Set(available.map((v) => v.size).filter((v): v is string => Boolean(v)))];
   const finishOptions = [...new Set(available.filter((v) => !selectedSize || !v.size || v.size === selectedSize).map((v) => v.finish).filter((v): v is string => Boolean(v)))];
-  const selected = available.find((v) => (!sizeOptions.length || v.size === selectedSize) && (!finishOptions.length || v.finish === selectedFinish)) || available[0] || null;
   const hasSeparateChoices = sizeOptions.length > 0 || finishOptions.length > 0;
+  const selected = hasSeparateChoices
+    ? available.find((v) => (!sizeOptions.length || v.size === selectedSize) && (!finishOptions.length || v.finish === selectedFinish)) || available[0] || null
+    : available.find((v) => v.id === selectedVariantId) || available[0] || null;
   const selectedPrice = selected ? (currency === "UGX" ? selected.price_ugx ?? (selected.currency === "UGX" ? selected.price : null) : selected.price_usd ?? (selected.currency === "USD" ? selected.price : null)) : (currency === "UGX" ? fallbackPriceUGX ?? (fallbackCurrency === "UGX" ? fallbackPrice : null) : fallbackPriceUSD ?? (fallbackCurrency === "USD" ? fallbackPrice : null));
   const price = isSoldOut ? "Currently unavailable" : productType === "original" ? "Price on request" : selected && selectedPrice != null ? formatPrice(Number(selectedPrice), currency) : selected || variants.length === 0 ? (selectedPrice == null ? `Not yet priced in ${currency}` : formatPrice(Number(selectedPrice), currency)) : "Currently unavailable";
   const subject = selected ? `Enquiry about ${productTitle} — ${selected.label}` : `Enquiry about ${productTitle}`;
@@ -50,7 +53,7 @@ export default function ProductVariantPicker({ productId, productSlug, productIm
       </div>}
       {!hasSeparateChoices && <div>
         <label htmlFor="print-option" className="eyebrow">Choose a format</label>
-        <select id="print-option" value={selected?.id || ""} onChange={(e) => { const choice = available.find((v) => v.id === e.target.value); if (choice) { setSelectedSize(choice.size || ""); setSelectedFinish(choice.finish || ""); } }} className="mt-3 w-full border border-[#d9d4ca] bg-white px-4 py-4 text-sm outline-none focus:border-[#9c8062]">
+        <select id="print-option" value={selected?.id || ""} onChange={(e) => setSelectedVariantId(e.target.value)} className="mt-3 w-full border border-[#d9d4ca] bg-white px-4 py-4 text-sm outline-none focus:border-[#9c8062]">
           {available.map((variant) => <option key={variant.id} value={variant.id}>{variant.label}</option>)}
         </select>
       </div>}
