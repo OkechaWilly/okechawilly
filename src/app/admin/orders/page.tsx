@@ -8,6 +8,6 @@ export default async function AdminOrdersPage() {
     supabase.from("payment_reconciliation_cases").select("*").order("created_at", { ascending: false }),
   ]);
   if (error) throw new Error(error.message);
-  if (reconciliationError && reconciliationError.code !== "42P01") throw new Error(reconciliationError.message);
+  if (reconciliationError && !["42P01", "PGRST205"].includes(reconciliationError.code)) throw new Error(reconciliationError.message);
   return <OrdersManager initialOrders={(data || []) as never} initialReconciliationCases={(reconciliationCases || []) as never} />;
 }
