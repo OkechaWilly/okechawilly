@@ -13,11 +13,6 @@ import { cookies, headers } from "next/headers";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const cookieStore = await cookies();
-  const requestHeaders = await headers();
-  const savedCurrency = cookieStore.get("okecha-willy-currency")?.value;
-  const detectedCountry = (requestHeaders.get("x-vercel-ip-country") || "").toUpperCase();
-  const marketCurrency: "UGX" | "USD" = savedCurrency === "UGX" || savedCurrency === "USD" ? savedCurrency : detectedCountry && detectedCountry !== "UG" ? "USD" : "UGX";
   const supabase = await createClient();
   const { data: product } = await supabase.from("products")
     .select("*, product_images(*), product_variants(*), artwork:artworks(title, slug, is_published, artwork_images(*))")
@@ -42,6 +37,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ShopProductDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const cookieStore = await cookies();
+  const requestHeaders = await headers();
+  const savedCurrency = cookieStore.get("okecha-willy-currency")?.value;
+  const detectedCountry = (requestHeaders.get("x-vercel-ip-country") || "").toUpperCase();
+  const marketCurrency: "UGX" | "USD" = savedCurrency === "UGX" || savedCurrency === "USD" ? savedCurrency : detectedCountry && detectedCountry !== "UG" ? "USD" : "UGX";
   const supabase = await createClient();
   const { data: product } = await supabase.from("products")
     .select("*, product_images(*), product_variants(*), artwork:artworks(title, slug, is_published, artwork_images(*))")
