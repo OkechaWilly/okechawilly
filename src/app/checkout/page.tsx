@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart-provider";
@@ -11,6 +11,7 @@ export default function CheckoutPage() {
   const { items, clearCart, currency } = useCart();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const requestIdRef = useRef<string | null>(null);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", country: "Uganda", address: "", city: "", postalCode: "", note: "" });
   useEffect(() => { fetch("/api/shop/currency", { cache: "no-store" }).then((r) => r.ok ? r.json() : null).then((data) => { if (data?.countryName) setForm((current) => current.country === "Uganda" ? { ...current, country: data.countryName } : current); }).catch(() => {}); }, []);
@@ -20,6 +21,7 @@ export default function CheckoutPage() {
     if (!items.length || busy) return;
     if (items.some((item) => item.currency !== currency)) { setError("Your bag contains mixed currencies. Please return to the bag and resolve this before checkout."); return; }
     setBusy(true); setError("");
+    if (!requestIdRef.current) requestIdRef.current = crypto.randomUUID();
     try {
       const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         customer: { name: form.name, email: form.email, phone: form.phone },
