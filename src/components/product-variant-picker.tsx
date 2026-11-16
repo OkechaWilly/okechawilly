@@ -22,12 +22,12 @@ export default function ProductVariantPicker({ productId, productSlug, productIm
   const finishOptions = [...new Set(available.filter((v) => !selectedSize || !v.size || v.size === selectedSize).map((v) => v.finish).filter((v): v is string => Boolean(v)))];
   const hasSeparateChoices = sizeOptions.length > 0 || finishOptions.length > 0;
   const selected = hasSeparateChoices
-    ? available.find((v) => (!sizeOptions.length || v.size === selectedSize) && (!finishOptions.length || v.finish === selectedFinish)) || available[0] || null
+    ? available.find((v) => (!sizeOptions.length || v.size === selectedSize) && (!finishOptions.length || v.finish === selectedFinish)) || null
     : available.find((v) => v.id === selectedVariantId) || available[0] || null;
   const selectedPrice = selected ? (currency === "UGX" ? selected.price_ugx ?? (selected.currency === "UGX" ? selected.price : null) : selected.price_usd ?? (selected.currency === "USD" ? selected.price : null)) : (currency === "UGX" ? fallbackPriceUGX ?? (fallbackCurrency === "UGX" ? fallbackPrice : null) : fallbackPriceUSD ?? (fallbackCurrency === "USD" ? fallbackPrice : null));
-  const price = isSoldOut ? "Currently unavailable" : productType === "original" ? "Price on request" : selected && selectedPrice != null ? formatPrice(Number(selectedPrice), currency) : selected || variants.length === 0 ? (selectedPrice == null ? `Not yet priced in ${currency}` : formatPrice(Number(selectedPrice), currency)) : "Currently unavailable";
+  const price = isSoldOut ? "Currently unavailable" : productType === "original" ? "Price on request" : hasSeparateChoices && !selected ? "This combination is unavailable" : selected && selectedPrice != null ? formatPrice(Number(selectedPrice), currency) : selected || variants.length === 0 ? (selectedPrice == null ? `Not yet priced in ${currency}` : formatPrice(Number(selectedPrice), currency)) : "Currently unavailable";
   const subject = selected ? `Enquiry about ${productTitle} — ${selected.label}` : `Enquiry about ${productTitle}`;
-  const canAdd = productType !== "original" && !isSoldOut && selectedPrice !== null && selectedPrice !== undefined && (selected !== null || variants.length === 0);
+  const canAdd = productType !== "original" && !isSoldOut && Boolean(selected || variants.length === 0) && selectedPrice !== null && selectedPrice !== undefined;
   const chosenPrice = selectedPrice;
   const chosenCurrency = currency;
 
