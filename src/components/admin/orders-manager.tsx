@@ -61,9 +61,15 @@ export default function OrdersManager({ initialOrders, initialReconciliationCase
   }
 
   async function updateReconciliationCase(item: ReconciliationCase, status: string) {
+    const note = window.prompt(status === "refunded"
+      ? "Enter the provider refund reference or confirmation details:"
+      : status === "refund_initiated"
+        ? "Enter the provider refund reference or the action taken:"
+        : "Explain why this reconciliation case is being dismissed:");
+    if (!note || note.trim().length < 8) return;
     setBusy(item.id); setNotice("");
     const { error } = await supabase.rpc("resolve_payment_reconciliation_case", {
-      p_case_id: item.id, p_outcome: status, p_admin_note: null,
+      p_case_id: item.id, p_outcome: status, p_admin_note: note.trim(),
     });
     if (error) setNotice("Could not update reconciliation case: " + error.message);
     else {
