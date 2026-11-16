@@ -18,6 +18,7 @@ export function ArtworkImageGallery({
 
   useEffect(() => {
     if (!expanded) return;
+    const trigger = triggerRef.current;
     closeRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setExpanded(false);
@@ -32,7 +33,7 @@ export function ArtworkImageGallery({
       }
     };
     document.addEventListener("keydown", onKeyDown);
-    return () => { document.removeEventListener("keydown", onKeyDown); triggerRef.current?.focus(); };
+    return () => { document.removeEventListener("keydown", onKeyDown); trigger?.focus(); };
   }, [expanded, images.length]);
 
   if (!images.length) {
