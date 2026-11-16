@@ -10,7 +10,7 @@ create table if not exists public.payment_reconciliation_cases (
   currency text not null check (currency in ('UGX','USD')),
   reason text not null,
   status text not null default 'pending_review'
-    check (status in ('pending_review','fulfilled','refund_initiated','refunded','dismissed')),
+    check (status in ('pending_review','refund_initiated','refunded','dismissed')),
   admin_note text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -23,18 +23,13 @@ create index if not exists payment_reconciliation_status_created_idx
 alter table public.payment_reconciliation_cases enable row level security;
 revoke all on public.payment_reconciliation_cases from public, anon;
 grant select on public.payment_reconciliation_cases to authenticated;
-grant update (status,admin_note,updated_at,resolved_at) on public.payment_reconciliation_cases to authenticated;
+
 
 drop policy if exists "Admins can view payment reconciliation cases" on public.payment_reconciliation_cases;
 create policy "Admins can view payment reconciliation cases"
   on public.payment_reconciliation_cases for select to authenticated
   using (public.is_admin());
 
-drop policy if exists "Admins can update payment reconciliation cases" on public.payment_reconciliation_cases;
-create policy "Admins can update payment reconciliation cases"
-  on public.payment_reconciliation_cases for update to authenticated
-  using (public.is_admin())
-  with check (public.is_admin());
 
 create or replace function public.record_flutterwave_reconciliation(
   p_tx_ref text,
@@ -94,3 +89,47 @@ $$;
 
 revoke all on function public.record_flutterwave_reconciliation(text,text,numeric,text,text) from public,anon,authenticated;
 grant execute on function public.record_flutterwave_reconciliation(text,text,numeric,text,text) to service_role;
+
+-- Resolve a case and update the linked order's payment state atomically.
+-- Refund execution itself remains a manual provider-dashboard operation.
+create or replace function public.resolve_payment_reconciliation_case(
+  p_case_id uuid,
+  p_outcome text,
+  p_admin_note text default null
+) returns jsonb
+language plpgsql
+security definer
+set search_path=public,pg_temp
+as $$
+declare
+  v_case public.payment_reconciliation_cases%rowtype;
+begin
+  if not public.is_admin() then raise exception 'NOT_AUTHORIZED'; end if;
+  if p_outcome not in ('refund_initiated','refunded','dismissed') then
+    raise exception 'RECONCILIATION_INVALID_OUTCOME';
+  end if;
+
+  select * into v_case from public.payment_reconciliation_cases
+  where id=p_case_id for update;
+  if not found then raise exception 'RECONCILIATION_CASE_NOT_FOUND'; end if;
+
+  if p_outcome='refunded' then
+    update public.orders set payment_status='refunded'
+    where id=v_case.order_id and payment_status <> 'paid';
+    if not found then raise exception 'RECONCILIATION_ORDER_STATE_MISMATCH'; end if;
+  end if;
+
+  update public.payment_reconciliation_cases
+  set status=p_outcome,
+      admin_note=nullif(left(trim(coalesce(p_admin_note,'')),1000),''),
+      updated_at=now(),
+      resolved_at=case when p_outcome in ('refunded','dismissed') then now() else null end
+  where id=p_case_id
+  returning * into v_case;
+
+  return jsonb_build_object('case_id',v_case.id,'order_number',v_case.order_number,'status',v_case.status);
+end;
+$$;
+
+revoke all on function public.resolve_payment_reconciliation_case(uuid,text,text) from public,anon;
+grant execute on function public.resolve_payment_reconciliation_case(uuid,text,text) to authenticated;
