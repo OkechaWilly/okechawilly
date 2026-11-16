@@ -19,7 +19,24 @@ export async function verifyFlutterwaveTransaction(transactionId: string, expect
     p_amount: Number(payment.amount),
     p_currency: String(payment.currency),
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    const reconciliationReasons = ["PAYMENT_STOCK_RESERVATION_EXPIRED", "PAYMENT_STOCK_CHANGED"];
+    if (reconciliationReasons.some((reason) => error.message.includes(reason))) {
+      const { error: reconciliationError } = await admin.rpc("record_flutterwave_reconciliation", {
+        p_tx_ref: payment.tx_ref,
+        p_transaction_id: String(payment.id),
+        p_amount: Number(payment.amount),
+        p_currency: String(payment.currency),
+        p_reason: reconciliationReasons.find((reason) => error.message.includes(reason)),
+      });
+      if (reconciliationError) {
+        console.error("Payment reconciliation record failed:", reconciliationError.message);
+        throw new Error("PAYMENT_RECONCILIATION_RECORD_FAILED");
+      }
+      throw new Error("PAYMENT_REQUIRES_RECONCILIATION");
+    }
+    throw new Error(error.message);
+  }
   const order = data as { order_number: string; customer_name: string; customer_email: string; payment_status: string; already_paid?: boolean };
   if (!order.already_paid) {
     await sendOrderEmail(order.customer_email, "Payment received · " + order.order_number, orderEmailShell("<h2>Payment confirmed</h2><p>Thank you. We have received payment for order <strong>" + emailText(order.order_number) + "</strong>.</p><p>The studio will now proceed with fulfilment and keep you updated.</p>"));
