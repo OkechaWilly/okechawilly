@@ -13,7 +13,7 @@ type Order = {
   id: string; order_number: string; customer_name: string; customer_email: string; customer_phone: string | null;
   currency: string; subtotal: number; shipping_total: number; total: number;
   shipping_address: Record<string, unknown> | null; status: string; payment_status: string;
-  payment_provider: string | null; payment_reference: string | null; customer_note: string | null;
+  payment_provider: string | null; payment_reference: string | null; payment_checkout_expires_at?: string | null; customer_note: string | null;
   shipping_quote_status?: string; shipping_quote_total?: number | null; shipping_quote_currency?: string | null; shipping_quote_note?: string | null; shipping_quote_sent_at?: string | null;
   created_at: string; order_items: Item[];
 };
@@ -71,6 +71,23 @@ export default function OrdersManager({ initialOrders, initialReconciliationCase
         setSelected((current) => current?.id === item.order_id ? { ...current, payment_status: "refunded" } : current);
       }
       setNotice(`Payment case for ${item.order_number} updated to ${label(status)}.`);
+    }
+    setBusy("");
+  }
+
+  async function releaseExpiredPaymentSession(order: Order) {
+    const note = window.prompt("Confirm you checked Flutterwave and verified that this payment was not successful. Add the provider check details (at least 12 characters):");
+    if (!note || note.trim().length < 12) return;
+    setBusy(order.id); setNotice("");
+    const { error } = await supabase.rpc("release_expired_flutterwave_session", {
+      p_order_id: order.id, p_admin_note: note.trim(),
+    });
+    if (error) setNotice("Could not release payment session: " + error.message);
+    else {
+      const updated = { ...order, payment_status: "unpaid", payment_provider: null, payment_reference: null, payment_checkout_url: null, payment_checkout_expires_at: null };
+      setOrders((current) => current.map((entry) => entry.id === order.id ? updated : entry));
+      setSelected(updated);
+      setNotice(`Expired payment session for ${order.order_number} released and recorded.`);
     }
     setBusy("");
   }
@@ -142,6 +159,11 @@ export default function OrdersManager({ initialOrders, initialReconciliationCase
         <div className="border-t border-[#dedad2] py-6"><p className="eyebrow">Delivery quote</p><p className="mt-2 text-xs leading-5 text-[#77736d]">Enter the delivery fee after checking the destination. Saving sets the complete order total, but does not request or record payment.</p><label className="mt-4 block text-xs">Delivery fee ({selected.currency})<input type="number" min="0" step="1" value={quoteAmount} onChange={(e) => setQuoteAmount(e.target.value)} className={field + " mt-2 w-full"} /></label><label className="mt-4 block text-xs">Message / delivery details<textarea rows={3} maxLength={1000} value={quoteNote} onChange={(e) => setQuoteNote(e.target.value)} className={field + " mt-2 w-full"} /></label><div className="mt-4 flex justify-between text-sm"><span className="text-[#77736d]">Final total</span><strong>{money(Number(selected.subtotal) + (Number(quoteAmount) || 0), selected.currency)}</strong></div><button disabled={busy === selected.id} onClick={() => saveShippingQuote(selected)} className="mt-4 w-full bg-[#242320] px-4 py-3 text-[10px] uppercase tracking-[.14em] text-white disabled:opacity-50">{busy === selected.id ? "Saving…" : "Save delivery quote"}</button>{quoteLink && <div className="mt-4 border border-[#dedad2] bg-white p-3"><p className="text-[10px] uppercase tracking-[.12em] text-[#77736d]">Secure customer quote link</p><p className="mt-2 break-all text-xs">{quoteLink}</p><button onClick={() => { void navigator.clipboard.writeText(quoteLink); setNotice("Quote link copied."); }} className="mt-3 text-[10px] uppercase tracking-[.12em] underline underline-offset-4">Copy quote link</button></div>}{selected.shipping_quote_status === "quoted" && <p className="mt-3 text-[10px] leading-5 text-[#77736d]">Quote saved {selected.shipping_quote_sent_at ? "on " + new Date(selected.shipping_quote_sent_at).toLocaleString("en-UG") : ""}. Customer approval is pending.</p>}</div>
         <div className="py-6"><p className="eyebrow">Fulfilment status</p><select disabled={busy === selected.id} className={field + " mt-3 w-full"} value={selected.status} onChange={(e) => updateStatus(selected, e.target.value)}>{statuses.map((s) => <option key={s} value={s}>{label(s)}</option>)}</select><p className="mt-2 text-[10px] leading-5 text-[#89847c]">Changing this updates fulfilment only. It does not mark a payment as received.</p></div>
         <div className="border-t border-[#dedad2] py-6"><p className="eyebrow">Payment record</p><p className="mt-3 text-sm">Status: <span className="capitalize">{label(selected.payment_status)}</span></p>{selected.payment_provider && <p className="mt-1 text-xs text-[#77736d]">Provider: {selected.payment_provider}</p>}{selected.payment_reference && <p className="mt-1 text-xs text-[#77736d]">Reference: {selected.payment_reference}</p>}
+          {selected.payment_status === "pending" && selected.payment_provider === "flutterwave" && selected.payment_checkout_expires_at && new Date(selected.payment_checkout_expires_at).getTime() <= Date.now() && <div className="mt-5 border border-[#c9a77f] bg-[#fbf7ef] p-4">
+            <p className="text-[10px] uppercase tracking-[.14em] text-[#8b6943]">Hosted payment session expired</p>
+            <p className="mt-2 text-xs leading-5 text-[#77736d]">Do not release this order until you have checked Flutterwave and confirmed that no successful payment exists. The action is recorded in the payment audit log.</p>
+            <button disabled={busy === selected.id} onClick={() => releaseExpiredPaymentSession(selected)} className="mt-4 border border-[#8b6943] px-3 py-2 text-[9px] uppercase tracking-wider disabled:opacity-50">Release after provider check</button>
+          </div>}
           {reconciliationCases.filter((item) => item.order_id === selected.id).map((item) => <div key={item.id} className="mt-5 border border-[#c9a77f] bg-[#fbf7ef] p-4">
             <p className="text-[10px] uppercase tracking-[.14em] text-[#8b6943]">Payment reconciliation · {label(item.status)}</p>
             <p className="mt-3 text-sm">Flutterwave reports a successful transaction, but automatic order completion needs review.</p>
