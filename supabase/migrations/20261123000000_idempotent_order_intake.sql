@@ -17,7 +17,7 @@ create or replace function public.submit_public_order_idempotent(
   p_customer_note text,
   p_currency text,
   p_items jsonb
-) returns table(order_number text)
+) returns table(order_number text, created boolean)
 language plpgsql
 security definer
 set search_path=pg_catalog,public,extensions,pg_temp
@@ -34,7 +34,7 @@ begin
   where r.request_id=p_request_id;
 
   if found then
-    return query select v_order_number;
+    return query select v_order_number,false;
     return;
   end if;
 
@@ -54,7 +54,7 @@ begin
   insert into public.order_submission_requests(request_id,order_number)
   values(p_request_id,v_order_number);
 
-  return query select v_order_number;
+  return query select v_order_number,true;
 end;
 $$;
 
