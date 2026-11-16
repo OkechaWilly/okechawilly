@@ -24,6 +24,7 @@ export default function CheckoutPage() {
     if (!requestIdRef.current) requestIdRef.current = crypto.randomUUID();
     try {
       const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        requestId: requestIdRef.current,
         customer: { name: form.name, email: form.email, phone: form.phone },
         shippingAddress: { country: form.country, address: form.address, city: form.city, postalCode: form.postalCode },
         note: form.note,
@@ -33,6 +34,7 @@ export default function CheckoutPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "We could not submit your order. Please try again.");
       clearCart();
+      requestIdRef.current = null;
       router.push(`/order-received?order=${encodeURIComponent(result.orderNumber)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
