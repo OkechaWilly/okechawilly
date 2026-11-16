@@ -25,8 +25,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ paymentUrl: existingOrder.payment_checkout_url, reused: true });
     }
     if (existingOrder.payment_status === "pending") {
-      const { error: resetError } = await supabase.rpc("reset_flutterwave_payment", { p_tx_ref: existingOrder.payment_reference });
-      if (resetError) return NextResponse.json({ error: "A previous payment attempt is still being reconciled. Please contact the studio." }, { status: 409 });
+      return NextResponse.json({ error: "A previous payment session is still pending or expired. The studio must verify its status before another payment attempt can begin." }, { status: 409 });
     }
     const txRef = "OW-" + randomUUID();
     const { data, error } = await supabase.rpc("prepare_flutterwave_payment", { p_token: body.token, p_tx_ref: txRef });
