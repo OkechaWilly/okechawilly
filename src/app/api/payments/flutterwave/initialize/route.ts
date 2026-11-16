@@ -49,7 +49,8 @@ export async function POST(request: Request) {
     const result = await response.json();
     const link = result?.data?.link;
     if (!response.ok || result?.status !== "success" || typeof link !== "string") {
-      await supabase.rpc("reset_flutterwave_payment", { p_tx_ref: txRef });
+      // Keep the attempt pending: a provider error can be ambiguous, and releasing
+      // inventory automatically could allow a second charge if checkout was created.
       console.error("Flutterwave initialization failed:", response.status, JSON.stringify(result).slice(0, 500));
       return NextResponse.json({ error: "Flutterwave could not start this payment. Please try again or contact the studio." }, { status: 502 });
     }
@@ -58,7 +59,8 @@ export async function POST(request: Request) {
       .eq("payment_reference", txRef)
       .eq("payment_status", "pending");
     if (saveLinkError) {
-      await supabase.rpc("reset_flutterwave_payment", { p_tx_ref: txRef });
+      // Preserve the pending reference for manual provider reconciliation; do not
+      // release stock when a hosted session may already exist.
       console.error("Could not persist Flutterwave checkout URL:", saveLinkError.message);
       return NextResponse.json({ error: "We could not save your secure payment session. Please try again." }, { status: 500 });
     }
