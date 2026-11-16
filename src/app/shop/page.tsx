@@ -124,7 +124,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
       <ShopPageBanner
         eyebrow="Collect art"
         title="The shop"
-        description={`${intro} Each piece is presented with its story and details. To purchase or ask about delivery, get in touch directly.`}
+        description={`${intro} Explore each work, add available pieces to your bag, and submit an order request. The studio confirms availability and delivery before you are asked to pay.`}
         aside={"Based in Uganda\nEnquiries welcome from collectors worldwide"}
       />
 
@@ -147,7 +147,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
                 <p className="eyebrow">Studio catalogue</p>
                 <h2 className="display mt-3 text-4xl md:text-5xl">{activeCategory ? activeCategory.title : "Selected works"}.</h2>
               </div>
-              <p className="max-w-sm text-sm leading-7 text-[#77736d]">Browse works currently listed by the studio. Availability is confirmed personally before any sale.</p>
+              <p className="max-w-sm text-sm leading-7 text-[#77736d]">Browse work and editions listed by the studio. Availability and delivery are confirmed with you before payment.</p>
             </div>
 
             {showFilter && (
