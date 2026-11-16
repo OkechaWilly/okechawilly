@@ -27,7 +27,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ error: error.message.includes("ORDER_") || error.message.includes("QUOTE_") ? error.message.replaceAll("_", " ").toLowerCase() : "Could not save the delivery quote." }, { status: 400 });
     }
     const quote = data as { token: string; order_number: string; customer_name: string; customer_email: string; currency: string; subtotal: number; shipping_total: number; total: number; shipping_quote_note: string | null; shipping_quote_expires_at: string };
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+    const origin = new URL(request.url).origin;
     const quoteUrl = `${origin}/order-quote/${quote.token}`;
     const customerHtml = orderEmailShell(`
       <h1 style="font-size:28px;font-weight:400">Your delivery quote is ready.</h1>
