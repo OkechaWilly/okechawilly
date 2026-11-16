@@ -60,13 +60,16 @@ export default function OrdersManager({ initialOrders, initialReconciliationCase
 
   async function updateReconciliationCase(item: ReconciliationCase, status: string) {
     setBusy(item.id); setNotice("");
-    const resolvedAt = status === "pending_review" ? null : new Date().toISOString();
-    const { error } = await supabase.from("payment_reconciliation_cases").update({
-      status, updated_at: new Date().toISOString(), resolved_at: resolvedAt,
-    }).eq("id", item.id);
+    const { error } = await supabase.rpc("resolve_payment_reconciliation_case", {
+      p_case_id: item.id, p_outcome: status, p_admin_note: null,
+    });
     if (error) setNotice("Could not update reconciliation case: " + error.message);
     else {
       setReconciliationCases((current) => current.map((entry) => entry.id === item.id ? { ...entry, status } : entry));
+      if (status === "refunded") {
+        setOrders((current) => current.map((order) => order.id === item.order_id ? { ...order, payment_status: "refunded" } : order));
+        setSelected((current) => current?.id === item.order_id ? { ...current, payment_status: "refunded" } : current);
+      }
       setNotice(`Payment case for ${item.order_number} updated to ${label(status)}.`);
     }
     setBusy("");
@@ -143,8 +146,8 @@ export default function OrdersManager({ initialOrders, initialReconciliationCase
             <p className="text-[10px] uppercase tracking-[.14em] text-[#8b6943]">Payment reconciliation · {label(item.status)}</p>
             <p className="mt-3 text-sm">Flutterwave reports a successful transaction, but automatic order completion needs review.</p>
             <dl className="mt-3 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-[#77736d]">Amount</dt><dd>{money(item.amount,item.currency)}</dd></div><div className="flex justify-between gap-3"><dt className="text-[#77736d]">Transaction</dt><dd className="max-w-[65%] break-all text-right">{item.transaction_id}</dd></div><div className="flex justify-between gap-3"><dt className="text-[#77736d]">Reason</dt><dd>{label(item.reason)}</dd></div></dl>
-            {item.status === "pending_review" && <><p className="mt-4 text-[10px] leading-5 text-[#77736d]">Verify the transaction in the provider dashboard before recording a fulfilment or refund outcome. These controls update the case record only; they do not move money or mark the order paid.</p><div className="mt-4 flex flex-wrap gap-2">
-              <button disabled={busy === item.id} onClick={() => updateReconciliationCase(item,"fulfilled")} className="border border-[#8d9e83] px-3 py-2 text-[9px] uppercase tracking-wider disabled:opacity-50">Record fulfilled</button>
+            {item.status === "pending_review" && <><p className="mt-4 text-[10px] leading-5 text-[#77736d]">Verify the transaction in the provider dashboard before recording a fulfilment or refund outcome. These controls record the outcome after you have handled it in the provider dashboard. They do not initiate a refund. Recording a completed refund also updates the order payment status.</p><div className="mt-4 flex flex-wrap gap-2">
+              
               <button disabled={busy === item.id} onClick={() => updateReconciliationCase(item,"refund_initiated")} className="border border-[#c9a77f] px-3 py-2 text-[9px] uppercase tracking-wider disabled:opacity-50">Refund initiated</button>
               <button disabled={busy === item.id} onClick={() => updateReconciliationCase(item,"refunded")} className="border border-[#c9a77f] px-3 py-2 text-[9px] uppercase tracking-wider disabled:opacity-50">Record refunded</button>
               <button disabled={busy === item.id} onClick={() => updateReconciliationCase(item,"dismissed")} className="border border-[#d9d4ca] px-3 py-2 text-[9px] uppercase tracking-wider disabled:opacity-50">Dismiss</button>
