@@ -34,7 +34,7 @@ export default async function OrderQuotePage({ params }: { params: Promise<{ tok
         </div>
         {quote.shipping_quote_note && <div className="mt-8"><p className="eyebrow">Delivery details</p><p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#77736d]">{quote.shipping_quote_note}</p></div>}
         <OrderQuoteResponse token={token} status={quote.shipping_quote_status} />
-        {quote.shipping_quote_status === "accepted" && quote.payment_status !== "paid" && <OrderPayment token={token} />}
+        {quote.shipping_quote_status === "accepted" && quote.payment_status !== "paid" && (process.env.ONLINE_PAYMENTS_ENABLED === "true" ? <OrderPayment token={token} /> : <p className="mt-6 border border-[#dedad2] bg-[#f7f6f2] p-5 text-sm leading-6">Your delivery quote has been approved. Online payment is not enabled yet; the studio will contact you with the next steps. No payment has been taken.</p>)}
         {quote.payment_status === "paid" && <p className="mt-6 border border-[#dedad2] bg-[#f7f6f2] p-5 text-sm">Payment received. Thank you — the studio will be in touch about fulfilment.</p>}
       </section>
       <aside className="h-fit border border-[#dedad2] bg-[#f7f6f2] p-6">
@@ -43,7 +43,7 @@ export default async function OrderQuotePage({ params }: { params: Promise<{ tok
         <div className="mt-3 flex justify-between gap-4 text-sm"><span>Delivery</span><span>{money(quote.shipping_total, quote.currency)}</span></div>
         <div className="mt-5 flex justify-between gap-4 border-t border-[#dedad2] pt-5 text-base font-medium"><span>Total</span><span>{money(quote.total, quote.currency)}</span></div>
         {quote.shipping_quote_expires_at && <p className="mt-5 text-xs leading-6 text-[#77736d]">Please respond by {new Date(quote.shipping_quote_expires_at).toLocaleDateString("en-UG", { day: "numeric", month: "long", year: "numeric" })}.</p>}
-        <p className="mt-4 text-xs leading-6 text-[#77736d]">After approval, you can complete payment securely through Flutterwave when online payments are enabled. Your order is not paid until payment is verified.</p>
+        <p className="mt-4 text-xs leading-6 text-[#77736d]">After approval, the studio will arrange the next step. Online payment will become available here once checkout is fully configured. Your order is not paid until payment is verified.</p>
       </aside>
     </div>
     <Link href="/shop" className="mt-12 inline-block text-xs underline underline-offset-4">Return to the shop ↗</Link>
