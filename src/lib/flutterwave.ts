@@ -1,7 +1,8 @@
+import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { emailText, orderEmailShell, sendOrderEmail } from "@/lib/order-email";
 
-export async function verifyFlutterwaveTransaction(transactionId: string, expectedTxRef?: string) {
+export async function verifyFlutterwaveTransaction(transactionId: string, expectedTxRef?: string, expectedQuoteToken?: string) {
   const secret = process.env.FLW_SECRET_KEY;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!secret || !serviceKey) throw new Error("Payment verification is not configured.");
@@ -13,6 +14,15 @@ export async function verifyFlutterwaveTransaction(transactionId: string, expect
   if (!response.ok || result?.status !== "success" || payment?.status !== "successful") throw new Error("PAYMENT_NOT_SUCCESSFUL");
   if (expectedTxRef && payment?.tx_ref !== expectedTxRef) throw new Error("PAYMENT_REFERENCE_MISMATCH");
   const admin = createAdminClient();
+  if (expectedQuoteToken) {
+    const tokenHash = createHash("sha256").update(expectedQuoteToken).digest("hex");
+    const { data: matchingOrder, error: lookupError } = await admin.from("orders")
+      .select("id")
+      .eq("payment_reference", payment.tx_ref)
+      .eq("shipping_quote_token_hash", tokenHash)
+      .maybeSingle();
+    if (lookupError || !matchingOrder) throw new Error("PAYMENT_QUOTE_MISMATCH");
+  }
   const { data, error } = await admin.rpc("complete_flutterwave_payment", {
     p_tx_ref: payment.tx_ref,
     p_transaction_id: String(payment.id),
