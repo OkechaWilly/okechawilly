@@ -174,7 +174,7 @@ export default function OrdersManager({ initialOrders, initialReconciliationCase
           </div>}
           {reconciliationCases.filter((item) => item.order_id === selected.id).map((item) => <div key={item.id} className="mt-5 border border-[#c9a77f] bg-[#fbf7ef] p-4">
             <p className="text-[10px] uppercase tracking-[.14em] text-[#8b6943]">Payment reconciliation · {label(item.status)}</p>
-            <p className="mt-3 text-sm">Flutterwave reports a successful transaction, but automatic order completion needs review.</p>
+            <p className="mt-3 text-sm">Flutterwave reports a successful transaction, but automatic order completion needs review.</p>{item.admin_note && <p className="mt-3 border-l border-[#c9a77f] pl-3 text-xs leading-5 text-[#77736d]">Studio note: {item.admin_note}</p>}
             <dl className="mt-3 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-[#77736d]">Amount</dt><dd>{money(item.amount,item.currency)}</dd></div><div className="flex justify-between gap-3"><dt className="text-[#77736d]">Transaction</dt><dd className="max-w-[65%] break-all text-right">{item.transaction_id}</dd></div><div className="flex justify-between gap-3"><dt className="text-[#77736d]">Reason</dt><dd>{label(item.reason)}</dd></div></dl>
             {item.status === "pending_review" && <><p className="mt-4 text-[10px] leading-5 text-[#77736d]">Verify the transaction in the provider dashboard before recording a fulfilment or refund outcome. These controls record the outcome after you have handled it in the provider dashboard. They do not initiate a refund. Recording a completed refund also updates the order payment status.</p><div className="mt-4 flex flex-wrap gap-2">
               
