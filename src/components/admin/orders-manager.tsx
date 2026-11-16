@@ -43,7 +43,9 @@ export default function OrdersManager({ initialOrders, initialReconciliationCase
   }, [selected?.id, selected?.shipping_quote_total, selected?.shipping_quote_note]);
 
   const visible = orders.filter((order) => filter === "all" || order.status === filter);
-  const totalValue = orders.filter((o) => !["cancelled", "refunded"].includes(o.status)).reduce((sum, o) => sum + Number(o.total || 0), 0);
+  const activeOrders = orders.filter((order) => !["cancelled", "refunded"].includes(order.status));
+  const totalValueUGX = activeOrders.filter((order) => order.currency === "UGX").reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const totalValueUSD = activeOrders.filter((order) => order.currency === "USD").reduce((sum, order) => sum + Number(order.total || 0), 0);
 
   async function updateStatus(order: Order, status: string) {
     setBusy(order.id); setNotice("");
@@ -137,7 +139,7 @@ export default function OrdersManager({ initialOrders, initialReconciliationCase
     <div className="mt-9 grid gap-3 sm:grid-cols-3">
       <div className="border border-[#dedad2] bg-white p-5"><p className="eyebrow">All orders</p><p className="display mt-2 text-3xl">{orders.length}</p></div>
       <div className="border border-[#dedad2] bg-white p-5"><p className="eyebrow">Awaiting action</p><p className="display mt-2 text-3xl">{orders.filter((o) => ["pending", "confirmed", "processing"].includes(o.status)).length}</p></div>
-      <div className="border border-[#dedad2] bg-white p-5"><p className="eyebrow">Order value · not revenue</p><p className="display mt-2 text-2xl">{orders.length ? money(totalValue, orders[0].currency) : "—"}</p></div>
+      <div className="border border-[#dedad2] bg-white p-5"><p className="eyebrow">Order value · not revenue</p><div className="mt-3 flex items-baseline justify-between gap-3"><span className="text-xs text-[#77736d]">UGX</span><p className="display text-xl">{money(totalValueUGX,"UGX")}</p></div><div className="mt-2 flex items-baseline justify-between gap-3"><span className="text-xs text-[#77736d]">USD</span><p className="display text-xl">{money(totalValueUSD,"USD")}</p></div></div>
     </div>
     <div className="mt-10 flex flex-col justify-between gap-4 border-b border-[#dedad2] pb-4 sm:flex-row sm:items-center">
       <p className="eyebrow">{visible.length} {filter === "all" ? "orders" : label(filter) + " orders"}</p>
