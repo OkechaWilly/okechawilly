@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
+
+async function findPendingReference(supabase: ReturnType<typeof createAdminClient>, tokenHash: string) {
+  const { data } = await supabase.from("orders")
+    .select("payment_reference")
+    .eq("shipping_quote_token_hash", tokenHash)
+    .eq("payment_status", "pending")
+    .maybeSingle();
+  return data?.payment_reference || "";
+}
 
 export async function POST(request: Request) {
   const secret = process.env.FLW_SECRET_KEY;
@@ -11,6 +20,23 @@ export async function POST(request: Request) {
     const body = await request.json();
     if (typeof body.token !== "string" || !/^[a-f0-9]{64}$/.test(body.token)) return NextResponse.json({ error: "Invalid quote link." }, { status: 400 });
     const supabase = createAdminClient();
+    const tokenHash = createHash("sha256").update(body.token).digest("hex");
+    const { data: existingOrder, error: existingOrderError } = await supabase
+      .from("orders")
+      .select("payment_status,payment_checkout_url,payment_checkout_expires_at,shipping_quote_status")
+      .eq("shipping_quote_token_hash", tokenHash)
+      .maybeSingle();
+    if (existingOrderError || !existingOrder) return NextResponse.json({ error: "This order could not be found." }, { status: 404 });
+    if (existingOrder.shipping_quote_status !== "accepted") return NextResponse.json({ error: "Please approve the delivery quote before payment." }, { status: 409 });
+    if (existingOrder.payment_status === "paid") return NextResponse.json({ error: "This order has already been paid." }, { status: 409 });
+    if (existingOrder.payment_status === "pending" && existingOrder.payment_checkout_url &&
+        existingOrder.payment_checkout_expires_at && new Date(existingOrder.payment_checkout_expires_at).getTime() > Date.now()) {
+      return NextResponse.json({ paymentUrl: existingOrder.payment_checkout_url, reused: true });
+    }
+    if (existingOrder.payment_status === "pending") {
+      const { error: resetError } = await supabase.rpc("reset_flutterwave_payment", { p_tx_ref: await findPendingReference(supabase, tokenHash) });
+      if (resetError) return NextResponse.json({ error: "A previous payment attempt is still being reconciled. Please contact the studio." }, { status: 409 });
+    }
     const txRef = "OW-" + randomUUID();
     const { data, error } = await supabase.rpc("prepare_flutterwave_payment", { p_token: body.token, p_tx_ref: txRef });
     if (error || !data) return NextResponse.json({ error: error?.message.includes("QUOTE_") ? error.message.replaceAll("_", " ").toLowerCase() : "This order is not ready for payment." }, { status: 400 });
@@ -36,6 +62,15 @@ export async function POST(request: Request) {
       await supabase.rpc("reset_flutterwave_payment", { p_tx_ref: txRef });
       console.error("Flutterwave initialization failed:", response.status, JSON.stringify(result).slice(0, 500));
       return NextResponse.json({ error: "Flutterwave could not start this payment. Please try again or contact the studio." }, { status: 502 });
+    }
+    const { error: saveLinkError } = await supabase.from("orders")
+      .update({ payment_checkout_url: link })
+      .eq("payment_reference", txRef)
+      .eq("payment_status", "pending");
+    if (saveLinkError) {
+      await supabase.rpc("reset_flutterwave_payment", { p_tx_ref: txRef });
+      console.error("Could not persist Flutterwave checkout URL:", saveLinkError.message);
+      return NextResponse.json({ error: "We could not save your secure payment session. Please try again." }, { status: 500 });
     }
     return NextResponse.json({ paymentUrl: link });
   } catch (error) {
