@@ -8,7 +8,7 @@ type Quote = {
   order_number: string; customer_name: string; currency: string; subtotal: number;
   shipping_total: number; total: number; shipping_quote_note: string | null;
   shipping_quote_status: string; shipping_quote_expires_at: string | null;
-  payment_status: string; payment_checkout_expires_at: string | null; payment_checkout_available: boolean; payment_reconciliation_status: string | null; items: { title: string; quantity: number; line_total: number; options: Record<string, unknown> }[];
+  payment_status: string; payment_checkout_expires_at: string | null; payment_checkout_available: boolean; payment_reconciliation_status: string | null; items: { title: string; quantity: number; line_total: number; options: { variant_label?: string | null } }[];
 };
 const money = (amount: number, currency: string) => {
   try { return new Intl.NumberFormat("en-UG", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(amount)); }
@@ -30,7 +30,7 @@ export default async function OrderQuotePage({ params }: { params: Promise<{ tok
       <section>
         <h2 className="display text-2xl">Order items</h2>
         <div className="mt-4 divide-y divide-[#e8e5de] border-y border-[#e8e5de]">
-          {(quote.items || []).map((item, index) => <div key={index} className="flex justify-between gap-4 py-5 text-sm"><div><p>{item.title}</p><p className="mt-1 text-xs text-[#77736d]">Quantity {item.quantity}</p></div><p className="whitespace-nowrap">{money(item.line_total, quote.currency)}</p></div>)}
+          {(quote.items || []).map((item, index) => <div key={index} className="flex justify-between gap-4 py-5 text-sm"><div><p>{item.title}</p><p className="mt-1 text-xs text-[#77736d]">Quantity {item.quantity}{item.options?.variant_label ? ` · ${item.options.variant_label}` : ""}</p></div><p className="whitespace-nowrap">{money(item.line_total, quote.currency)}</p></div>)}
         </div>
         {quote.shipping_quote_note && <div className="mt-8"><p className="eyebrow">Delivery details</p><p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#77736d]">{quote.shipping_quote_note}</p></div>}
         <OrderQuoteResponse token={token} status={quote.shipping_quote_status} />
