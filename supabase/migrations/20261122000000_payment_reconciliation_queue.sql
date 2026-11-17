@@ -259,7 +259,7 @@ begin
     'shipping_quote_expires_at',v_order.shipping_quote_expires_at,
     'payment_status',v_order.payment_status,
     'payment_checkout_expires_at',v_order.payment_checkout_expires_at,
-    'payment_checkout_available',(v_order.payment_checkout_url is not null and v_order.payment_checkout_expires_at>now()),
+    'payment_checkout_available',coalesce(v_order.payment_checkout_url is not null and v_order.payment_checkout_expires_at>now(),false),
     'payment_reconciliation_status',v_reconciliation_status,
     'items',coalesce((
       select jsonb_agg(jsonb_build_object(
