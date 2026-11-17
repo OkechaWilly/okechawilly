@@ -30,14 +30,14 @@ export async function verifyFlutterwaveTransaction(transactionId: string, expect
     p_currency: String(payment.currency),
   });
   if (error) {
-    const reconciliationReasons = ["PAYMENT_STOCK_RESERVATION_EXPIRED", "PAYMENT_STOCK_CHANGED", "PAYMENT_DETAILS_MISMATCH"];
-    if (reconciliationReasons.some((reason) => error.message.includes(reason))) {
+    const reconciliationReasons = ["PAYMENT_STOCK_RESERVATION_EXPIRED", "PAYMENT_STOCK_CHANGED", "PAYMENT_DETAILS_MISMATCH", "PAYMENT_SESSION_RELEASED_AFTER_PROVIDER_CHECK"];
+    if (reconciliationReasons.some((reason) => error.message.includes(reason)) || error.message.includes("PAYMENT_NOT_FOUND")) {
       const { error: reconciliationError } = await admin.rpc("record_flutterwave_reconciliation", {
         p_tx_ref: payment.tx_ref,
         p_transaction_id: String(payment.id),
         p_amount: Number(payment.amount),
         p_currency: String(payment.currency),
-        p_reason: reconciliationReasons.find((reason) => error.message.includes(reason)),
+        p_reason: reconciliationReasons.find((reason) => error.message.includes(reason)) || "PAYMENT_SESSION_RELEASED_AFTER_PROVIDER_CHECK",
       });
       if (reconciliationError) {
         console.error("Payment reconciliation record failed:", reconciliationError.message);
