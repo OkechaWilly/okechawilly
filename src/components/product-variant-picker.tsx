@@ -25,9 +25,10 @@ export default function ProductVariantPicker({ productId, productSlug, productIm
     ? available.find((v) => (!sizeOptions.length || v.size === selectedSize) && (!finishOptions.length || v.finish === selectedFinish)) || null
     : available.find((v) => v.id === selectedVariantId) || available[0] || null;
   const selectedPrice = selected ? (currency === "UGX" ? selected.price_ugx ?? (selected.currency === "UGX" ? selected.price : null) : selected.price_usd ?? (selected.currency === "USD" ? selected.price : null)) : (currency === "UGX" ? fallbackPriceUGX ?? (fallbackCurrency === "UGX" ? fallbackPrice : null) : fallbackPriceUSD ?? (fallbackCurrency === "USD" ? fallbackPrice : null));
-  const price = isSoldOut ? "Currently unavailable" : productType === "original" ? "Price on request" : hasSeparateChoices && !selected ? "This combination is unavailable" : selected && selectedPrice != null ? formatPrice(Number(selectedPrice), currency) : selected || variants.length === 0 ? (selectedPrice == null ? `Not yet priced in ${currency}` : formatPrice(Number(selectedPrice), currency)) : "Currently unavailable";
+  const hasValidPrice = selectedPrice != null && Number.isFinite(Number(selectedPrice)) && Number(selectedPrice) >= 0;
+  const price = isSoldOut ? "Currently unavailable" : productType === "original" ? "Price on request" : hasSeparateChoices && !selected ? "This combination is unavailable" : (selected || variants.length === 0) ? (hasValidPrice ? formatPrice(Number(selectedPrice), currency) : `Not yet priced in ${currency}`) : "Currently unavailable";
   const subject = selected ? `Enquiry about ${productTitle} — ${selected.label}` : `Enquiry about ${productTitle}`;
-  const canAdd = currencyReady && productType !== "original" && !isSoldOut && Boolean(selected || variants.length === 0) && selectedPrice !== null && selectedPrice !== undefined;
+  const canAdd = currencyReady && productType !== "original" && !isSoldOut && Boolean(selected || variants.length === 0) && hasValidPrice;
   const chosenPrice = selectedPrice;
   const chosenCurrency = currency;
 
