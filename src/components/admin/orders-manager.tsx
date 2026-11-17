@@ -73,7 +73,7 @@ export default function OrdersManager({ initialOrders, initialReconciliationCase
     });
     if (error) setNotice("Could not update reconciliation case: " + error.message);
     else {
-      setReconciliationCases((current) => current.map((entry) => entry.id === item.id ? { ...entry, status } : entry));
+      setReconciliationCases((current) => current.map((entry) => entry.id === item.id ? { ...entry, status, admin_note: note.trim() } : entry));
       if (status === "refunded") {
         setOrders((current) => current.map((order) => order.id === item.order_id ? { ...order, payment_status: "refunded" } : order));
         setSelected((current) => current?.id === item.order_id ? { ...current, payment_status: "refunded" } : current);
