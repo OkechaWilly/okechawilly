@@ -20,6 +20,7 @@ export async function POST(request: Request) {
     if (existingOrderError || !existingOrder) return NextResponse.json({ error: "This order could not be found." }, { status: 404 });
     if (existingOrder.shipping_quote_status !== "accepted") return NextResponse.json({ error: "Please approve the delivery quote before payment." }, { status: 409 });
     if (existingOrder.payment_status === "paid") return NextResponse.json({ error: "This order has already been paid." }, { status: 409 });
+    if (existingOrder.payment_status === "refunded") return NextResponse.json({ error: "This order has been refunded. Please contact the studio if you would like to place a new order." }, { status: 409 });
     if (existingOrder.payment_status === "pending" && existingOrder.payment_checkout_url &&
         existingOrder.payment_checkout_expires_at && new Date(existingOrder.payment_checkout_expires_at).getTime() > Date.now()) {
       return NextResponse.json({ paymentUrl: existingOrder.payment_checkout_url, reused: true });
