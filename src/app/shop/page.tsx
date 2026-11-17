@@ -110,7 +110,11 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
   // Works that can be bought come first; sold works follow in their own section so they never push
   // available work out of sight.
   const onSale = visible.filter((product) => !availability(product));
-  const soldWorks = visible.filter((product) => availability(product));
+  const unavailableWorks = visible.filter((product) => availability(product)?.label === "Currently unavailable");
+  const soldWorks = visible.filter((product) => {
+    const state = availability(product);
+    return state !== null && state.label !== "Currently unavailable";
+  });
   // A filter is only useful when there is more than one kind of thing to filter.
   const showFilter = presentCategories.length > 1;
   const hasPrints = available.some((product) => categoryOfType(product.product_type)?.slug === "prints");
@@ -177,6 +181,17 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
               <p className="mt-12 max-w-xl text-sm leading-7 text-[#77736d]">
                 Nothing {activeCategory ? `in ${activeCategory.title.toLowerCase()} ` : ""}is available to buy right now. New work is added regularly, and you are welcome to <Link href="/contact" className="underline underline-offset-4">get in touch</Link> about something similar.
               </p>
+            )}
+
+            {unavailableWorks.length > 0 && (
+              <div className={onSale.length > 0 ? "mt-20 border-t border-[#ded9d0] pt-14" : "mt-14"}>
+                <p className="eyebrow">Temporarily unavailable</p>
+                <h3 className="display mt-3 text-3xl md:text-4xl">Not available to order right now.</h3>
+                <p className="mt-3 max-w-xl text-sm leading-7 text-[#77736d]">Some listings or formats are currently unavailable. You can still open a listing or contact the studio about future availability.</p>
+                <div className="mt-10 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+                  {unavailableWorks.map((product) => <ProductCard key={product.id} product={product} currency={currency} />)}
+                </div>
+              </div>
             )}
 
             {soldWorks.length > 0 && (
