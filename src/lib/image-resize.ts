@@ -7,6 +7,8 @@
 
 export const MAX_EDGE = 2400; // longest side in pixels
 export const JPEG_QUALITY = 0.88;
+export const MAX_IMAGE_UPLOAD_BYTES = 20 * 1024 * 1024;
+const SUPPORTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const LEAVE_ALONE_BELOW_BYTES = 600 * 1024; // already small enough
 
 /** Largest size that fits inside maxEdge while keeping the aspect ratio. */
@@ -44,9 +46,14 @@ async function decode(file: File): Promise<Decoded> {
 }
 
 export async function prepareImageForUpload(file: File): Promise<File> {
+  if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
+    throw new Error("Please upload a JPG, PNG or WebP image.");
+  }
+  if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+    throw new Error("Each image must be 20 MB or smaller.");
+  }
   try {
     if (typeof document === "undefined") return file;
-    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return file;
 
     const decoded = await decode(file);
     try {
