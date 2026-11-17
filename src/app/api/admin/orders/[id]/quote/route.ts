@@ -36,10 +36,37 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       ${quote.shipping_quote_note ? `<p style="font-size:14px;line-height:1.7">${emailText(quote.shipping_quote_note)}</p>` : ""}
       <p style="margin:28px 0"><a href="${quoteUrl}" style="display:inline-block;background:#242320;color:#fff;padding:15px 22px;text-decoration:none;font-size:12px">Review and respond to quote</a></p>
       <p style="font-size:12px;color:#77736d">This link expires in seven days. No payment is taken by reviewing this quote.</p>`);
-    const customerEmail = await sendOrderEmail(quote.customer_email, `Delivery quote for order ${quote.order_number}`, customerHtml);
+    let emailSent = false;
+    let emailReason = "Email delivery was not confirmed.";
+    try {
+      const customerEmail = await sendOrderEmail(
+        quote.customer_email,
+        `Delivery quote for order ${quote.order_number}`,
+        customerHtml
+      );
+      emailSent = customerEmail.sent;
+      emailReason = customerEmail.reason;
+    } catch (emailError) {
+      // The quote is already committed. Do not report a failed quote operation
+      // merely because the email provider is temporarily unavailable.
+      console.error("Quote saved but customer email failed:", emailError);
+      emailReason = "The quote was saved, but the customer email could not be sent.";
+    }
+
     const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL;
-    if (adminEmail) await sendOrderEmail(adminEmail, `Delivery quote created · ${quote.order_number}`, orderEmailShell(`<h2>Quote created</h2><p><a href="${quoteUrl}">Customer quote link</a></p><p>${emailText(quote.customer_name)} · ${emailText(quote.customer_email)}</p>`));
-    return NextResponse.json({ quoteUrl, quote, emailSent: customerEmail.sent, emailReason: customerEmail.reason });
+    if (adminEmail) {
+      try {
+        await sendOrderEmail(
+          adminEmail,
+          `Delivery quote created · ${quote.order_number}`,
+          orderEmailShell(`<h2>Quote created</h2><p><a href="${quoteUrl}">Customer quote link</a></p><p>${emailText(quote.customer_name)} · ${emailText(quote.customer_email)}</p>`)
+        );
+      } catch (emailError) {
+        console.error("Quote saved but Studio notification failed:", emailError);
+      }
+    }
+
+    return NextResponse.json({ quoteUrl, quote, emailSent, emailReason });
   } catch (error) {
     console.error("Quote route error:", error);
     return NextResponse.json({ error: "We could not prepare the delivery quote. Please try again." }, { status: 500 });
