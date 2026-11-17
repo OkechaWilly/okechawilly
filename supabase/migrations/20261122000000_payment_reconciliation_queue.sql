@@ -52,14 +52,25 @@ begin
   if p_tx_ref is null or p_transaction_id is null
      or p_amount is null or p_amount < 0
      or upper(coalesce(p_currency,'')) not in ('UGX','USD')
-     or p_reason not in ('PAYMENT_STOCK_RESERVATION_EXPIRED','PAYMENT_STOCK_CHANGED','PAYMENT_DETAILS_MISMATCH') then
+     or p_reason not in ('PAYMENT_STOCK_RESERVATION_EXPIRED','PAYMENT_STOCK_CHANGED','PAYMENT_DETAILS_MISMATCH','PAYMENT_SESSION_RELEASED_AFTER_PROVIDER_CHECK') then
     raise exception 'RECONCILIATION_INVALID_DETAILS';
   end if;
 
   select * into v_order from public.orders
   where payment_reference=p_tx_ref and payment_provider='flutterwave'
   for update;
-  if not found then raise exception 'PAYMENT_NOT_FOUND'; end if;
+  if not found then
+    -- A hosted link may complete after Studio has verified an expired session
+    -- and released it. Keep the original reference auditable and reconcile it.
+    select o.* into v_order
+    from public.orders o
+    join public.payment_session_events e on e.order_id=o.id
+    where e.payment_reference=p_tx_ref
+    order by e.created_at desc
+    limit 1
+    for update of o;
+    if not found then raise exception 'PAYMENT_NOT_FOUND'; end if;
+  end if;
 
   insert into public.payment_reconciliation_cases(
     order_id,order_number,tx_ref,transaction_id,amount,currency,reason
