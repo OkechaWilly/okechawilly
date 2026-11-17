@@ -63,9 +63,7 @@ export default function OrdersManager({ initialOrders, initialReconciliationCase
   async function updateReconciliationCase(item: ReconciliationCase, status: string) {
     const note = window.prompt(status === "refunded"
       ? "Enter the provider refund reference or confirmation details:"
-      : status === "refund_initiated"
-        ? "Enter the provider refund reference or the action taken:"
-        : "Explain why this reconciliation case is being dismissed:");
+      : "Enter the provider refund reference or the action taken:");
     if (!note || note.trim().length < 8) return;
     setBusy(item.id); setNotice("");
     const { error } = await supabase.rpc("resolve_payment_reconciliation_case", {
@@ -180,7 +178,6 @@ export default function OrdersManager({ initialOrders, initialReconciliationCase
               
               <button disabled={busy === item.id} onClick={() => updateReconciliationCase(item,"refund_initiated")} className="border border-[#c9a77f] px-3 py-2 text-[9px] uppercase tracking-wider disabled:opacity-50">Refund initiated</button>
               <button disabled={busy === item.id} onClick={() => updateReconciliationCase(item,"refunded")} className="border border-[#c9a77f] px-3 py-2 text-[9px] uppercase tracking-wider disabled:opacity-50">Record refunded</button>
-              <button disabled={busy === item.id} onClick={() => updateReconciliationCase(item,"dismissed")} className="border border-[#d9d4ca] px-3 py-2 text-[9px] uppercase tracking-wider disabled:opacity-50">Dismiss</button>
             </div></>}
           </div>)}
         </div>
