@@ -52,7 +52,7 @@ begin
   if p_tx_ref is null or p_transaction_id is null
      or p_amount is null or p_amount < 0
      or upper(coalesce(p_currency,'')) not in ('UGX','USD')
-     or p_reason not in ('PAYMENT_STOCK_RESERVATION_EXPIRED','PAYMENT_STOCK_CHANGED','PAYMENT_DETAILS_MISMATCH','PAYMENT_SESSION_RELEASED_AFTER_PROVIDER_CHECK') then
+     or p_reason is null or p_reason not in ('PAYMENT_STOCK_RESERVATION_EXPIRED','PAYMENT_STOCK_CHANGED','PAYMENT_DETAILS_MISMATCH','PAYMENT_SESSION_RELEASED_AFTER_PROVIDER_CHECK') then
     raise exception 'RECONCILIATION_INVALID_DETAILS';
   end if;
 
