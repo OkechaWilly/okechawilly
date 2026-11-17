@@ -31,6 +31,12 @@ export async function POST(request: Request) {
     });
     if (error) {
       console.error("Order submission failed:", error.message);
+      if (error.message.includes("ORDER_IDEMPOTENCY_KEY_REUSED")) {
+        return NextResponse.json(
+          { error: "This checkout attempt has changed. Please refresh your checkout and submit the order again." },
+          { status: 409 }
+        );
+      }
       return NextResponse.json({ error: error.message.includes("ORDER_") ? error.message.replace("ORDER_", "").replaceAll("_", " ").toLowerCase() : "We could not submit this order. Please check the details and try again." }, { status: 400 });
     }
     const result = Array.isArray(data) ? data[0] : data;
@@ -56,7 +62,10 @@ export async function POST(request: Request) {
         console.error("Order saved but notification delivery failed:", emailError);
       }
     }
-    return NextResponse.json({ orderNumber: result.order_number, reused: !result.created }, { status: 201 });
+    return NextResponse.json(
+      { orderNumber: result.order_number, reused: !result.created },
+      { status: result.created ? 201 : 200 }
+    );
   } catch (error) {
     console.error("Unexpected order submission error:", error);
     return NextResponse.json({ error: "We could not submit this order. Please try again." }, { status: 500 });
