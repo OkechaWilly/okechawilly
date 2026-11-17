@@ -45,7 +45,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         customerHtml
       );
       emailSent = customerEmail.sent;
-      emailReason = customerEmail.reason;
+      emailReason = customerEmail.reason ?? "Email delivery could not be confirmed.";
     } catch (emailError) {
       // The quote is already committed. Do not report a failed quote operation
       // merely because the email provider is temporarily unavailable.
