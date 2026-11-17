@@ -27,12 +27,6 @@ export default function CheckoutPage() {
     if (!items.length || busy) return;
     if (items.some((item) => item.currency !== currency)) { setError("Your bag contains mixed currencies. Please return to the bag and resolve this before checkout."); return; }
     setBusy(true); setError("");
-    const cartFingerprint = JSON.stringify(items.map((item) => ({
-      productId: item.productId,
-      variantId: item.variantId,
-      quantity: item.quantity,
-      currency: item.currency,
-    })));
     const orderPayload = {
       customer: { name: form.name, email: form.email, phone: form.phone },
       shippingAddress: { country: form.country, address: form.address, city: form.city, postalCode: form.postalCode },
@@ -41,29 +35,32 @@ export default function CheckoutPage() {
       items: items.map((item) => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity })),
     };
     try {
-      // Store only a SHA-256 digest in sessionStorage, never the customer's
-      // contact or delivery details. Include every server-fingerprinted field.
+      // Store only a SHA-256 digest in sessionStorage, never contact or
+      // delivery details. Bind retries to every field fingerprinted by SQL.
       const fingerprint = await fingerprintPayload(orderPayload);
-      let requestId = requestIdRef.current?.fingerprint === fingerprint ? requestIdRef.current.id : null;
-    if (!requestId) {
+      let requestId = requestIdRef.current?.fingerprint === fingerprint
+        ? requestIdRef.current.id
+        : null;
+      if (!requestId) {
+        try {
+          const saved = JSON.parse(sessionStorage.getItem(requestStorageKey) || "null") as
+            | { id?: string; fingerprint?: string; createdAt?: number }
+            | null;
+          if (
+            saved?.id &&
+            saved.fingerprint === fingerprint &&
+            typeof saved.createdAt === "number" &&
+            Date.now() - saved.createdAt < 2 * 60 * 60 * 1000
+          ) requestId = saved.id;
+        } catch { /* A fresh idempotency key is created when storage is unavailable. */ }
+      }
+      if (!requestId) requestId = crypto.randomUUID();
+      requestIdRef.current = { id: requestId, fingerprint };
       try {
-        const saved = JSON.parse(sessionStorage.getItem(requestStorageKey) || "null") as
-          | { id?: string; fingerprint?: string; createdAt?: number }
-          | null;
-        if (
-          saved?.id && (saved.fingerprint === fingerprint || saved.fingerprint === cartFingerprint) &&
-          typeof saved.createdAt === "number" &&
-          Date.now() - saved.createdAt < 2 * 60 * 60 * 1000
-        ) requestId = saved.id;
-      } catch { /* A fresh idempotency key is created when session storage is unavailable. */ }
-    }
-    if (!requestId) requestId = crypto.randomUUID();
-    requestIdRef.current = { id: requestId, fingerprint };
-    try {
-      sessionStorage.setItem(requestStorageKey, JSON.stringify({
-        id: requestId, fingerprint, createdAt: Date.now(),
-      }));
-    } catch { /* The in-memory key still protects retries during this page session. */ }
+        sessionStorage.setItem(requestStorageKey, JSON.stringify({
+          id: requestId, fingerprint, createdAt: Date.now(),
+        }));
+      } catch { /* The in-memory key still protects retries during this page session. */ }
       const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         requestId,
         ...orderPayload,
