@@ -30,7 +30,7 @@ export async function verifyFlutterwaveTransaction(transactionId: string, expect
     p_currency: String(payment.currency),
   });
   if (error) {
-    const reconciliationReasons = ["PAYMENT_STOCK_RESERVATION_EXPIRED", "PAYMENT_STOCK_CHANGED"];
+    const reconciliationReasons = ["PAYMENT_STOCK_RESERVATION_EXPIRED", "PAYMENT_STOCK_CHANGED", "PAYMENT_DETAILS_MISMATCH"];
     if (reconciliationReasons.some((reason) => error.message.includes(reason))) {
       const { error: reconciliationError } = await admin.rpc("record_flutterwave_reconciliation", {
         p_tx_ref: payment.tx_ref,
