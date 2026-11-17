@@ -40,10 +40,11 @@ export default function CheckoutPage() {
       currency,
       items: items.map((item) => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity })),
     };
-    // Store only a SHA-256 digest in sessionStorage, never the customer's
-    // contact or delivery details. Include every server-fingerprinted field.
-    const fingerprint = await fingerprintPayload(orderPayload);
-    let requestId = requestIdRef.current?.fingerprint === fingerprint ? requestIdRef.current.id : null;
+    try {
+      // Store only a SHA-256 digest in sessionStorage, never the customer's
+      // contact or delivery details. Include every server-fingerprinted field.
+      const fingerprint = await fingerprintPayload(orderPayload);
+      let requestId = requestIdRef.current?.fingerprint === fingerprint ? requestIdRef.current.id : null;
     if (!requestId) {
       try {
         const saved = JSON.parse(sessionStorage.getItem(requestStorageKey) || "null") as
@@ -63,7 +64,6 @@ export default function CheckoutPage() {
         id: requestId, fingerprint, createdAt: Date.now(),
       }));
     } catch { /* The in-memory key still protects retries during this page session. */ }
-    try {
       const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         requestId,
         ...orderPayload,
