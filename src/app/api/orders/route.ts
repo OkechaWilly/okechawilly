@@ -36,19 +36,25 @@ export async function POST(request: Request) {
     const result = Array.isArray(data) ? data[0] : data;
     if (!result?.order_number) return NextResponse.json({ error: "The order could not be confirmed. Please contact the studio." }, { status: 500 });
     if (result.created) {
-      const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL;
-      await sendOrderEmail(
-      customer.email.trim().toLowerCase(),
-      "We received your order request · " + result.order_number,
-      orderEmailShell(`<h1 style="font-size:26px;font-weight:400">Your order request is with the studio.</h1>
-        <p style="font-size:14px;line-height:1.7">Hello ${emailText(customer.name.trim())}, thank you. We have received order <strong>${emailText(result.order_number)}</strong>.</p>
-        <p style="font-size:14px;line-height:1.7">We will review availability and calculate delivery individually, then send you the complete total for approval. No payment has been taken.</p>`)
-    );
-      if (adminEmail) await sendOrderEmail(
-      adminEmail,
-      "New order request · " + result.order_number,
-      orderEmailShell(`<h2>New order request</h2><p><strong>${emailText(result.order_number)}</strong></p><p>${emailText(customer.name.trim())} · ${emailText(customer.email.trim())}</p><p>Open Studio → Orders to review availability and prepare a delivery quote.</p>`)
-      );
+      try {
+        const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL;
+        await sendOrderEmail(
+          customer.email.trim().toLowerCase(),
+          "We received your order request · " + result.order_number,
+          orderEmailShell(`<h1 style="font-size:26px;font-weight:400">Your order request is with the studio.</h1>
+            <p style="font-size:14px;line-height:1.7">Hello ${emailText(customer.name.trim())}, thank you. We have received order <strong>${emailText(result.order_number)}</strong>.</p>
+            <p style="font-size:14px;line-height:1.7">We will review availability and calculate delivery individually, then send you the complete total for approval. No payment has been taken.</p>`)
+        );
+        if (adminEmail) await sendOrderEmail(
+          adminEmail,
+          "New order request · " + result.order_number,
+          orderEmailShell(`<h2>New order request</h2><p><strong>${emailText(result.order_number)}</strong></p><p>${emailText(customer.name.trim())} · ${emailText(customer.email.trim())}</p><p>Open Studio → Orders to review availability and prepare a delivery quote.</p>`)
+        );
+      } catch (emailError) {
+        // The order is already committed. Never tell the customer the order failed
+        // just because a notification provider is unavailable; Studio can still see it.
+        console.error("Order saved but notification delivery failed:", emailError);
+      }
     }
     return NextResponse.json({ orderNumber: result.order_number, reused: !result.created }, { status: 201 });
   } catch (error) {
