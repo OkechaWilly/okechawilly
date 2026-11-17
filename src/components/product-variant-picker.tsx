@@ -12,7 +12,7 @@ function formatPrice(price: number, currency: string) {
 }
 
 export default function ProductVariantPicker({ productId, productSlug, productImage, productTitle, productType, variants, fallbackPrice, fallbackCurrency, fallbackPriceUGX, fallbackPriceUSD, isSoldOut = false }: { productId: string; productSlug: string; productImage: string | null; productTitle: string; productType: string; variants: Variant[]; fallbackPrice: number | null; fallbackCurrency: string; fallbackPriceUGX?: number | null; fallbackPriceUSD?: number | null; isSoldOut?: boolean }) {
-  const { addItem, currency } = useCart();
+  const { addItem, currency, currencyReady } = useCart();
   const [addError, setAddError] = useState("");
   const available = useMemo(() => isSoldOut ? [] : variants.filter((v) => v.is_available && (v.stock_quantity == null || v.stock_quantity > 0)), [variants, isSoldOut]);
   const [selectedSize, setSelectedSize] = useState(available[0]?.size || "");
@@ -27,7 +27,7 @@ export default function ProductVariantPicker({ productId, productSlug, productIm
   const selectedPrice = selected ? (currency === "UGX" ? selected.price_ugx ?? (selected.currency === "UGX" ? selected.price : null) : selected.price_usd ?? (selected.currency === "USD" ? selected.price : null)) : (currency === "UGX" ? fallbackPriceUGX ?? (fallbackCurrency === "UGX" ? fallbackPrice : null) : fallbackPriceUSD ?? (fallbackCurrency === "USD" ? fallbackPrice : null));
   const price = isSoldOut ? "Currently unavailable" : productType === "original" ? "Price on request" : hasSeparateChoices && !selected ? "This combination is unavailable" : selected && selectedPrice != null ? formatPrice(Number(selectedPrice), currency) : selected || variants.length === 0 ? (selectedPrice == null ? `Not yet priced in ${currency}` : formatPrice(Number(selectedPrice), currency)) : "Currently unavailable";
   const subject = selected ? `Enquiry about ${productTitle} — ${selected.label}` : `Enquiry about ${productTitle}`;
-  const canAdd = productType !== "original" && !isSoldOut && Boolean(selected || variants.length === 0) && selectedPrice !== null && selectedPrice !== undefined;
+  const canAdd = currencyReady && productType !== "original" && !isSoldOut && Boolean(selected || variants.length === 0) && selectedPrice !== null && selectedPrice !== undefined;
   const chosenPrice = selectedPrice;
   const chosenCurrency = currency;
 
@@ -59,6 +59,7 @@ export default function ProductVariantPicker({ productId, productSlug, productIm
       </div>}
     </div>}
     <p className="mt-5 text-lg font-medium">{price}</p>
+    {!currencyReady && <p className="mt-2 text-xs text-[#77736d]">Preparing local pricing…</p>}
     {isSoldOut && <p className="mt-2 text-xs text-[#9b5947]">This listing is not available to buy at the moment. You can still contact the studio about the work, something similar, or future availability.</p>}
     {!isSoldOut && variants.length > 0 && available.length === 0 && <p className="mt-2 text-xs text-[#9b5947]">All configured formats are currently unavailable. Please contact the studio about future availability.</p>}
     {canAdd && <button type="button" onClick={() => { setAddError(""); const added = addItem({ productId, slug: productSlug, image: productImage, title: productTitle, variantId: selected?.id || null, variantLabel: selected?.label || null, unitPrice: Number(chosenPrice), currency: chosenCurrency }); if (!added) setAddError("Your bag uses a different currency. Empty it before changing market currency."); }} className="mt-7 block w-full bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] text-[#f7f6f2] transition-colors hover:bg-[#9c8062]">Add to bag ↗</button>}
