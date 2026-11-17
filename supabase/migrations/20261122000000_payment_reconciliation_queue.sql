@@ -215,3 +215,61 @@ end;
 $$;
 revoke all on function public.release_expired_flutterwave_session(uuid,text) from public,anon;
 grant execute on function public.release_expired_flutterwave_session(uuid,text) to authenticated;
+
+
+-- Return only safe payment-state metadata on the existing quote bearer page.
+-- Never expose the hosted checkout URL itself in the quote RPC payload.
+create or replace function public.get_order_shipping_quote(p_token text)
+returns jsonb
+language plpgsql
+security definer
+set search_path=public,extensions,pg_temp
+as $$
+declare
+  v_order public.orders%rowtype;
+  v_reconciliation_status text;
+begin
+  if p_token is null or length(p_token)<>64 then return null; end if;
+  select * into v_order from public.orders
+  where shipping_quote_token_hash=encode(digest(p_token,'sha256'),'hex')
+  limit 1;
+  if not found then return null; end if;
+
+  if v_order.shipping_quote_status='quoted'
+     and v_order.shipping_quote_expires_at is not null
+     and v_order.shipping_quote_expires_at<now() then
+    update public.orders set shipping_quote_status='expired' where id=v_order.id;
+    v_order.shipping_quote_status:='expired';
+  end if;
+
+  select c.status into v_reconciliation_status
+  from public.payment_reconciliation_cases c
+  where c.order_id=v_order.id
+  order by c.created_at desc limit 1;
+
+  return jsonb_build_object(
+    'order_number',v_order.order_number,
+    'customer_name',v_order.customer_name,
+    'currency',v_order.currency,
+    'subtotal',v_order.subtotal,
+    'shipping_total',v_order.shipping_total,
+    'total',v_order.total,
+    'shipping_quote_note',v_order.shipping_quote_note,
+    'shipping_quote_status',v_order.shipping_quote_status,
+    'shipping_quote_expires_at',v_order.shipping_quote_expires_at,
+    'payment_status',v_order.payment_status,
+    'payment_checkout_expires_at',v_order.payment_checkout_expires_at,
+    'payment_checkout_available',(v_order.payment_checkout_url is not null and v_order.payment_checkout_expires_at>now()),
+    'payment_reconciliation_status',v_reconciliation_status,
+    'items',coalesce((
+      select jsonb_agg(jsonb_build_object(
+        'title',oi.product_title,'quantity',oi.quantity,
+        'line_total',oi.line_total,'options',oi.selected_options
+      ) order by oi.id)
+      from public.order_items oi where oi.order_id=v_order.id
+    ),'[]'::jsonb)
+  );
+end;
+$$;
+revoke all on function public.get_order_shipping_quote(text) from public;
+grant execute on function public.get_order_shipping_quote(text) to anon,authenticated;
