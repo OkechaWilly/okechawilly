@@ -23,14 +23,14 @@ export async function POST(request: Request) {
       const action = result.decision === "accepted" ? "accepted" : "declined";
       const adminEmail = process.env.ORDER_NOTIFICATION_EMAIL;
       if (adminEmail) {
-      try {
-        await sendOrderEmail(adminEmail, `Customer ${action} delivery quote · ${result.order_number}`, orderEmailShell(`
-          <h2>Delivery quote ${action}</h2><p>${emailText(result.customer_name)} (${emailText(result.customer_email)}) has ${action} the quote for <strong>${emailText(result.order_number)}</strong>.</p>
-          <p>Order total: ${emailText(result.currency)} ${Number(result.total).toLocaleString("en-UG")}</p><p>Open Studio → Orders to continue.</p>`));
-      } catch (emailError) {
-        console.error("Quote response saved but Studio notification failed:", emailError);
+        try {
+          await sendOrderEmail(adminEmail, `Customer ${action} delivery quote · ${result.order_number}`, orderEmailShell(`
+            <h2>Delivery quote ${action}</h2><p>${emailText(result.customer_name)} (${emailText(result.customer_email)}) has ${action} the quote for <strong>${emailText(result.order_number)}</strong>.</p>
+            <p>Order total: ${emailText(result.currency)} ${Number(result.total).toLocaleString("en-UG")}</p><p>Open Studio → Orders to continue.</p>`));
+        } catch (emailError) {
+          console.error("Quote response saved but Studio notification failed:", emailError);
+        }
       }
-    }
       try {
         await sendOrderEmail(result.customer_email, `Quote response received · ${result.order_number}`, orderEmailShell(`
           <h2>Thank you for responding.</h2><p>Your delivery quote for <strong>${emailText(result.order_number)}</strong> has been ${emailText(result.decision)}.</p>
