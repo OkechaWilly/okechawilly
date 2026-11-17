@@ -36,7 +36,7 @@ export default async function OrderQuotePage({ params }: { params: Promise<{ tok
         <OrderQuoteResponse token={token} status={quote.shipping_quote_status} />
         {quote.payment_status === "paid" && <p className="mt-6 border border-[#dedad2] bg-[#f7f6f2] p-5 text-sm">Payment received. Thank you — the studio will be in touch about fulfilment.</p>}
         {quote.payment_status === "refunded" && <p className="mt-6 border border-[#dedad2] bg-[#f7f6f2] p-5 text-sm leading-6">This payment has been recorded as refunded. Please contact the studio if you need any further assistance.</p>}
-        {quote.payment_status === "pending" && ["pending_review","refund_initiated"].includes(quote.payment_reconciliation_status || "") && <p role="status" className="mt-6 border border-[#c9a77f] bg-[#fbf7ef] p-5 text-sm leading-6">Your payment was confirmed by the payment provider and is being reviewed by the studio. Please do not attempt another payment. We will update you as soon as the review is complete.</p>}
+        {["pending_review","refund_initiated"].includes(quote.payment_reconciliation_status || "") && <p role="status" className="mt-6 border border-[#c9a77f] bg-[#fbf7ef] p-5 text-sm leading-6">A payment for this order is being reviewed by the studio with the payment provider. Please do not attempt another payment. We will update you as soon as the review is complete.</p>}
         {quote.shipping_quote_status === "accepted" && quote.payment_status !== "paid" && quote.payment_status !== "refunded" && !["pending_review","refund_initiated"].includes(quote.payment_reconciliation_status || "") && (process.env.ONLINE_PAYMENTS_ENABLED === "true"
           ? quote.payment_status === "pending"
             ? quote.payment_checkout_available
