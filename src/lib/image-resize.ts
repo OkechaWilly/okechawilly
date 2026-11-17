@@ -80,6 +80,6 @@ export async function prepareImageForUpload(file: File): Promise<File> {
       decoded.release();
     }
   } catch {
-    return file;
+    throw new Error("This file could not be processed as a valid JPG, PNG or WebP image. Please choose another image.");
   }
 }
