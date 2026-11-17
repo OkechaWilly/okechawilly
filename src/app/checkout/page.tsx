@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart-provider";
 
 const inputClass = "mt-2 w-full border border-[#d9d4ca] bg-white px-4 py-3 text-sm outline-none focus:border-[#9c8062]";
+async function fingerprintPayload(payload: unknown) {
+  const bytes = new TextEncoder().encode(JSON.stringify(payload));
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
 function money(value: number, currency: string) { try { return new Intl.NumberFormat("en-UG", { style: "currency", currency, maximumFractionDigits: 0 }).format(value); } catch { return currency + " " + value.toLocaleString("en-UG"); } }
 export default function CheckoutPage() {
   const { items, clearCart, currency } = useCart();
@@ -22,12 +27,22 @@ export default function CheckoutPage() {
     if (!items.length || busy) return;
     if (items.some((item) => item.currency !== currency)) { setError("Your bag contains mixed currencies. Please return to the bag and resolve this before checkout."); return; }
     setBusy(true); setError("");
-    const fingerprint = JSON.stringify(items.map((item) => ({
+    const cartFingerprint = JSON.stringify(items.map((item) => ({
       productId: item.productId,
       variantId: item.variantId,
       quantity: item.quantity,
       currency: item.currency,
     })));
+    const orderPayload = {
+      customer: { name: form.name, email: form.email, phone: form.phone },
+      shippingAddress: { country: form.country, address: form.address, city: form.city, postalCode: form.postalCode },
+      note: form.note,
+      currency,
+      items: items.map((item) => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity })),
+    };
+    // Store only a SHA-256 digest in sessionStorage, never the customer's
+    // contact or delivery details. Include every server-fingerprinted field.
+    const fingerprint = await fingerprintPayload(orderPayload);
     let requestId = requestIdRef.current?.fingerprint === fingerprint ? requestIdRef.current.id : null;
     if (!requestId) {
       try {
@@ -35,7 +50,7 @@ export default function CheckoutPage() {
           | { id?: string; fingerprint?: string; createdAt?: number }
           | null;
         if (
-          saved?.id && saved.fingerprint === fingerprint &&
+          saved?.id && (saved.fingerprint === fingerprint || saved.fingerprint === cartFingerprint) &&
           typeof saved.createdAt === "number" &&
           Date.now() - saved.createdAt < 2 * 60 * 60 * 1000
         ) requestId = saved.id;
@@ -51,11 +66,7 @@ export default function CheckoutPage() {
     try {
       const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         requestId,
-        customer: { name: form.name, email: form.email, phone: form.phone },
-        shippingAddress: { country: form.country, address: form.address, city: form.city, postalCode: form.postalCode },
-        note: form.note,
-        currency,
-        items: items.map((item) => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity })),
+        ...orderPayload,
       }) });
       const result = await response.json();
       if (!response.ok) {
