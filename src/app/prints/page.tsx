@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { cookies, headers } from "next/headers";
 import Image from "next/image";
-import { PRODUCT_TYPE_LABELS, PRINT_TYPES, isCurrentlyAvailable, priceLabel } from "@/lib/shop";
+import { PRODUCT_TYPE_LABELS, PRINT_TYPES, availability, isCurrentlyAvailable, priceLabel } from "@/lib/shop";
 import { pageMetadata } from "@/lib/site";
 import ShopPageBanner from "@/components/shop-page-banner";
 
@@ -82,12 +82,12 @@ export default async function FineArtPrintsPage() {
                     </div>
                     <p className="eyebrow mt-5">{PRODUCT_TYPE_LABELS[print.product_type]}</p>
                     <h3 className="display mt-2 text-2xl">{print.title}</h3>
-                    {!isCurrentlyAvailable(print) && <span className="mt-3 inline-flex border border-[#d9d4ca] px-3 py-2 text-[9px] uppercase tracking-[.14em] text-[#77736d]">Sold out</span>}
+                    {!isCurrentlyAvailable(print) && <span className="mt-3 inline-flex border border-[#d9d4ca] px-3 py-2 text-[9px] uppercase tracking-[.14em] text-[#77736d]">{availability(print)?.label}</span>}
                   </Link>
                   <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#ded9d0] pt-3 text-xs text-[#77736d]">
                     <span>{priceLabel(print, currency)}</span>
                     {!isCurrentlyAvailable(print) ? (
-                      <span>Sold out</span>
+                      <span>{availability(print)?.label || "Unavailable"}</span>
                     ) : print.product_type === "limited_print" && print.edition_size != null ? (
                       <span>{Math.max(0, print.edition_size - (print.edition_sold ?? 0))} remaining</span>
                     ) : (
