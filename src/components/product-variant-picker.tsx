@@ -19,7 +19,7 @@ export default function ProductVariantPicker({ productId, productSlug, productIm
   const [selectedFinish, setSelectedFinish] = useState(available[0]?.finish || "");
   const [selectedVariantId, setSelectedVariantId] = useState(available[0]?.id || "");
   const sizeOptions = [...new Set(available.map((v) => v.size).filter((v): v is string => Boolean(v)))];
-  const finishOptions = [...new Set(available.filter((v) => !selectedSize || !v.size || v.size === selectedSize).map((v) => v.finish).filter((v): v is string => Boolean(v)))];
+  const finishOptions = [...new Set(available.filter((v) => !sizeOptions.length || v.size === selectedSize).map((v) => v.finish).filter((v): v is string => Boolean(v)))];
   const hasSeparateChoices = sizeOptions.length > 0 || finishOptions.length > 0;
   const selected = hasSeparateChoices
     ? available.find((v) => (!sizeOptions.length || v.size === selectedSize) && (!finishOptions.length || v.finish === selectedFinish)) || null
