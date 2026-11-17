@@ -119,6 +119,9 @@ begin
   if p_outcome is null or p_outcome not in ('refund_initiated','refunded','dismissed') then
     raise exception 'RECONCILIATION_INVALID_OUTCOME';
   end if;
+  if length(trim(coalesce(p_admin_note,''))) < 8 then
+    raise exception 'RECONCILIATION_NOTE_REQUIRED';
+  end if;
 
   select * into v_case from public.payment_reconciliation_cases
   where id=p_case_id for update;
