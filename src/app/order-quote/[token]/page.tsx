@@ -8,7 +8,7 @@ type Quote = {
   order_number: string; customer_name: string; currency: string; subtotal: number;
   shipping_total: number; total: number; shipping_quote_note: string | null;
   shipping_quote_status: string; shipping_quote_expires_at: string | null;
-  payment_status: string; items: { title: string; quantity: number; line_total: number; options: Record<string, unknown> }[];
+  payment_status: string; payment_checkout_expires_at: string | null; payment_checkout_available: boolean; payment_reconciliation_status: string | null; items: { title: string; quantity: number; line_total: number; options: Record<string, unknown> }[];
 };
 const money = (amount: number, currency: string) => {
   try { return new Intl.NumberFormat("en-UG", { style: "currency", currency, maximumFractionDigits: 0 }).format(Number(amount)); }
@@ -34,8 +34,16 @@ export default async function OrderQuotePage({ params }: { params: Promise<{ tok
         </div>
         {quote.shipping_quote_note && <div className="mt-8"><p className="eyebrow">Delivery details</p><p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#77736d]">{quote.shipping_quote_note}</p></div>}
         <OrderQuoteResponse token={token} status={quote.shipping_quote_status} />
-        {quote.shipping_quote_status === "accepted" && quote.payment_status !== "paid" && (process.env.ONLINE_PAYMENTS_ENABLED === "true" ? <OrderPayment token={token} /> : <p className="mt-6 border border-[#dedad2] bg-[#f7f6f2] p-5 text-sm leading-6">Your delivery quote has been approved. Online payment is not enabled yet; the studio will contact you with the next steps. No payment has been taken.</p>)}
         {quote.payment_status === "paid" && <p className="mt-6 border border-[#dedad2] bg-[#f7f6f2] p-5 text-sm">Payment received. Thank you — the studio will be in touch about fulfilment.</p>}
+        {quote.payment_status === "refunded" && <p className="mt-6 border border-[#dedad2] bg-[#f7f6f2] p-5 text-sm leading-6">This payment has been recorded as refunded. Please contact the studio if you need any further assistance.</p>}
+        {quote.payment_status === "pending" && ["pending_review","refund_initiated"].includes(quote.payment_reconciliation_status || "") && <p role="status" className="mt-6 border border-[#c9a77f] bg-[#fbf7ef] p-5 text-sm leading-6">Your payment was confirmed by the payment provider and is being reviewed by the studio. Please do not attempt another payment. We will update you as soon as the review is complete.</p>}
+        {quote.shipping_quote_status === "accepted" && quote.payment_status !== "paid" && quote.payment_status !== "refunded" && !["pending_review","refund_initiated"].includes(quote.payment_reconciliation_status || "") && (process.env.ONLINE_PAYMENTS_ENABLED === "true"
+          ? quote.payment_status === "pending"
+            ? quote.payment_checkout_available
+              ? <OrderPayment token={token} />
+              : <p role="status" className="mt-6 border border-[#dedad2] bg-[#f7f6f2] p-5 text-sm leading-6">A payment attempt is already being checked or its secure session has expired. Please contact the studio before trying again. This helps prevent duplicate charges.</p>
+            : <OrderPayment token={token} />
+          : <p className="mt-6 border border-[#dedad2] bg-[#f7f6f2] p-5 text-sm leading-6">Your delivery quote has been approved. Online payment is not enabled yet; the studio will contact you with the next steps. No payment has been taken.</p>)}
       </section>
       <aside className="h-fit border border-[#dedad2] bg-[#f7f6f2] p-6">
         <p className="eyebrow">Cost summary</p>
