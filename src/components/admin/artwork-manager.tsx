@@ -387,7 +387,7 @@ function ArtworkForm({
             {collections.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">{collections.map((collection) => <label key={collection.id} className="flex items-center gap-3 text-sm text-[#625e57]"><input type="checkbox" checked={selectedCollections.includes(collection.id)} onChange={() => onToggleCollection(collection.id)} />{collection.title}</label>)}</div> : <p className="mt-2 text-xs text-[#89847c]">No collections have been created yet. You can add these later.</p>}
           </div>
 
-          <label className={labelClass}>Artwork photographs<input type="file" accept="image/*" multiple onChange={(e) => onFiles(Array.from(e.target.files ?? []))} className="mt-2 block w-full text-xs text-[#77736d] file:mr-4 file:border-0 file:bg-[#e9e5dc] file:px-4 file:py-3 file:text-[10px] file:uppercase file:tracking-widest" /></label>
+          <label className={labelClass}>Artwork photographs<input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(e) => onFiles(Array.from(e.target.files ?? []))} className="mt-2 block w-full text-xs text-[#77736d] file:mr-4 file:border-0 file:bg-[#e9e5dc] file:px-4 file:py-3 file:text-[10px] file:uppercase file:tracking-widest" /></label>
           {files.length > 0 && <p className="text-xs text-[#77736d]">{files.length} image{files.length === 1 ? "" : "s"} selected: {files.map((file) => file.name).join(", ")}</p>}
 
           <div className="grid gap-5 sm:grid-cols-2">
