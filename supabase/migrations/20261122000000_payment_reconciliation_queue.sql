@@ -10,7 +10,7 @@ create table if not exists public.payment_reconciliation_cases (
   currency text not null check (currency in ('UGX','USD')),
   reason text not null,
   status text not null default 'pending_review'
-    check (status in ('pending_review','refund_initiated','refunded','dismissed')),
+    check (status in ('pending_review','refund_initiated','refunded')),
   admin_note text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -116,7 +116,7 @@ declare
   v_case public.payment_reconciliation_cases%rowtype;
 begin
   if not public.is_admin() then raise exception 'NOT_AUTHORIZED'; end if;
-  if p_outcome is null or p_outcome not in ('refund_initiated','refunded','dismissed') then
+  if p_outcome is null or p_outcome not in ('refund_initiated','refunded') then
     raise exception 'RECONCILIATION_INVALID_OUTCOME';
   end if;
   if length(trim(coalesce(p_admin_note,''))) < 8 then
@@ -130,7 +130,6 @@ begin
     return jsonb_build_object('case_id',v_case.id,'order_number',v_case.order_number,'status',v_case.status);
   end if;
   if (p_outcome='refund_initiated' and v_case.status<>'pending_review')
-     or (p_outcome='dismissed' and v_case.status<>'pending_review')
      or (p_outcome='refunded' and v_case.status not in ('pending_review','refund_initiated')) then
     raise exception 'RECONCILIATION_CASE_ALREADY_RESOLVED';
   end if;
@@ -149,7 +148,7 @@ begin
   set status=p_outcome,
       admin_note=nullif(left(trim(coalesce(p_admin_note,'')),1000),''),
       updated_at=now(),
-      resolved_at=case when p_outcome in ('refunded','dismissed') then now() else null end
+      resolved_at=case when p_outcome='refunded' then now() else null end
   where id=p_case_id
   returning * into v_case;
 
