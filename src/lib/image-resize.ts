@@ -2,8 +2,8 @@
 // photo is stored (and later served) as a roughly 0.5–1 MB image that is still
 // sharp on large screens.
 //
-// It never blocks an upload: anything it cannot handle (GIF, SVG, unsupported
-// formats, very old browsers, any error) is uploaded unchanged.
+// Only JPG, PNG and WebP are accepted. Unsupported formats are rejected;
+// if browser-side optimization fails, the original supported image is retained.
 
 export const MAX_EDGE = 2400; // longest side in pixels
 export const JPEG_QUALITY = 0.88;
