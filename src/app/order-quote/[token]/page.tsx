@@ -4,6 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import OrderQuoteResponse from "@/components/order-quote-response";
 import OrderPayment from "@/components/order-payment";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const metadata = {
+  title: "Order quote | Okecha Willy",
+  robots: { index: false, follow: false },
+};
+
 type Quote = {
   order_number: string; customer_name: string; currency: string; subtotal: number;
   shipping_total: number; total: number; shipping_quote_note: string | null;
