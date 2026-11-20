@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { emailText, orderEmailShell, sendOrderEmail } from "@/lib/order-email";
 
 export const runtime = "nodejs";
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     if (typeof body.token !== "string" || !/^[a-f0-9]{64}$/.test(body.token) || !["accepted", "declined"].includes(body.decision)) {
       return NextResponse.json({ error: "This quote link or response is invalid." }, { status: 400 });
     }
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase.rpc("respond_order_shipping_quote", {
       p_token: body.token, p_accept: body.decision === "accepted",
     });
