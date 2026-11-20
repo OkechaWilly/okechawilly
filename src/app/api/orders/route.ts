@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { emailText, orderEmailShell, sendOrderEmail } from "@/lib/order-email";
 
 export const runtime = "nodejs";
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
         typeof customer.phone !== "string" || !address || !Array.isArray(items) || items.length < 1 || items.length > 30) {
       return NextResponse.json({ error: "Please provide valid contact, delivery and order details." }, { status: 400 });
     }
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data, error } = await supabase.rpc("submit_public_order_idempotent", {
       p_request_id: requestId,
       p_customer_name: customer.name.trim(),
