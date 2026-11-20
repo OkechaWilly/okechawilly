@@ -17,7 +17,7 @@ type Order = {
   shipping_quote_status?: string; shipping_quote_total?: number | null; shipping_quote_currency?: string | null; shipping_quote_note?: string | null; shipping_quote_sent_at?: string | null;
   created_at: string; order_items: Item[];
 };
-const statuses = ["pending", "confirmed", "processing", "shipped", "completed", "cancelled", "refunded"];
+const statuses = ["pending", "confirmed", "processing", "shipped", "completed", "cancelled"];
 const label = (value: string) => value.replaceAll("_", " ");
 const money = (value: number, currency: string) => {
   try { return new Intl.NumberFormat("en-UG", { style: "currency", currency: currency || "UGX", maximumFractionDigits: 0 }).format(Number(value || 0)); }
@@ -49,13 +49,18 @@ export default function OrdersManager({ initialOrders, initialReconciliationCase
 
   async function updateStatus(order: Order, status: string) {
     setBusy(order.id); setNotice("");
-    const { error } = await supabase.from("orders").update({ status }).eq("id", order.id);
-    if (error) setNotice(error.message);
+    const { data, error } = await supabase.rpc("update_order_fulfilment_status", {
+      p_order_id: order.id,
+      p_new_status: status,
+    });
+    if (error) setNotice(error.message.includes("ORDER_INVALID_STATUS_TRANSITION")
+      ? "That fulfilment transition is not allowed. Follow the order workflow in sequence."
+      : "Could not update fulfilment status. Please refresh and try again.");
     else {
-      const updated = { ...order, status };
+      const updated = { ...order, status: (data as { status: string }).status };
       setOrders((current) => current.map((item) => item.id === order.id ? updated : item));
       setSelected(updated);
-      setNotice(`Order ${order.order_number} updated.`);
+      setNotice(`Order ${order.order_number} updated and recorded in the audit trail.`);
     }
     setBusy("");
   }
