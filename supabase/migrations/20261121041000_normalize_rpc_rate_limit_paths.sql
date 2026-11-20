@@ -22,7 +22,8 @@ begin
   ) then return; end if;
 
   v_headers := coalesce(nullif(current_setting('request.headers', true), '')::jsonb, '{}'::jsonb);
-  v_ip_text := nullif(trim(split_part(coalesce(v_headers->>'x-forwarded-for', ''), ',', 1)), '');
+  -- Supabase's edge supplies CF-Connecting-IP; do not trust client-controlled X-Forwarded-For.
+  v_ip_text := nullif(trim(v_headers->>'cf-connecting-ip'), '');
   if v_ip_text is null then
     raise sqlstate 'PGRST'
       using message = json_build_object('message', 'Request could not be rate limited safely')::text,
