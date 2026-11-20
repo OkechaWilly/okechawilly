@@ -67,6 +67,8 @@ export default function InquiriesManager({ initialInquiries }: { initialInquirie
         setSelected(next);
         setNotice("Enquiry status updated and recorded.");
       }
+    } catch {
+      setNotice("The request could not be completed. Check your connection and try again.");
     } finally {
       setBusy("");
     }
