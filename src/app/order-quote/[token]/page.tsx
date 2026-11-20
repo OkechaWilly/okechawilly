@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import OrderQuoteResponse from "@/components/order-quote-response";
 import OrderPayment from "@/components/order-payment";
 
@@ -25,7 +25,7 @@ const money = (amount: number, currency: string) => {
 export default async function OrderQuotePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   if (!/^[a-f0-9]{64}$/.test(token)) notFound();
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase.rpc("get_order_shipping_quote", { p_token: token });
   if (error || !data) notFound();
   const quote = data as Quote;
