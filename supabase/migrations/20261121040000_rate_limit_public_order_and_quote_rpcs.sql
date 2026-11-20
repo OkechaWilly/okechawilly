@@ -81,9 +81,11 @@ begin
             detail = json_build_object('status', 429, 'status_text', 'Too Many Requests')::text;
   end if;
 
-  -- Keep the private counter table bounded without requiring a separate cron job.
-  delete from private.api_rate_limits
-  where window_start < now() - interval '1 day';
+  -- Keep cleanup off the hot path except for the first request in a window.
+  if v_count = 1 then
+    delete from private.api_rate_limits
+    where window_start < now() - interval '1 day';
+  end if;
 end;
 $function$;
 
