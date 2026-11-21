@@ -1,16 +1,22 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { emailText, orderEmailShell, sendOrderEmail } from "@/lib/order-email";
+import { readJsonBody } from "@/lib/request-body";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const customer = body?.customer;
-    const address = body?.shippingAddress;
-    const items = body?.items;
-    const requestId = body?.requestId;
+    const parsedBody = await readJsonBody(request, 16_384);
+    if (!parsedBody.ok) {
+      const tooLarge = parsedBody.reason === "too_large";
+      return NextResponse.json({ error: tooLarge ? "Your order details are too large." : "Please submit valid order details." }, { status: tooLarge ? 413 : 400 });
+    }
+    const body = parsedBody.data as Record<string, unknown>;
+    const customer = body.customer as Record<string, unknown> | null;
+    const address = body.shippingAddress;
+    const items = body.items;
+    const requestId = body.requestId;
     if (typeof requestId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)) {
       return NextResponse.json({ error: "This checkout session has expired. Please refresh and try again." }, { status: 400 });
     }
@@ -18,6 +24,7 @@ export async function POST(request: Request) {
         typeof customer.phone !== "string" || !address || !Array.isArray(items) || items.length < 1 || items.length > 30) {
       return NextResponse.json({ error: "Please provide valid contact, delivery and order details." }, { status: 400 });
     }
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return NextResponse.json({ error: "Order submission is temporarily unavailable. Please contact the studio." }, { status: 503 });
     const supabase = createAdminClient();
     const { data, error } = await supabase.rpc("submit_public_order_idempotent", {
       p_request_id: requestId,
