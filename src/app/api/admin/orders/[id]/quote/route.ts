@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { emailText, orderEmailShell, sendOrderEmail } from "@/lib/order-email";
 import { SITE_URL } from "@/lib/site";
+import { readJsonBody } from "@/lib/request-body";
 
 export const runtime = "nodejs";
 
@@ -14,7 +15,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (profile?.role !== "admin") return NextResponse.json({ error: "Not authorised." }, { status: 403 });
 
     const { id } = await context.params;
-    const body = await request.json();
+    const parsedBody = await readJsonBody(request, 4_096);
+    if (!parsedBody.ok) return NextResponse.json({ error: parsedBody.reason === "too_large" ? "The quote details are too large." : "Please enter valid quote details." }, { status: parsedBody.reason === "too_large" ? 413 : 400 });
+    const body = parsedBody.data as Record<string, unknown>;
     const amount = Number(body.amount);
     if (!Number.isFinite(amount) || amount < 0 || String(body.amount).trim() === "") {
       return NextResponse.json({ error: "Enter a valid delivery amount." }, { status: 400 });
