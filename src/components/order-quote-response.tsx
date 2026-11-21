@@ -21,7 +21,7 @@ export default function OrderQuoteResponse({ token, status }: { token: string; s
       setDecision(result.decision);
       router.refresh();
       setMessage(next === "accepted"
-        ? "Thank you. Your approval has been sent to the studio. We will follow up with payment instructions; no payment has been taken."
+        ? "Thank you. Your approval has been recorded and sent to the studio. Return to this page for secure payment when online checkout is enabled. No payment has been taken."
         : "Your response has been sent to the studio. We will be in touch if needed.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Something went wrong.");

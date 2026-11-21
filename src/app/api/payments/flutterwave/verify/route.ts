@@ -9,10 +9,10 @@ export async function GET(request: Request) {
   const transactionId = url.searchParams.get("transaction_id");
   const txRef = url.searchParams.get("tx_ref");
   const quoteToken = url.searchParams.get("quote");
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || url.origin;
+  const origin = url.origin;
   if (status !== "successful" || !transactionId || !txRef || !quoteToken || !/^[a-f0-9]{64}$/.test(quoteToken)) return NextResponse.redirect(origin + "/shop?payment=not-completed");
   try {
-    await verifyFlutterwaveTransaction(transactionId, txRef);
+    await verifyFlutterwaveTransaction(transactionId, txRef, quoteToken);
     return NextResponse.redirect(origin + "/order-quote/" + quoteToken + "?payment=confirmed");
   } catch (error) {
     console.error("Flutterwave callback verification failed:", error);

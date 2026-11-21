@@ -50,7 +50,7 @@ export function categoryOfType(type: string): ShopCategory | undefined {
 }
 
 export function formatPrice(price: number | null, currency: string | null) {
-  if (price == null) return "Price on request";
+  if (price == null || !Number.isFinite(Number(price)) || Number(price) < 0) return "Price on request";
   const code = currency || "UGX";
   try {
     return new Intl.NumberFormat("en-UG", { style: "currency", currency: code, maximumFractionDigits: 0 }).format(Number(price));
@@ -114,7 +114,8 @@ export function priceLabel(product: SellableProduct, currency: "UGX" | "USD" = (
       ? variant.price_ugx ?? (variant.currency === "UGX" ? variant.price : null)
       : variant.price_usd ?? (variant.currency === "USD" ? variant.price : null))
       .filter((price): price is number | string => price != null)
-      .map(Number);
+      .map(Number)
+      .filter((price) => Number.isFinite(price) && price >= 0);
     if (!prices.length) return `Not yet priced in ${currency}`;
     const lowest = Math.min(...prices);
     return lowest === Math.max(...prices) ? formatPrice(lowest, currency) : `From ${formatPrice(lowest, currency)}`;
@@ -122,5 +123,5 @@ export function priceLabel(product: SellableProduct, currency: "UGX" | "USD" = (
   const price = currency === "UGX"
     ? product.price_ugx ?? (product.currency === "UGX" ? product.price : null)
     : product.price_usd ?? (product.currency === "USD" ? product.price : null);
-  return formatPrice(price == null ? null : Number(price), currency);
+  return formatPrice(price == null || !Number.isFinite(Number(price)) ? null : Number(price), currency);
 }

@@ -12,10 +12,16 @@ import { LOGIN_PATH } from "@/lib/admin-auth";
 // passed on to the page being rendered and to the browser.
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
+  const preventSessionCaching = (target: NextResponse) => {
+    target.headers.set("Cache-Control", "private, no-store, max-age=0");
+    target.headers.set("Pragma", "no-cache");
+    target.headers.set("Expires", "0");
+    return target;
+  };
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return response;
+  if (!url || !key) return preventSessionCaching(response);
 
   const supabase = createServerClient(url, key, {
     cookies: {
@@ -34,6 +40,10 @@ export async function middleware(request: NextRequest) {
   // getUser() validates the session with Supabase and triggers the refresh.
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Authenticated responses may contain refreshed Supabase session cookies.
+  // Never let a CDN or browser cache those responses for another visitor.
+  preventSessionCaching(response);
+
   const { pathname } = request.nextUrl;
   if (!user && pathname.startsWith("/admin")) {
     const loginUrl = request.nextUrl.clone();
@@ -43,7 +53,7 @@ export async function middleware(request: NextRequest) {
     const redirect = NextResponse.redirect(loginUrl);
     // Keep any cookies Supabase just cleared/refreshed.
     response.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
-    return redirect;
+    return preventSessionCaching(redirect);
   }
 
   return response;

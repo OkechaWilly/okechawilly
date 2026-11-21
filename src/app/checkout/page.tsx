@@ -1,16 +1,23 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart-provider";
 
 const inputClass = "mt-2 w-full border border-[#d9d4ca] bg-white px-4 py-3 text-sm outline-none focus:border-[#9c8062]";
+async function fingerprintPayload(payload: unknown) {
+  const bytes = new TextEncoder().encode(JSON.stringify(payload));
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
 function money(value: number, currency: string) { try { return new Intl.NumberFormat("en-UG", { style: "currency", currency, maximumFractionDigits: 0 }).format(value); } catch { return currency + " " + value.toLocaleString("en-UG"); } }
 export default function CheckoutPage() {
   const { items, clearCart, currency } = useCart();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const requestIdRef = useRef<{ id: string; fingerprint: string } | null>(null);
+  const requestStorageKey = "okecha-willy-checkout-attempt-v1";
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", country: "Uganda", address: "", city: "", postalCode: "", note: "" });
   useEffect(() => { fetch("/api/shop/currency", { cache: "no-store" }).then((r) => r.ok ? r.json() : null).then((data) => { if (data?.countryName) setForm((current) => current.country === "Uganda" ? { ...current, country: data.countryName } : current); }).catch(() => {}); }, []);
@@ -20,17 +27,55 @@ export default function CheckoutPage() {
     if (!items.length || busy) return;
     if (items.some((item) => item.currency !== currency)) { setError("Your bag contains mixed currencies. Please return to the bag and resolve this before checkout."); return; }
     setBusy(true); setError("");
+    const orderPayload = {
+      customer: { name: form.name, email: form.email, phone: form.phone },
+      shippingAddress: { country: form.country, address: form.address, city: form.city, postalCode: form.postalCode },
+      note: form.note,
+      currency,
+      items: items.map((item) => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity })),
+    };
     try {
+      // Store only a SHA-256 digest in sessionStorage, never contact or
+      // delivery details. Bind retries to every field fingerprinted by SQL.
+      const fingerprint = await fingerprintPayload(orderPayload);
+      let requestId = requestIdRef.current?.fingerprint === fingerprint
+        ? requestIdRef.current.id
+        : null;
+      if (!requestId) {
+        try {
+          const saved = JSON.parse(sessionStorage.getItem(requestStorageKey) || "null") as
+            | { id?: string; fingerprint?: string; createdAt?: number }
+            | null;
+          if (
+            saved?.id &&
+            saved.fingerprint === fingerprint &&
+            typeof saved.createdAt === "number" &&
+            Date.now() - saved.createdAt < 2 * 60 * 60 * 1000
+          ) requestId = saved.id;
+        } catch { /* A fresh idempotency key is created when storage is unavailable. */ }
+      }
+      if (!requestId) requestId = crypto.randomUUID();
+      requestIdRef.current = { id: requestId, fingerprint };
+      try {
+        sessionStorage.setItem(requestStorageKey, JSON.stringify({
+          id: requestId, fingerprint, createdAt: Date.now(),
+        }));
+      } catch { /* The in-memory key still protects retries during this page session. */ }
       const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
-        customer: { name: form.name, email: form.email, phone: form.phone },
-        shippingAddress: { country: form.country, address: form.address, city: form.city, postalCode: form.postalCode },
-        note: form.note,
-        currency,
-        items: items.map((item) => ({ productId: item.productId, variantId: item.variantId, quantity: item.quantity })),
+        requestId,
+        ...orderPayload,
       }) });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "We could not submit your order. Please try again.");
+      if (!response.ok) {
+        if (response.status === 409) {
+          requestIdRef.current = null;
+          try { sessionStorage.removeItem(requestStorageKey); } catch { /* Ignore unavailable session storage. */ }
+        }
+        throw new Error(result.error || "We could not submit your order. Please try again.");
+      }
       clearCart();
+      requestIdRef.current = null;
+      try { sessionStorage.removeItem(requestStorageKey); } catch { /* Ignore unavailable session storage. */ }
       router.push(`/order-received?order=${encodeURIComponent(result.orderNumber)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");

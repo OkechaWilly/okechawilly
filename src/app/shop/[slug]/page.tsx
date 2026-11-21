@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import { JsonLd } from "@/components/json-ld";
 import { SITE_NAME, absoluteUrl, pageMetadata, plainText, shareImage } from "@/lib/site";
 import { byPrimaryThenOrder } from "@/lib/media";
+import { cookies, headers } from "next/headers";
 
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -36,6 +37,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ShopProductDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const cookieStore = await cookies();
+  const requestHeaders = await headers();
+  const savedCurrency = cookieStore.get("okecha-willy-currency")?.value;
+  const detectedCountry = (requestHeaders.get("x-vercel-ip-country") || "").toUpperCase();
+  const marketCurrency: "UGX" | "USD" = savedCurrency === "UGX" || savedCurrency === "USD" ? savedCurrency : detectedCountry && detectedCountry !== "UG" ? "USD" : "UGX";
   const supabase = await createClient();
   const { data: product } = await supabase.from("products")
     .select("*, product_images(*), product_variants(*), artwork:artworks(title, slug, is_published, artwork_images(*))")
@@ -73,23 +79,31 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
 
   // Structured data so Google can show the price and availability of this product.
   const onOffer = availableVariants(product);
-  const offerPrices = onOffer.map((variant) => Number(variant.price));
-  const offerCurrency = onOffer[0]?.currency || product.currency || "UGX";
+  const marketVariantPrices = onOffer
+    .map((variant) => marketCurrency === "UGX"
+      ? variant.price_ugx ?? (variant.currency === "UGX" ? variant.price : null)
+      : variant.price_usd ?? (variant.currency === "USD" ? variant.price : null))
+    .filter((price): price is number | string => price != null)
+    .map(Number)
+    .filter((price) => Number.isFinite(price) && price >= 0);
+  const marketBasePrice = marketCurrency === "UGX"
+    ? product.price_ugx ?? (product.currency === "UGX" ? product.price : null)
+    : product.price_usd ?? (product.currency === "USD" ? product.price : null);
   const productUrl = absoluteUrl(`/shop/${product.slug}`);
-  // A sold or unavailable product must never be reported to Google as "in stock", even when its
-  // formats are still switched on.
+  // Structured prices must match the visitor's selected market; never publish a USD
+  // legacy price as UGX (or vice versa) in search results.
   const unavailable = availability(product) !== null;
   const offers = unavailable
-    ? product.price != null
-      ? { "@type": "Offer", priceCurrency: product.currency || "UGX", price: Number(product.price), availability: "https://schema.org/OutOfStock", url: productUrl }
+    ? marketBasePrice != null
+      ? { "@type": "Offer", priceCurrency: marketCurrency, price: Number(marketBasePrice), availability: "https://schema.org/OutOfStock", url: productUrl }
       : undefined
-    : onOffer.length > 1 && Math.min(...offerPrices) !== Math.max(...offerPrices)
-    ? { "@type": "AggregateOffer", priceCurrency: offerCurrency, lowPrice: Math.min(...offerPrices), highPrice: Math.max(...offerPrices), offerCount: onOffer.length, availability: "https://schema.org/InStock", url: productUrl }
-    : onOffer.length > 0
-      ? { "@type": "Offer", priceCurrency: offerCurrency, price: offerPrices[0], availability: "https://schema.org/InStock", url: productUrl }
-      : product.price != null
-        ? { "@type": "Offer", priceCurrency: product.currency || "UGX", price: Number(product.price), availability: isCurrentlyAvailable(product) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", url: productUrl }
-        : undefined;
+    : marketVariantPrices.length > 1 && Math.min(...marketVariantPrices) !== Math.max(...marketVariantPrices)
+      ? { "@type": "AggregateOffer", priceCurrency: marketCurrency, lowPrice: Math.min(...marketVariantPrices), highPrice: Math.max(...marketVariantPrices), offerCount: marketVariantPrices.length, availability: "https://schema.org/InStock", url: productUrl }
+      : marketVariantPrices.length > 0
+        ? { "@type": "Offer", priceCurrency: marketCurrency, price: marketVariantPrices[0], availability: "https://schema.org/InStock", url: productUrl }
+        : marketBasePrice != null
+          ? { "@type": "Offer", priceCurrency: marketCurrency, price: Number(marketBasePrice), availability: "https://schema.org/InStock", url: productUrl }
+          : undefined;
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",

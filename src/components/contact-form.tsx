@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { submitEnquiry } from "@/app/contact/actions";
 import { BASE_SUBJECTS, DEFAULT_SUBJECT, SUBJECT_MAX } from "@/lib/contact";
 
 export default function ContactForm({ initialSubject = DEFAULT_SUBJECT }: { initialSubject?: string }) {
@@ -20,7 +19,9 @@ export default function ContactForm({ initialSubject = DEFAULT_SUBJECT }: { init
     setNotice(null);
     startTransition(async () => {
       try {
-        const result = await submitEnquiry(formData);
+        const payload = Object.fromEntries(formData.entries());
+        const response = await fetch("/api/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const result = await response.json();
         setNotice({ ok: result.ok, text: result.message });
         if (result.ok) form.reset();
       } catch {

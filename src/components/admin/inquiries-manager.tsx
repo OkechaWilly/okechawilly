@@ -52,16 +52,26 @@ export default function InquiriesManager({ initialInquiries }: { initialInquirie
   async function update(item: Inquiry, status: string) {
     setBusy(item.id);
     setNotice("");
-    const { error } = await supabase.from("inquiries").update({ status }).eq("id", item.id);
-    if (error) {
-      setNotice(error.message);
-    } else {
-      const next = { ...item, status };
-      setItems((old) => old.map((entry) => entry.id === item.id ? next : entry));
-      setSelected(next);
-      setNotice("Enquiry status updated.");
+    try {
+      const { data, error } = await supabase.rpc("update_inquiry_status", {
+        p_inquiry_id: item.id,
+        p_new_status: status,
+      });
+      if (error) {
+        setNotice(error.message.includes("INQUIRY_INVALID_STATUS")
+          ? "That enquiry status is not valid."
+          : "Could not update enquiry status. Please refresh and try again.");
+      } else {
+        const next = { ...item, status: (data as { status: string }).status };
+        setItems((old) => old.map((entry) => entry.id === item.id ? next : entry));
+        setSelected(next);
+        setNotice("Enquiry status updated and recorded.");
+      }
+    } catch {
+      setNotice("The request could not be completed. Check your connection and try again.");
+    } finally {
+      setBusy("");
     }
-    setBusy("");
   }
 
   return (
