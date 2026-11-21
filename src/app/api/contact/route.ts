@@ -44,7 +44,9 @@ export async function POST(request: Request) {
       const tooLarge = parsedBody.reason === "too_large";
       return NextResponse.json({ ok: false, message: tooLarge ? "Your message is too large." : "Please check your message and try again." }, { status: tooLarge ? 413 : 400 });
     }
-    const raw = parsedBody.data;
+    const raw = parsedBody.data && typeof parsedBody.data === "object" && !Array.isArray(parsedBody.data)
+      ? parsedBody.data as { website?: unknown; name?: unknown; email?: unknown; subject?: unknown; message?: unknown }
+      : {};
     // Honeypot: real visitors never see or fill this field. Pretend success to bots.
     if (String(raw?.website ?? "").trim() !== "") return NextResponse.json({ ok: true, message: THANKS });
 
