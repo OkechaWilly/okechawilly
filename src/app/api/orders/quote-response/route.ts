@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { emailText, orderEmailShell, sendOrderEmail } from "@/lib/order-email";
+import { readJsonBody } from "@/lib/request-body";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    if (typeof body.token !== "string" || !/^[a-f0-9]{64}$/.test(body.token) || !["accepted", "declined"].includes(body.decision)) {
+    const parsedBody = await readJsonBody(request, 4_096);
+    if (!parsedBody.ok) return NextResponse.json({ error: parsedBody.reason === "too_large" ? "This response is too large." : "This quote link or response is invalid." }, { status: parsedBody.reason === "too_large" ? 413 : 400 });
+    const body = parsedBody.data as Record<string, unknown>;
+    if (typeof body.token !== "string" || !/^[a-f0-9]{64}$/.test(body.token) || typeof body.decision !== "string" || !["accepted", "declined"].includes(body.decision)) {
       return NextResponse.json({ error: "This quote link or response is invalid." }, { status: 400 });
     }
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return NextResponse.json({ error: "Quote responses are temporarily unavailable. Please contact the studio." }, { status: 503 });
     const supabase = createAdminClient();
     const { data, error } = await supabase.rpc("respond_order_shipping_quote", {
       p_token: body.token, p_accept: body.decision === "accepted",
