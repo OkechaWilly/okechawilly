@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { escapeHtml, validateContact } from "@/lib/contact";
+import { readJsonBody } from "@/lib/request-body";
 
 export const runtime = "nodejs";
 
@@ -38,16 +39,19 @@ async function notifyStudio(data: { name: string; email: string; subject: string
 
 export async function POST(request: Request) {
   try {
-    const contentLength = Number(request.headers.get("content-length") || 0);
-    if (contentLength > 16_384) return NextResponse.json({ ok: false, message: "Your message is too large." }, { status: 413 });
-
-    const raw = await request.json();
+    const parsedBody = await readJsonBody(request, 16_384);
+    if (!parsedBody.ok) {
+      const tooLarge = parsedBody.reason === "too_large";
+      return NextResponse.json({ ok: false, message: tooLarge ? "Your message is too large." : "Please check your message and try again." }, { status: tooLarge ? 413 : 400 });
+    }
+    const raw = parsedBody.data;
     // Honeypot: real visitors never see or fill this field. Pretend success to bots.
     if (String(raw?.website ?? "").trim() !== "") return NextResponse.json({ ok: true, message: THANKS });
 
     const parsed = validateContact(raw ?? {});
     if (!parsed.ok) return NextResponse.json({ ok: false, message: parsed.error }, { status: 400 });
 
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return NextResponse.json({ ok: false, message: "The studio contact service is temporarily unavailable. Please email the studio directly." }, { status: 503 });
     const supabase = createAdminClient();
     const { error } = await supabase.from("inquiries").insert(parsed.data);
     if (error) {
