@@ -36,9 +36,10 @@ function hasMarketPrice(product: Pick<Product, "product_type" | "price" | "curre
   );
   if (variants.length > 0) {
     return variants.every((variant) => {
-      const raw = market === "UGX"
-        ? variant.price_ugx || (variant.currency === "UGX" ? variant.price : "")
-        : variant.price_usd || (variant.currency === "USD" ? variant.price : "");
+      const regionalPrice = market === "UGX" ? variant.price_ugx : variant.price_usd;
+      const raw = regionalPrice !== "" && regionalPrice != null
+        ? regionalPrice
+        : variant.currency === market ? variant.price : "";
       return raw !== "" && Number.isFinite(Number(raw)) && Number(raw) >= 0;
     });
   }
