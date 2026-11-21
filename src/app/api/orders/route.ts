@@ -12,7 +12,9 @@ export async function POST(request: Request) {
       const tooLarge = parsedBody.reason === "too_large";
       return NextResponse.json({ error: tooLarge ? "Your order details are too large." : "Please submit valid order details." }, { status: tooLarge ? 413 : 400 });
     }
-    const body = parsedBody.data as Record<string, unknown>;
+    const body = parsedBody.data && typeof parsedBody.data === "object" && !Array.isArray(parsedBody.data)
+      ? parsedBody.data as Record<string, unknown>
+      : {};
     const customer = body.customer as Record<string, unknown> | null;
     const address = body.shippingAddress;
     const items = body.items;
