@@ -29,7 +29,7 @@ const types = [
   { value: "art_object", label: "Art object" },
 ];
 
-function hasMarketPrice(product: Product, market: "UGX" | "USD") {
+function hasMarketPrice(product: Pick<Product, "product_type" | "price" | "currency" | "price_ugx" | "price_usd" | "product_variants">, market: "UGX" | "USD") {
   if (product.product_type === "original") return true;
   const variants = (product.product_variants || []).filter((variant) =>
     variant.is_available && (variant.stock_quantity === "" || variant.stock_quantity == null || Number(variant.stock_quantity) > 0)
