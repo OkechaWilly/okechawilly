@@ -9,7 +9,9 @@ export async function POST(request: Request) {
   try {
     const parsedBody = await readJsonBody(request, 4_096);
     if (!parsedBody.ok) return NextResponse.json({ error: parsedBody.reason === "too_large" ? "This response is too large." : "This quote link or response is invalid." }, { status: parsedBody.reason === "too_large" ? 413 : 400 });
-    const body = parsedBody.data as Record<string, unknown>;
+    const body = parsedBody.data && typeof parsedBody.data === "object" && !Array.isArray(parsedBody.data)
+      ? parsedBody.data as Record<string, unknown>
+      : {};
     if (typeof body.token !== "string" || !/^[a-f0-9]{64}$/.test(body.token) || typeof body.decision !== "string" || !["accepted", "declined"].includes(body.decision)) {
       return NextResponse.json({ error: "This quote link or response is invalid." }, { status: 400 });
     }
