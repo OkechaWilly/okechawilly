@@ -17,7 +17,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     const { id } = await context.params;
     const parsedBody = await readJsonBody(request, 4_096);
     if (!parsedBody.ok) return NextResponse.json({ error: parsedBody.reason === "too_large" ? "The quote details are too large." : "Please enter valid quote details." }, { status: parsedBody.reason === "too_large" ? 413 : 400 });
-    const body = parsedBody.data as Record<string, unknown>;
+    const body = parsedBody.data && typeof parsedBody.data === "object" && !Array.isArray(parsedBody.data)
+      ? parsedBody.data as Record<string, unknown>
+      : {};
     const amount = Number(body.amount);
     if (!Number.isFinite(amount) || amount < 0 || String(body.amount).trim() === "") {
       return NextResponse.json({ error: "Enter a valid delivery amount." }, { status: 400 });
