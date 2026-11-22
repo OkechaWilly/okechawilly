@@ -6,6 +6,11 @@ import { readJsonBody } from "@/lib/request-body";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  // Initial public release is enquiry-led. Keep the hardened order pipeline in
+  // place for a later commerce release, but do not accept public orders yet.
+  if (process.env.ENQUIRY_ONLY_MODE !== "false") {
+    return NextResponse.json({ error: "Online ordering is not available. Please contact the studio with an enquiry." }, { status: 410 });
+  }
   try {
     const parsedBody = await readJsonBody(request, 16_384);
     if (!parsedBody.ok) {
