@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { cookies, headers } from "next/headers";
 import Image from "next/image";
-import { PRODUCT_TYPE_LABELS, PRINT_TYPES, availability, isCurrentlyAvailable, priceLabel } from "@/lib/shop";
+import { PRODUCT_TYPE_LABELS, PRINT_TYPES, availability, isCurrentlyAvailable } from "@/lib/shop";
 import { pageMetadata } from "@/lib/site";
 import ShopPageBanner from "@/components/shop-page-banner";
 
@@ -13,11 +12,6 @@ export const metadata = pageMetadata({
 });
 
 export default async function FineArtPrintsPage() {
-  const cookieStore = await cookies();
-  const requestHeaders = await headers();
-  const savedCurrency = cookieStore.get("okecha-willy-currency")?.value;
-  const detectedCountry = (requestHeaders.get("x-vercel-ip-country") || "").toUpperCase();
-  const currency: "UGX" | "USD" = savedCurrency === "UGX" || savedCurrency === "USD" ? savedCurrency : detectedCountry && detectedCountry !== "UG" ? "USD" : "UGX";
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
@@ -85,7 +79,7 @@ export default async function FineArtPrintsPage() {
                     {!isCurrentlyAvailable(print) && <span className="mt-3 inline-flex border border-[#d9d4ca] px-3 py-2 text-[9px] uppercase tracking-[.14em] text-[#77736d]">{availability(print)?.label}</span>}
                   </Link>
                   <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#ded9d0] pt-3 text-xs text-[#77736d]">
-                    <span>{priceLabel(print, currency)}</span>
+                    <span>Enquire for details</span>
                     {!isCurrentlyAvailable(print) ? (
                       <span>{availability(print)?.label || "Unavailable"}</span>
                     ) : print.product_type === "limited_print" && print.edition_size != null ? (
@@ -114,7 +108,7 @@ export default async function FineArtPrintsPage() {
             <h2 className="display mt-4 max-w-xl text-4xl leading-tight md:text-5xl">Every print begins with an original.</h2>
           </div>
           <div>
-            <p className="text-sm leading-7 text-[#77736d]">Print formats, paper or other materials, edition details and delivery options vary by work. Open an individual listing for its available information, or contact the studio before placing an order.</p>
+            <p className="text-sm leading-7 text-[#77736d]">Print formats, paper or other materials, edition details and delivery options vary by work. Open an individual listing for its available information, or contact the studio before making arrangements.</p>
             <Link href="/contact?subject=Fine%20art%20print%20enquiry" className="mt-7 inline-flex border border-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] transition-colors !text-[#242320] hover:bg-[#242320] hover:!text-[#f7f6f2]">Contact the studio <span className="ml-5">↗</span></Link>
           </div>
         </div>
