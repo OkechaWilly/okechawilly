@@ -182,7 +182,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
                 <h3 className="display mt-3 text-3xl md:text-4xl">Not available to order right now.</h3>
                 <p className="mt-3 max-w-xl text-sm leading-7 text-[#77736d]">Some listings or formats are currently unavailable. You can still open a listing or contact the studio about future availability.</p>
                 <div className="mt-10 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-                  {unavailableWorks.map((product) => <ProductCard key={product.id} product={product} currency={currency} />)}
+                  {unavailableWorks.map((product) => <ProductCard key={product.id} product={product} />)}
                 </div>
               </div>
             )}
@@ -193,7 +193,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
                 <h3 className="display mt-3 text-3xl md:text-4xl">Works that have found a home.</h3>
                 <p className="mt-3 max-w-xl text-sm leading-7 text-[#77736d]">A record of work already collected. If one of these speaks to you, get in touch about something similar or a print.</p>
                 <div className="mt-10 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-                  {soldWorks.map((product) => <ProductCard key={product.id} product={product} currency={currency} />)}
+                  {soldWorks.map((product) => <ProductCard key={product.id} product={product} />)}
                 </div>
               </div>
             )}
