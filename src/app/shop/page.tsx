@@ -36,7 +36,7 @@ type ShopProduct = {
   edition_sold: number | null;
   imageUrl: string | null;
   imageAlt: string;
-} & { id: string };
+} & Parameters<typeof availability>[0] & { id: string };
 
 // One card, used for work on sale and for sold work.
 function ProductCard({ product }: { product: ShopProduct }) {
