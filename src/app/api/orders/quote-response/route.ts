@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       try {
         await sendOrderEmail(result.customer_email, `Quote response received · ${result.order_number}`, orderEmailShell(`
           <h2>Thank you for responding.</h2><p>Your delivery quote for <strong>${emailText(result.order_number)}</strong> has been ${emailText(result.decision)}.</p>
-          <p>${result.decision === "accepted" ? "Your approval is recorded. Return to the same quote link to continue to secure payment if online checkout is enabled. No payment has been collected yet." : "The studio has been notified and will contact you if any clarification is needed."}</p>`));
+          <p>${result.decision === "accepted" ? "Your approval is recorded. The studio will contact you directly to arrange payment. No payment has been collected." : "The studio has been notified and will contact you if any clarification is needed."}</p>`));
       } catch (emailError) {
         console.error("Quote response saved but customer confirmation failed:", emailError);
       }
