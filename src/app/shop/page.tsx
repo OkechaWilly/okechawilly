@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { cookies, headers } from "next/headers";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/site";
 import ShopPageBanner from "@/components/shop-page-banner";
@@ -10,7 +9,6 @@ import {
   SHOP_CATEGORIES,
   availability,
   categoryOfType,
-  priceLabel,
 } from "@/lib/shop";
 
 function joinWithAnd(items: string[]) {
@@ -38,10 +36,10 @@ type ShopProduct = {
   edition_sold: number | null;
   imageUrl: string | null;
   imageAlt: string;
-} & Parameters<typeof priceLabel>[0];
+} & { id: string };
 
 // One card, used for work on sale and for sold work.
-function ProductCard({ product, currency }: { product: ShopProduct; currency: "UGX" | "USD" }) {
+function ProductCard({ product }: { product: ShopProduct }) {
   const state = availability(product);
   return (
     <article>
@@ -54,7 +52,7 @@ function ProductCard({ product, currency }: { product: ShopProduct; currency: "U
         {state && <span className="mt-3 inline-flex border border-[#d9d4ca] px-3 py-2 text-[9px] uppercase tracking-[.14em] text-[#77736d]">{state.label}</span>}
       </Link>
       <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#ded9d0] pt-3 text-xs text-[#77736d]">
-        {state ? <span /> : <span>{priceLabel(product, currency)}</span>}
+        <span>Enquire for details</span>
         {!state && product.product_type === "limited_print" && product.edition_size != null
           ? <span>{Math.max(0, product.edition_size - (product.edition_sold ?? 0))} remaining</span>
           : <Link href={`/shop/${product.slug}`} className="uppercase tracking-[.12em] !text-[#242320] transition-colors hover:!text-[#9c8062]">View details ↗</Link>}
@@ -65,11 +63,6 @@ function ProductCard({ product, currency }: { product: ShopProduct; currency: "U
 
 export default async function Shop({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   const { category: requestedCategory } = await searchParams;
-  const cookieStore = await cookies();
-  const requestHeaders = await headers();
-  const savedCurrency = cookieStore.get("okecha-willy-currency")?.value;
-  const detectedCountry = (requestHeaders.get("x-vercel-ip-country") || "").toUpperCase();
-  const currency: "UGX" | "USD" = savedCurrency === "UGX" || savedCurrency === "USD" ? savedCurrency : detectedCountry && detectedCountry !== "UG" ? "USD" : "UGX";
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
@@ -128,7 +121,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
       <ShopPageBanner
         eyebrow="Collect art"
         title="The shop"
-        description={`${intro} Explore each work, add available pieces to your bag, and submit an order request. The studio confirms availability and delivery before you are asked to pay.`}
+        description={`${intro} Explore each work and enquire directly with the studio. We will confirm availability, pricing and delivery with you personally.`}
         aside={"Based in Uganda\nEnquiries welcome from collectors worldwide"}
       />
 
@@ -151,7 +144,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
                 <p className="eyebrow">Studio catalogue</p>
                 <h2 className="display mt-3 text-4xl md:text-5xl">{activeCategory ? activeCategory.title : "Selected works"}.</h2>
               </div>
-              <p className="max-w-sm text-sm leading-7 text-[#77736d]">Browse work and editions listed by the studio. Availability and delivery are confirmed with you before payment.</p>
+              <p className="max-w-sm text-sm leading-7 text-[#77736d]">Browse work and editions listed by the studio. Availability, pricing and delivery are discussed with you directly.</p>
             </div>
 
             {showFilter && (
@@ -175,7 +168,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
 
             {onSale.length > 0 ? (
               <div className="mt-12 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-                {onSale.map((product) => <ProductCard key={product.id} product={product} currency={currency} />)}
+                {onSale.map((product) => <ProductCard key={product.id} product={product} />)}
               </div>
             ) : (
               <p className="mt-12 max-w-xl text-sm leading-7 text-[#77736d]">
