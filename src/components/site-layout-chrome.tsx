@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
-import { CartProvider } from "@/components/cart-provider";
 
 export default function SiteLayoutChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -14,7 +13,7 @@ export default function SiteLayoutChrome({ children }: { children: ReactNode }) 
   if (isStudio) return <>{children}</>;
 
   return (
-    <CartProvider>
+    <>
       <SiteHeader />
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
@@ -28,6 +27,6 @@ export default function SiteLayoutChrome({ children }: { children: ReactNode }) 
         </motion.div>
       </AnimatePresence>
       <SiteFooter />
-    </CartProvider>
+    </>
   );
 }
