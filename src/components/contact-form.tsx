@@ -79,12 +79,7 @@ export default function ContactForm({ initialSubject = DEFAULT_SUBJECT }: { init
             <p className="text-sm font-medium">
               {notice.ok ? "Thank you for reaching out!" : "Your enquiry wasn't sent"}
             </p>
-            <p className="mt-1 text-sm leading-6">{notice.text}</p>
-            {notice.ok && (
-              <p className="mt-2 text-xs leading-5 text-[#61745c]">
-                Your message is safely with the studio. You can expect a reply by email.
-              </p>
-            )}
+            <p className="mt-1 text-sm leading-6">{notice.ok ? "Your enquiry has been sent to the studio. You can expect a reply by email." : notice.text}</p>
           </div>
         </div>
       )}
