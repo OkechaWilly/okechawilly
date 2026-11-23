@@ -19,6 +19,7 @@ export default async function Contact({ searchParams }: { searchParams: Promise<
     .from("living_space_photos")
     .select("id, title, caption, location, alt_text, storage_path")
     .eq("is_published", true)
+    .order("is_featured", { ascending: false })
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false })
     .limit(20);
