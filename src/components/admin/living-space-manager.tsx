@@ -10,11 +10,11 @@ type Photo = {
   id: string; title: string; caption: string | null; location: string | null;
   storage_path: string; alt_text: string; sort_order: number;
   is_featured: boolean; is_published: boolean; created_at: string;
+  image_url: string;
 };
 const bucket = "living-space-images";
 const field = "mt-2 w-full border border-[#d9d4ca] bg-white px-3 py-3 text-sm outline-none focus:border-[#9c8062]";
 const label = "block text-[10px] uppercase tracking-[.14em] text-[#77736d]";
-const publicUrl = (path: string) => createClient().storage.from(bucket).getPublicUrl(path).data.publicUrl;
 
 export default function LivingSpaceManager({ initialPhotos, loadError }: { initialPhotos: Photo[]; loadError: string | null }) {
   const supabase = useMemo(() => createClient(), []);
@@ -46,6 +46,7 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
     if (!editing && !file) { setNotice("Choose a photograph to upload."); return; }
     setBusy(true); setNotice("");
     let uploadedPath: string | null = null;
+    let recordSaved = false;
     try {
       let storagePath = editing?.storage_path ?? "";
       if (file) {
@@ -53,7 +54,7 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
         const extension = prepared.name.split(".").pop()?.toLowerCase() || "jpg";
         uploadedPath = `living-spaces/${crypto.randomUUID()}.${extension}`;
         const { error } = await supabase.storage.from(bucket).upload(uploadedPath, prepared, {
-          upsert: false, contentType: prepared.type || undefined, cacheControl: "31536000",
+          upsert: false, contentType: prepared.type || undefined, cacheControl: "3600",
         });
         if (error) throw error;
         storagePath = uploadedPath;
@@ -69,17 +70,24 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
         : supabase.from("living_space_photos").insert(payload);
       const { data, error } = await query.select("*").single();
       if (error) throw error;
+      recordSaved = true;
+
+      const { data: signed, error: signError } = await supabase.storage
+        .from(bucket).createSignedUrl(storagePath, 4 * 60 * 60);
+      const savedPhoto = { ...(data as Omit<Photo, "image_url">), image_url: signed?.signedUrl ?? "" } as Photo;
+
       if (editing && file && editing.storage_path) {
         const { error: removeError } = await supabase.storage.from(bucket).remove([editing.storage_path]);
         if (removeError) setNotice("Saved, but the previous image may need manual storage cleanup.");
       }
       setPhotos(current => {
-        const next = current.filter(item => item.id !== data.id);
-        return [...next, data as Photo].sort((a,b) => a.sort_order-b.sort_order);
+        const next = current.filter(item => item.id !== savedPhoto.id);
+        return [...next, savedPhoto].sort((a,b) => a.sort_order-b.sort_order);
       });
-      reset(); setNotice("Photograph saved.");
+      reset();
+      setNotice(signError ? "Photograph saved. Refresh the page if its preview does not appear." : "Photograph saved.");
     } catch (error) {
-      if (uploadedPath) await supabase.storage.from(bucket).remove([uploadedPath]);
+      if (uploadedPath && !recordSaved) await supabase.storage.from(bucket).remove([uploadedPath]);
       setNotice(errorMessage(error, "Could not save this photograph."));
     } finally { setBusy(false); }
   }
@@ -155,7 +163,7 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
     <div className="mt-12 flex items-end justify-between border-b border-[#dedad2] pb-4"><div><p className="eyebrow">Your collection</p><h2 className="display mt-2 text-3xl">{photos.length} photograph{photos.length===1?"":"s"}</h2></div><p className="text-[10px] uppercase tracking-widest text-[#89847c]">{photos.filter(p=>p.is_published).length} published</p></div>
     {photos.length ? <div className="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
       {photos.map((photo,index)=><article key={photo.id} className="border border-[#dedad2] bg-[#f7f6f2] p-3">
-        <div className="relative aspect-[4/5] overflow-hidden bg-[#e8e5de]"><Image src={publicUrl(photo.storage_path)} alt={photo.alt_text} fill sizes="(min-width:1280px) 30vw, (min-width:640px) 45vw, 100vw" className="object-cover" /></div>
+        <div className="relative aspect-[4/5] overflow-hidden bg-[#e8e5de]">{photo.image_url ? <Image src={photo.image_url} alt={photo.alt_text} fill sizes="(min-width:1280px) 30vw, (min-width:640px) 45vw, 100vw" className="object-cover" /> : <div className="flex h-full items-center justify-center text-xs text-[#89847c]">Preview unavailable · refresh page</div>}</div>
         <div className="p-2"><h3 className="serif text-2xl">{photo.title}</h3><p className="mt-1 text-xs text-[#77736d]">{photo.location || "Location not specified"}</p>
           <div className="mt-3 flex flex-wrap gap-2 text-[9px] uppercase tracking-widest"><span className={photo.is_published?"bg-[#e3e9df] px-2 py-1 text-[#53664e]":"bg-[#eeeae3] px-2 py-1 text-[#77736d]"}>{photo.is_published?"Published":"Draft"}</span>{photo.is_featured&&<span className="bg-[#eee5d9] px-2 py-1 text-[#806344]">Featured</span>}</div>
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-[#dedad2] pt-3 text-[9px] uppercase tracking-widest">
