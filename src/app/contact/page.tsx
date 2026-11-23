@@ -24,10 +24,13 @@ export default async function Contact({ searchParams }: { searchParams: Promise<
     .order("created_at", { ascending: false })
     .limit(20);
 
-  const photos = (galleryPhotos ?? []).map(photo => ({
-    ...photo,
-    image_url: supabase.storage.from("living-space-images").getPublicUrl(photo.storage_path).data.publicUrl,
+  const signedPhotos = await Promise.all((galleryPhotos ?? []).map(async photo => {
+    const { data } = await supabase.storage
+      .from("living-space-images")
+      .createSignedUrl(photo.storage_path, 60 * 60);
+    return data?.signedUrl ? { ...photo, image_url: data.signedUrl } : null;
   }));
+  const photos = signedPhotos.filter((photo): photo is NonNullable<typeof photo> => photo !== null);
 
   return (
     <main className="grid min-h-[calc(100svh-5rem)] bg-[#f5f3ef] lg:grid-cols-2">
