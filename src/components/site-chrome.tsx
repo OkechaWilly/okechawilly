@@ -109,17 +109,17 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="mt-24 border-t border-[#e8e5de]">
+    <footer className="mt-24 border-t border-white/10 bg-[#242320] text-[#f7f6f2]">
       <div className="container grid gap-10 py-14 md:grid-cols-3">
         <div>
           <div className="serif text-3xl">Okecha Willy.</div>
-          <p className="mt-3 max-w-xs text-sm leading-6 text-[#77736d]">
+          <p className="mt-3 max-w-xs text-sm leading-6 text-[#c2bdb4]">
             An independent Ugandan artist exploring identity, spirituality, culture and the human experience through visual art.
           </p>
         </div>
         <div>
-          <p className="eyebrow">Explore</p>
-          <div className="mt-4 flex flex-col gap-3 text-sm">
+          <p className="eyebrow !text-[#c2a17d]">Explore</p>
+          <div className="mt-4 flex flex-col gap-3 text-sm text-[#e1ddd6] [&_a]:transition-colors [&_a:hover]:text-[#c2a17d]">
             <Link href="/artwork">Artwork</Link>
             <Link href="/shop">Shop</Link>
             <Link href="/faq">Collector FAQ</Link>
@@ -128,12 +128,12 @@ export function SiteFooter() {
           </div>
         </div>
         <div>
-          <p className="eyebrow">Studio</p>
+          <p className="eyebrow !text-[#c2a17d]">Studio</p>
           <p className="mt-4 text-sm leading-6 text-[#77736d]">
             Based in Wakiso, Uganda<br />
             Working locally and internationally.
           </p>
-          <p className="mt-8 text-xs text-[#77736d]">
+          <p className="mt-8 text-xs text-[#aaa49a]">
             © {new Date().getFullYear()} Okecha Willy. All rights reserved.
           </p>
         </div>
