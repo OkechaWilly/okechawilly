@@ -122,21 +122,21 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
     try {
       const nextValue = !photo[key];
       let nextBucket = photo.storage_bucket;
+      let nextPath = photo.storage_path;
       if (key === "is_published") {
         const destination = nextValue ? publicBucket : draftBucket;
         if (destination !== photo.storage_bucket) {
-          const nextPath = `living-spaces/${crypto.randomUUID()}-${photo.storage_path.split("/").pop()}`;
+          nextPath = `living-spaces/${crypto.randomUUID()}-${photo.storage_path.split("/").pop()}`;
           const { error } = await supabase.storage.from(photo.storage_bucket).copy(
             photo.storage_path, nextPath, { destinationBucket: destination },
           );
           if (error) throw error;
           copied = { bucket: destination, path: nextPath };
-          photo = { ...photo, storage_path: nextPath };
           nextBucket = destination;
         }
       }
       const { error } = await supabase.from("living_space_photos")
-        .update({ [key]: nextValue, ...(key === "is_published" ? { storage_bucket: nextBucket, storage_path: photo.storage_path } : {}) })
+        .update({ [key]: nextValue, ...(key === "is_published" ? { storage_bucket: nextBucket, storage_path: nextPath } : {}) })
         .eq("id", photo.id);
       if (error) throw error;
       if (copied) {
@@ -144,10 +144,10 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
         if (cleanupError) setNotice("Visibility updated, but an old storage copy needs cleanup.");
       }
       const imageUrl = nextBucket === publicBucket
-        ? supabase.storage.from(publicBucket).getPublicUrl(photo.storage_path).data.publicUrl
-        : (await supabase.storage.from(draftBucket).createSignedUrl(photo.storage_path, 4 * 60 * 60)).data?.signedUrl ?? "";
+        ? supabase.storage.from(publicBucket).getPublicUrl(nextPath).data.publicUrl
+        : (await supabase.storage.from(draftBucket).createSignedUrl(nextPath, 4 * 60 * 60)).data?.signedUrl ?? "";
       setPhotos(current => current.map(item => item.id === photo.id
-        ? { ...item, [key]: nextValue, storage_bucket: nextBucket, image_url: imageUrl }
+        ? { ...item, [key]: nextValue, storage_bucket: nextBucket, storage_path: nextPath, image_url: imageUrl }
         : item));
     } catch (error) {
       if (copied) await supabase.storage.from(copied.bucket).remove([copied.path]);
