@@ -8,11 +8,13 @@ import { errorMessage } from "@/lib/errors";
 
 type Photo = {
   id: string; title: string; caption: string | null; location: string | null;
-  storage_path: string; alt_text: string; sort_order: number;
+  storage_path: string; storage_bucket: "living-space-images" | "living-space-drafts";
+  alt_text: string; sort_order: number;
   is_featured: boolean; is_published: boolean; created_at: string;
   image_url: string;
 };
-const bucket = "living-space-images";
+const publicBucket = "living-space-images";
+const draftBucket = "living-space-drafts";
 const field = "mt-2 w-full border border-[#d9d4ca] bg-white px-3 py-3 text-sm outline-none focus:border-[#9c8062]";
 const label = "block text-[10px] uppercase tracking-[.14em] text-[#77736d]";
 
@@ -45,24 +47,41 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
     event.preventDefault();
     if (!editing && !file) { setNotice("Choose a photograph to upload."); return; }
     setBusy(true); setNotice("");
-    let uploadedPath: string | null = null;
+    let newlyUploaded: { bucket: string; path: string } | null = null;
+    let copiedObject: { bucket: string; path: string } | null = null;
+    let oldObject: { bucket: string; path: string } | null = null;
     let recordSaved = false;
     try {
+      const targetBucket = published ? publicBucket : draftBucket;
       let storagePath = editing?.storage_path ?? "";
+      let storageBucket = editing?.storage_bucket ?? draftBucket;
+
       if (file) {
         const prepared = await prepareImageForUpload(file);
         const extension = prepared.name.split(".").pop()?.toLowerCase() || "jpg";
-        uploadedPath = `living-spaces/${crypto.randomUUID()}.${extension}`;
-        const { error } = await supabase.storage.from(bucket).upload(uploadedPath, prepared, {
+        storagePath = `living-spaces/${crypto.randomUUID()}.${extension}`;
+        const { error } = await supabase.storage.from(targetBucket).upload(storagePath, prepared, {
           upsert: false, contentType: prepared.type || undefined, cacheControl: "3600",
         });
         if (error) throw error;
-        storagePath = uploadedPath;
+        newlyUploaded = { bucket: targetBucket, path: storagePath };
+        if (editing?.storage_path) oldObject = { bucket: editing.storage_bucket, path: editing.storage_path };
+        storageBucket = targetBucket;
+      } else if (editing && editing.storage_bucket !== targetBucket) {
+        const { error } = await supabase.storage.from(editing.storage_bucket).copy(
+          editing.storage_path, editing.storage_path, { destinationBucket: targetBucket },
+        );
+        if (error) throw error;
+        copiedObject = { bucket: targetBucket, path: editing.storage_path };
+        oldObject = { bucket: editing.storage_bucket, path: editing.storage_path };
+        storageBucket = targetBucket;
       }
+
       const payload = {
         title: title.trim(), caption: caption.trim() || null,
         location: location.trim() || null, alt_text: alt.trim(),
-        storage_path: storagePath, is_featured: featured, is_published: published,
+        storage_path: storagePath, storage_bucket: storageBucket,
+        is_featured: featured, is_published: published,
         sort_order: editing?.sort_order ?? photos.length,
       };
       const query = editing
@@ -73,12 +92,12 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
       recordSaved = true;
 
       const { data: signed, error: signError } = await supabase.storage
-        .from(bucket).createSignedUrl(storagePath, 4 * 60 * 60);
+        .from(storageBucket).createSignedUrl(storagePath, 4 * 60 * 60);
       const savedPhoto = { ...(data as Omit<Photo, "image_url">), image_url: signed?.signedUrl ?? "" } as Photo;
 
-      if (editing && file && editing.storage_path) {
-        const { error: removeError } = await supabase.storage.from(bucket).remove([editing.storage_path]);
-        if (removeError) setNotice("Saved, but the previous image may need manual storage cleanup.");
+      if (oldObject) {
+        const { error: cleanupError } = await supabase.storage.from(oldObject.bucket).remove([oldObject.path]);
+        if (cleanupError) setNotice("Saved, but the previous storage copy needs cleanup.");
       }
       setPhotos(current => {
         const next = current.filter(item => item.id !== savedPhoto.id);
@@ -87,19 +106,49 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
       reset();
       setNotice(signError ? "Photograph saved. Refresh the page if its preview does not appear." : "Photograph saved.");
     } catch (error) {
-      if (uploadedPath && !recordSaved) await supabase.storage.from(bucket).remove([uploadedPath]);
+      if (!recordSaved) {
+        if (newlyUploaded) await supabase.storage.from(newlyUploaded.bucket).remove([newlyUploaded.path]);
+        if (copiedObject) await supabase.storage.from(copiedObject.bucket).remove([copiedObject.path]);
+      }
       setNotice(errorMessage(error, "Could not save this photograph."));
     } finally { setBusy(false); }
   }
 
   async function toggle(photo: Photo, key: "is_published" | "is_featured") {
     setBusy(true); setNotice("");
+    let copied: { bucket: string; path: string } | null = null;
     try {
-      const { error } = await supabase.from("living_space_photos").update({ [key]: !photo[key] }).eq("id", photo.id);
+      const nextValue = !photo[key];
+      let nextBucket = photo.storage_bucket;
+      if (key === "is_published") {
+        const destination = nextValue ? publicBucket : draftBucket;
+        if (destination !== photo.storage_bucket) {
+          const { error } = await supabase.storage.from(photo.storage_bucket).copy(
+            photo.storage_path, photo.storage_path, { destinationBucket: destination },
+          );
+          if (error) throw error;
+          copied = { bucket: destination, path: photo.storage_path };
+          nextBucket = destination;
+        }
+      }
+      const { error } = await supabase.from("living_space_photos")
+        .update({ [key]: nextValue, ...(key === "is_published" ? { storage_bucket: nextBucket } : {}) })
+        .eq("id", photo.id);
       if (error) throw error;
-      setPhotos(current => current.map(item => item.id === photo.id ? { ...item, [key]: !photo[key] } : item));
-    } catch (error) { setNotice(errorMessage(error, "Could not update this photograph.")); }
-    finally { setBusy(false); }
+      if (copied) {
+        const { error: cleanupError } = await supabase.storage.from(photo.storage_bucket).remove([photo.storage_path]);
+        if (cleanupError) setNotice("Visibility updated, but an old storage copy needs cleanup.");
+      }
+      const imageUrl = nextBucket === publicBucket
+        ? supabase.storage.from(publicBucket).getPublicUrl(photo.storage_path).data.publicUrl
+        : (await supabase.storage.from(draftBucket).createSignedUrl(photo.storage_path, 4 * 60 * 60)).data?.signedUrl ?? "";
+      setPhotos(current => current.map(item => item.id === photo.id
+        ? { ...item, [key]: nextValue, storage_bucket: nextBucket, image_url: imageUrl }
+        : item));
+    } catch (error) {
+      if (copied) await supabase.storage.from(copied.bucket).remove([copied.path]);
+      setNotice(errorMessage(error, "Could not update this photograph."));
+    } finally { setBusy(false); }
   }
 
   async function move(photo: Photo, direction: -1 | 1) {
@@ -126,7 +175,7 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
     try {
       const { error } = await supabase.from("living_space_photos").delete().eq("id", photo.id);
       if (error) throw error;
-      const { error: storageError } = await supabase.storage.from(bucket).remove([photo.storage_path]);
+      const { error: storageError } = await supabase.storage.from(photo.storage_bucket).remove([photo.storage_path]);
       setPhotos(current => current.filter(item => item.id !== photo.id));
       setNotice(storageError ? "Record deleted; the image file may need manual cleanup." : "Photograph deleted.");
       if (editing?.id === photo.id) reset();
