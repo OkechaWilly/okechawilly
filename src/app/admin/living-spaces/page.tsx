@@ -11,7 +11,7 @@ export default async function AdminLivingSpacesPage() {
 
   const photos = await Promise.all((data ?? []).map(async photo => {
     const { data: signed } = await supabase.storage
-      .from("living-space-images")
+      .from(photo.storage_bucket ?? "living-space-images")
       .createSignedUrl(photo.storage_path, 4 * 60 * 60);
     return { ...photo, image_url: signed?.signedUrl ?? "" };
   }));
