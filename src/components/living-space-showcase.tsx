@@ -23,6 +23,8 @@ export default function LivingSpaceShowcase({ photos }: { photos: LivingSpacePho
 
   useEffect(() => {
     if (paused || photos.length < 2) return;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) return;
     const timer = window.setInterval(() => {
       setImageReady(false);
       setActive(index => (index + 1) % photos.length);
@@ -41,6 +43,7 @@ export default function LivingSpaceShowcase({ photos }: { photos: LivingSpacePho
     <aside
       className="relative min-h-[560px] overflow-hidden bg-[#292824] lg:min-h-0"
       aria-label="Art in living spaces"
+      aria-roledescription="carousel"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
