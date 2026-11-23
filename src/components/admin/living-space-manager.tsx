@@ -68,12 +68,14 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
         if (editing?.storage_path) oldObject = { bucket: editing.storage_bucket, path: editing.storage_path };
         storageBucket = targetBucket;
       } else if (editing && editing.storage_bucket !== targetBucket) {
+        const nextPath = `living-spaces/${crypto.randomUUID()}-${editing.storage_path.split("/").pop()}`;
         const { error } = await supabase.storage.from(editing.storage_bucket).copy(
-          editing.storage_path, editing.storage_path, { destinationBucket: targetBucket },
+          editing.storage_path, nextPath, { destinationBucket: targetBucket },
         );
         if (error) throw error;
-        copiedObject = { bucket: targetBucket, path: editing.storage_path };
+        copiedObject = { bucket: targetBucket, path: nextPath };
         oldObject = { bucket: editing.storage_bucket, path: editing.storage_path };
+        storagePath = nextPath;
         storageBucket = targetBucket;
       }
 
@@ -123,16 +125,18 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
       if (key === "is_published") {
         const destination = nextValue ? publicBucket : draftBucket;
         if (destination !== photo.storage_bucket) {
+          const nextPath = `living-spaces/${crypto.randomUUID()}-${photo.storage_path.split("/").pop()}`;
           const { error } = await supabase.storage.from(photo.storage_bucket).copy(
-            photo.storage_path, photo.storage_path, { destinationBucket: destination },
+            photo.storage_path, nextPath, { destinationBucket: destination },
           );
           if (error) throw error;
-          copied = { bucket: destination, path: photo.storage_path };
+          copied = { bucket: destination, path: nextPath };
+          photo = { ...photo, storage_path: nextPath };
           nextBucket = destination;
         }
       }
       const { error } = await supabase.from("living_space_photos")
-        .update({ [key]: nextValue, ...(key === "is_published" ? { storage_bucket: nextBucket } : {}) })
+        .update({ [key]: nextValue, ...(key === "is_published" ? { storage_bucket: nextBucket, storage_path: photo.storage_path } : {}) })
         .eq("id", photo.id);
       if (error) throw error;
       if (copied) {
@@ -186,7 +190,7 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
   return <section>
     <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
       <div><p className="eyebrow">Studio workspace</p><h1 className="display mt-3 text-5xl md:text-6xl">Art in living spaces.</h1>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-[#77736d]">Manage photographs showing your artwork in collectors’ homes. Only published photographs appear in the public contact-page showcase.</p></div>
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-[#77736d]">Manage photographs of your artwork being shared, exhibited and lived with. Only published photographs appear in the public contact-page showcase.</p></div>
       <button type="button" onClick={() => { reset(); setNotice(""); }} className="bg-[#242320] px-6 py-3 text-[10px] uppercase tracking-[.15em] !text-white">+ Add photograph</button>
     </div>
     {loadError && <p className="mt-7 border border-[#d9b7a9] bg-[#fbf2ee] p-4 text-sm text-[#8b4937]">Could not load gallery: {loadError}</p>}
@@ -224,6 +228,6 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
           </div>
         </div>
       </article>)}
-    </div> : <div className="mt-5 border border-dashed border-[#cfcac0] px-6 py-16 text-center"><p className="display text-3xl">Your showcase starts here.</p><p className="mx-auto mt-3 max-w-md text-xs leading-6 text-[#89847c]">Upload your first photograph when you have an artwork installation to share. Drafts stay private until you publish them.</p></div>}
+    </div> : <div className="mt-5 border border-dashed border-[#cfcac0] px-6 py-16 text-center"><p className="display text-3xl">Your showcase starts here.</p><p className="mx-auto mt-3 max-w-md text-xs leading-6 text-[#89847c]">Add a photograph of a moment with the work. Drafts stay private until you publish them.</p></div>}
   </section>;
 }
