@@ -97,7 +97,7 @@ export default function ArtistProfileManager({ initialProfile }: { initialProfil
         <div><p className="eyebrow">02 / Portrait</p><h2 className="display mt-2 text-3xl">Artist photograph</h2><p className="mt-3 text-xs leading-6 text-[#89847c]">A profile image for the About page. It will not be listed as an artwork.</p></div>
         <div>
           {profile.portrait_path && <img src={publicUrl(profile.portrait_path)} alt="Current artist portrait" className="mb-4 max-h-[420px] w-full object-cover object-center sm:w-2/3" />}
-          <label className={label}>Replace portrait<input type="file" accept="image/*" className="mt-3 block w-full text-xs file:mr-4 file:border-0 file:bg-[#e9e5dc] file:px-4 file:py-3 file:text-[10px] file:uppercase file:tracking-widest" onChange={e=>setPortrait(e.target.files?.[0] ?? null)} /></label>
+          <label className={label}>Replace portrait<input type="file" accept="image/jpeg,image/png,image/webp" className="mt-3 block w-full text-xs file:mr-4 file:border-0 file:bg-[#e9e5dc] file:px-4 file:py-3 file:text-[10px] file:uppercase file:tracking-widest" onChange={e=>setPortrait(e.target.files?.[0] ?? null)} /></label>
           {portrait && <p className="mt-2 text-xs text-[#77736d]">Selected: {portrait.name}</p>}
         </div>
       </section>
@@ -123,7 +123,7 @@ export default function ArtistProfileManager({ initialProfile }: { initialProfil
         <div><p className="eyebrow">05 / Images</p><h2 className="display mt-2 text-3xl">About gallery</h2><p className="mt-3 text-xs leading-6 text-[#89847c]">Add studio, process or exhibition photographs.</p></div>
         <div>
           {profile.gallery.length>0 && <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{profile.gallery.map((item,index)=><div key={item.path} className="relative bg-white p-2"><img src={publicUrl(item.path)} alt={item.alt} className="aspect-[4/5] w-full object-cover" /><button type="button" disabled={busy} onClick={()=>removeGalleryItem(index)} className="mt-2 text-[9px] uppercase tracking-widest text-[#9a5a4a]">Remove image</button></div>)}</div>}
-          <label className={label}>Upload images<input type="file" accept="image/*" multiple className="mt-3 block w-full text-xs file:mr-4 file:border-0 file:bg-[#e9e5dc] file:px-4 file:py-3 file:text-[10px] file:uppercase file:tracking-widest" onChange={e=>setGalleryFiles(Array.from(e.target.files ?? []))} /></label>
+          <label className={label}>Upload images<input type="file" accept="image/jpeg,image/png,image/webp" multiple className="mt-3 block w-full text-xs file:mr-4 file:border-0 file:bg-[#e9e5dc] file:px-4 file:py-3 file:text-[10px] file:uppercase file:tracking-widest" onChange={e=>setGalleryFiles(Array.from(e.target.files ?? []))} /></label>
           {galleryFiles.length>0 && <p className="mt-2 text-xs text-[#77736d]">{galleryFiles.length} image(s) selected.</p>}
         </div>
       </section>

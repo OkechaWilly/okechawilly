@@ -15,8 +15,15 @@ export async function POST(request: Request) {
     const body = await request.json();
     const id = body?.data?.id;
     if (!id) return NextResponse.json({ received: true });
-    await verifyFlutterwaveTransaction(String(id));
-    return NextResponse.json({ received: true });
+    try {
+      await verifyFlutterwaveTransaction(String(id));
+      return NextResponse.json({ received: true });
+    } catch (error) {
+      if (error instanceof Error && error.message === "PAYMENT_REQUIRES_RECONCILIATION") {
+        return NextResponse.json({ received: true, reconciliationRequired: true });
+      }
+      throw error;
+    }
   } catch (error) {
     console.error("Flutterwave webhook verification failed:", error);
     return NextResponse.json({ received: false }, { status: 500 });

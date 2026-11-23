@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArtworkImageGallery } from "@/components/artwork-image-gallery";
 import ProductVariantPicker from "@/components/product-variant-picker";
-import { PRODUCT_TYPE_LABELS, availability, availableVariants, isCurrentlyAvailable } from "@/lib/shop";
+import { PRODUCT_TYPE_LABELS, availability } from "@/lib/shop";
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/json-ld";
 import { SITE_NAME, absoluteUrl, pageMetadata, plainText, shareImage } from "@/lib/site";
@@ -71,25 +71,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
     alt: image.alt,
   }));
 
-  // Structured data so Google can show the price and availability of this product.
-  const onOffer = availableVariants(product);
-  const offerPrices = onOffer.map((variant) => Number(variant.price));
-  const offerCurrency = onOffer[0]?.currency || product.currency || "UGX";
   const productUrl = absoluteUrl(`/shop/${product.slug}`);
-  // A sold or unavailable product must never be reported to Google as "in stock", even when its
-  // formats are still switched on.
-  const unavailable = availability(product) !== null;
-  const offers = unavailable
-    ? product.price != null
-      ? { "@type": "Offer", priceCurrency: product.currency || "UGX", price: Number(product.price), availability: "https://schema.org/OutOfStock", url: productUrl }
-      : undefined
-    : onOffer.length > 1 && Math.min(...offerPrices) !== Math.max(...offerPrices)
-    ? { "@type": "AggregateOffer", priceCurrency: offerCurrency, lowPrice: Math.min(...offerPrices), highPrice: Math.max(...offerPrices), offerCount: onOffer.length, availability: "https://schema.org/InStock", url: productUrl }
-    : onOffer.length > 0
-      ? { "@type": "Offer", priceCurrency: offerCurrency, price: offerPrices[0], availability: "https://schema.org/InStock", url: productUrl }
-      : product.price != null
-        ? { "@type": "Offer", priceCurrency: product.currency || "UGX", price: Number(product.price), availability: isCurrentlyAvailable(product) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", url: productUrl }
-        : undefined;
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -99,7 +81,6 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
     category: PRODUCT_TYPE_LABELS[product.product_type] || "Studio product",
     ...(product.description ? { description: plainText(product.description, 300) } : {}),
     ...(imageUrls.length ? { image: imageUrls.slice(0, 4).map((image) => shareImage(image.url)) } : {}),
-    ...(offers ? { offers } : {}),
   };
 
   return (
@@ -114,7 +95,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
           <p className="eyebrow">{PRODUCT_TYPE_LABELS[product.product_type] || "Studio product"}</p>
           <h1 className="display mt-4 text-5xl md:text-6xl">{product.title}</h1>
           {availability(product) && <p className="mt-5 inline-flex border border-[#d9d4ca] px-4 py-3 text-[10px] uppercase tracking-[.15em] text-[#77736d]">{availability(product)?.label} · Enquiries welcome</p>}
-          <ProductVariantPicker productId={product.id} productSlug={product.slug} productImage={imageUrls[0]?.url || null} productTitle={product.title} productType={product.product_type} variants={(product.product_variants || []).sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order)} fallbackPrice={product.price == null ? null : Number(product.price)} fallbackCurrency={product.currency || "UGX"} fallbackPriceUGX={product.price_ugx == null ? null : Number(product.price_ugx)} fallbackPriceUSD={product.price_usd == null ? null : Number(product.price_usd)} isSoldOut={!isCurrentlyAvailable(product)} />
+          <ProductVariantPicker productTitle={product.title} productType={product.product_type} variants={(product.product_variants || []).sort((a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order)} isSoldOut={availability(product) !== null} />
           {product.description && <p className="mt-6 whitespace-pre-line text-sm leading-7 text-[#77736d]">{product.description}</p>}
           {linkedArtwork?.is_published && linkedArtwork?.slug && <div className="mt-7 border-l border-[#c9b59e] pl-4"><p className="eyebrow">From the artwork archive</p><Link href={`/artwork/${linkedArtwork.slug}`} className="mt-2 inline-flex items-center gap-2 text-sm transition-colors hover:text-[#9c8062]">Explore the original artwork: {linkedArtwork.title} <span aria-hidden="true">↗</span></Link></div>}
           {(product.medium || product.materials || product.dimensions || product.framing) && <div className="mt-8 border-t border-[#e8e5de] pt-5"><p className="eyebrow mb-3">{product.product_type === "limited_print" || product.product_type === "open_print" ? "Print details" : "Product details"}</p><dl className="divide-y divide-[#e8e5de] text-sm">
@@ -131,7 +112,7 @@ export default async function ShopProductDetail({ params }: { params: Promise<{ 
             {product.track_inventory && product.stock_quantity != null && <div className="flex justify-between py-2"><span className="text-[#77736d]">Availability</span><span>{product.stock_quantity > 0 ? "Available" : "Out of stock"}</span></div>}
             {Array.isArray(product.options) && product.options.length > 0 && <div className="flex justify-between gap-5 py-2"><span className="text-[#77736d]">Options</span><span className="text-right">{product.options.join(", ")}</span></div>}
           </div>
-          <div className="border-t border-[#e8e5de] pt-5"><p className="eyebrow">Delivery & payment</p><p className="mt-3 text-xs leading-6 text-[#77736d]">Delivery is calculated individually. The studio will confirm the delivery fee and full total with you before payment is requested.</p></div>
+          <div className="border-t border-[#e8e5de] pt-5"><p className="eyebrow">Enquiries & delivery</p><p className="mt-3 text-xs leading-6 text-[#77736d]">Ask the studio about availability, pricing, materials or delivery. We will discuss the details with you directly before confirming a purchase.</p></div>
         </div>
       </div>
     </main>

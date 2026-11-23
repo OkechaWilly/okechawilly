@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCart } from "@/components/cart-provider";
-import { CurrencySelector } from "@/components/currency-selector";
 
 const navigation = [
   { href: "/artwork", label: "Artwork" },
@@ -16,7 +14,6 @@ const navigation = [
 
 export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { count } = useCart();
   const pathname = usePathname();
   const darkHeader = ["/artwork", "/collections", "/shop", "/prints", "/journal"].includes(pathname);
   const [scrolled, setScrolled] = useState(false);
@@ -63,8 +60,6 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <div className="hidden sm:block"><CurrencySelector compact dark={darkHeader} /></div>
-          <Link href="/cart" onClick={closeMenu} aria-label={`Shopping bag, ${count} items`} className="border border-current/40 px-3 py-3 text-[9px] uppercase tracking-[.12em] transition-colors hover:border-[#9c8062] hover:text-[#d0aa83]">Bag ({count})</Link>
           <Link
             href="/contact"
             onClick={closeMenu}
@@ -105,8 +100,6 @@ export function SiteHeader() {
                 <span aria-hidden="true" className="text-[#9c8062]">0{index + 1}</span>
               </Link>
             ))}
-            <div className="flex items-center justify-between border-b border-current/10 py-4"><span className="text-[12px] uppercase tracking-[.14em]">Shop currency</span><CurrencySelector compact dark={darkHeader} /></div>
-            <Link href="/cart" onClick={closeMenu} className="flex items-center justify-between border-b border-current/10 py-4 text-[12px] uppercase tracking-[.14em]">Shopping bag <span className="text-[#9c8062]">{count} items</span></Link>
           </div>
         </nav>
       )}
@@ -115,18 +108,21 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
+  const pathname = usePathname();
+  const compactTop = pathname === "/contact";
+
   return (
-    <footer className="mt-24 border-t border-[#e8e5de]">
+    <footer className={`${compactTop ? "mt-0" : "mt-24"} border-t border-white/10 bg-[#242320] text-[#f7f6f2]`}>
       <div className="container grid gap-10 py-14 md:grid-cols-3">
         <div>
           <div className="serif text-3xl">Okecha Willy.</div>
-          <p className="mt-3 max-w-xs text-sm leading-6 text-[#77736d]">
+          <p className="mt-3 max-w-xs text-sm leading-6 text-[#c2bdb4]">
             An independent Ugandan artist exploring identity, spirituality, culture and the human experience through visual art.
           </p>
         </div>
         <div>
-          <p className="eyebrow">Explore</p>
-          <div className="mt-4 flex flex-col gap-3 text-sm">
+          <p className="eyebrow !text-[#c2a17d]">Explore</p>
+          <div className="mt-4 flex flex-col gap-3 text-sm text-[#e1ddd6] [&_a]:transition-colors [&_a:hover]:text-[#c2a17d]">
             <Link href="/artwork">Artwork</Link>
             <Link href="/shop">Shop</Link>
             <Link href="/faq">Collector FAQ</Link>
@@ -135,12 +131,12 @@ export function SiteFooter() {
           </div>
         </div>
         <div>
-          <p className="eyebrow">Studio</p>
+          <p className="eyebrow !text-[#c2a17d]">Studio</p>
           <p className="mt-4 text-sm leading-6 text-[#77736d]">
             Based in Wakiso, Uganda<br />
             Working locally and internationally.
           </p>
-          <p className="mt-8 text-xs text-[#77736d]">
+          <p className="mt-8 text-xs text-[#aaa49a]">
             © {new Date().getFullYear()} Okecha Willy. All rights reserved.
           </p>
         </div>

@@ -21,9 +21,26 @@ const nextConfig: NextConfig = {
     // resized copies can safely be cached for a long time (30 days).
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
+  async headers() {
+    return [{
+      source: "/:path*",
+      headers: [
+        { key: "X-Content-Type-Options", value: "nosniff" },
+        { key: "X-Frame-Options", value: "DENY" },
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+      ],
+    }];
+  },
   async redirects() {
     // There is one login page. Older bookmarks to /admin/login land there.
-    return [{ source: "/admin/login", destination: "/studio-login", permanent: false }];
+    return [
+      { source: "/admin/login", destination: "/studio-login", permanent: false },
+      { source: "/cart", destination: "/shop", permanent: false },
+      { source: "/checkout", destination: "/shop", permanent: false },
+      { source: "/order-received", destination: "/shop", permanent: false },
+    ];
   },
 };
 export default nextConfig;

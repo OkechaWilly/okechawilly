@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
-import { cookies, headers } from "next/headers";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/site";
 import ShopPageBanner from "@/components/shop-page-banner";
@@ -10,7 +9,6 @@ import {
   SHOP_CATEGORIES,
   availability,
   categoryOfType,
-  priceLabel,
 } from "@/lib/shop";
 
 function joinWithAnd(items: string[]) {
@@ -38,10 +36,10 @@ type ShopProduct = {
   edition_sold: number | null;
   imageUrl: string | null;
   imageAlt: string;
-} & Parameters<typeof priceLabel>[0];
+} & Parameters<typeof availability>[0] & { id: string };
 
 // One card, used for work on sale and for sold work.
-function ProductCard({ product, currency }: { product: ShopProduct; currency: "UGX" | "USD" }) {
+function ProductCard({ product }: { product: ShopProduct }) {
   const state = availability(product);
   return (
     <article>
@@ -54,7 +52,7 @@ function ProductCard({ product, currency }: { product: ShopProduct; currency: "U
         {state && <span className="mt-3 inline-flex border border-[#d9d4ca] px-3 py-2 text-[9px] uppercase tracking-[.14em] text-[#77736d]">{state.label}</span>}
       </Link>
       <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#ded9d0] pt-3 text-xs text-[#77736d]">
-        {state ? <span /> : <span>{priceLabel(product, currency)}</span>}
+        <span>Enquire for details</span>
         {!state && product.product_type === "limited_print" && product.edition_size != null
           ? <span>{Math.max(0, product.edition_size - (product.edition_sold ?? 0))} remaining</span>
           : <Link href={`/shop/${product.slug}`} className="uppercase tracking-[.12em] !text-[#242320] transition-colors hover:!text-[#9c8062]">View details ↗</Link>}
@@ -65,11 +63,6 @@ function ProductCard({ product, currency }: { product: ShopProduct; currency: "U
 
 export default async function Shop({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   const { category: requestedCategory } = await searchParams;
-  const cookieStore = await cookies();
-  const requestHeaders = await headers();
-  const savedCurrency = cookieStore.get("okecha-willy-currency")?.value;
-  const detectedCountry = (requestHeaders.get("x-vercel-ip-country") || "").toUpperCase();
-  const currency: "UGX" | "USD" = savedCurrency === "UGX" || savedCurrency === "USD" ? savedCurrency : detectedCountry && detectedCountry !== "UG" ? "USD" : "UGX";
   const supabase = await createClient();
   const { data } = await supabase
     .from("products")
@@ -110,7 +103,11 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
   // Works that can be bought come first; sold works follow in their own section so they never push
   // available work out of sight.
   const onSale = visible.filter((product) => !availability(product));
-  const soldWorks = visible.filter((product) => availability(product));
+  const unavailableWorks = visible.filter((product) => availability(product)?.label === "Currently unavailable");
+  const soldWorks = visible.filter((product) => {
+    const state = availability(product);
+    return state !== null && state.label !== "Currently unavailable";
+  });
   // A filter is only useful when there is more than one kind of thing to filter.
   const showFilter = presentCategories.length > 1;
   const hasPrints = available.some((product) => categoryOfType(product.product_type)?.slug === "prints");
@@ -124,7 +121,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
       <ShopPageBanner
         eyebrow="Collect art"
         title="The shop"
-        description={`${intro} Each piece is presented with its story and details. To purchase or ask about delivery, get in touch directly.`}
+        description={`${intro} Explore each work and enquire directly with the studio. We will confirm availability, pricing and delivery with you personally.`}
         aside={"Based in Uganda\nEnquiries welcome from collectors worldwide"}
       />
 
@@ -147,7 +144,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
                 <p className="eyebrow">Studio catalogue</p>
                 <h2 className="display mt-3 text-4xl md:text-5xl">{activeCategory ? activeCategory.title : "Selected works"}.</h2>
               </div>
-              <p className="max-w-sm text-sm leading-7 text-[#77736d]">Browse works currently listed by the studio. Availability is confirmed personally before any sale.</p>
+              <p className="max-w-sm text-sm leading-7 text-[#77736d]">Browse work and editions listed by the studio. Availability, pricing and delivery are discussed with you directly.</p>
             </div>
 
             {showFilter && (
@@ -171,12 +168,23 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
 
             {onSale.length > 0 ? (
               <div className="mt-12 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-                {onSale.map((product) => <ProductCard key={product.id} product={product} currency={currency} />)}
+                {onSale.map((product) => <ProductCard key={product.id} product={product} />)}
               </div>
             ) : (
               <p className="mt-12 max-w-xl text-sm leading-7 text-[#77736d]">
                 Nothing {activeCategory ? `in ${activeCategory.title.toLowerCase()} ` : ""}is available to buy right now. New work is added regularly, and you are welcome to <Link href="/contact" className="underline underline-offset-4">get in touch</Link> about something similar.
               </p>
+            )}
+
+            {unavailableWorks.length > 0 && (
+              <div className={onSale.length > 0 ? "mt-20 border-t border-[#ded9d0] pt-14" : "mt-14"}>
+                <p className="eyebrow">Temporarily unavailable</p>
+                <h3 className="display mt-3 text-3xl md:text-4xl">Not available to order right now.</h3>
+                <p className="mt-3 max-w-xl text-sm leading-7 text-[#77736d]">Some listings or formats are currently unavailable. You can still open a listing or contact the studio about future availability.</p>
+                <div className="mt-10 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+                  {unavailableWorks.map((product) => <ProductCard key={product.id} product={product} />)}
+                </div>
+              </div>
             )}
 
             {soldWorks.length > 0 && (
@@ -185,7 +193,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
                 <h3 className="display mt-3 text-3xl md:text-4xl">Works that have found a home.</h3>
                 <p className="mt-3 max-w-xl text-sm leading-7 text-[#77736d]">A record of work already collected. If one of these speaks to you, get in touch about something similar or a print.</p>
                 <div className="mt-10 grid gap-x-7 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-                  {soldWorks.map((product) => <ProductCard key={product.id} product={product} currency={currency} />)}
+                  {soldWorks.map((product) => <ProductCard key={product.id} product={product} />)}
                 </div>
               </div>
             )}

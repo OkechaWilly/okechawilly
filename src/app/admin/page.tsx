@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 const sections = [
   { title: "Artist profile", description: "Edit your About page, artist portrait, biography, statement and supporting studio images.", href: "/admin/profile", label: "Edit artist profile" },
   { title: "Artwork archive", description: "Add paintings, update details, organise collections and publish portfolio entries.", href: "/admin/artworks", label: "Manage artworks" },
+  { title: "Art in living spaces", description: "Upload real photographs of your work in collectors’ homes, add captions, reorder images and manage what appears on the contact page.", href: "/admin/living-spaces", label: "Manage living-space gallery" },
   { title: "Collections", description: "Create themed bodies of work, upload cover images and assign artworks to each collection.", href: "/admin/collections", label: "Manage collections" },
   { title: "Shop catalogue", description: "Prepare originals, print editions and merchandise for future sale.", href: "/admin/products", label: "Manage products" },
   { title: "Orders", description: "Review customer orders and track fulfilment once checkout is enabled.", href: "/admin/orders", label: "View orders" },

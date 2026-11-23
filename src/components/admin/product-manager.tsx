@@ -29,6 +29,26 @@ const types = [
   { value: "art_object", label: "Art object" },
 ];
 
+function hasMarketPrice(product: Pick<Product, "product_type" | "price" | "currency" | "price_ugx" | "price_usd" | "product_variants">, market: "UGX" | "USD") {
+  if (product.product_type === "original") return true;
+  const variants = (product.product_variants || []).filter((variant) =>
+    variant.is_available && (variant.stock_quantity === "" || variant.stock_quantity == null || Number(variant.stock_quantity) > 0)
+  );
+  if (variants.length > 0) {
+    return variants.every((variant) => {
+      const regionalPrice = market === "UGX" ? variant.price_ugx : variant.price_usd;
+      const raw = regionalPrice !== "" && regionalPrice != null
+        ? regionalPrice
+        : variant.currency === market ? variant.price : "";
+      return raw !== "" && Number.isFinite(Number(raw)) && Number(raw) >= 0;
+    });
+  }
+  const raw = market === "UGX"
+    ? product.price_ugx ?? (product.currency === "UGX" ? product.price : null)
+    : product.price_usd ?? (product.currency === "USD" ? product.price : null);
+  return raw != null && Number.isFinite(Number(raw)) && Number(raw) >= 0;
+}
+
 const productCategories = [
   { slug: "originals", title: "Originals", description: "Original paintings and physical artworks.", defaultType: "original", types: ["original"] },
   { slug: "prints", title: "Fine Art Prints", description: "Limited and open-edition reproductions.", defaultType: "limited_print", types: ["limited_print", "open_print"] },
@@ -93,6 +113,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
   const publicUrl = (path: string) => supabase.storage.from("product-images").getPublicUrl(path).data.publicUrl;
   const selectedCategory = productCategories.find((category) => category.types.includes(type)) || productCategories[0];
   const isPrint = type === "limited_print" || type === "open_print";
+  const missingMarketPrices = type === "original" ? [] : (["UGX", "USD"] as const).filter((market) => !hasMarketPrice({ product_type: type, price: price === "" ? null : Number(price), currency, price_ugx: priceUGX === "" ? null : Number(priceUGX), price_usd: priceUSD === "" ? null : Number(priceUSD), product_variants: variants }, market));
 
   function setProductType(nextType: string) {
     const switchingToPrint = nextType === "limited_print" || nextType === "open_print";
@@ -318,6 +339,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
         </div>
         <label className={label}>Linked artwork<select className={field} value={artworkId} onChange={(e) => linkArtwork(e.target.value)}><option value="">No linked artwork</option>{artworks.map((a) => <option key={a.id} value={a.id}>{a.title}{a.year ? ` (${a.year})` : ""}</option>)}</select><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Linking an artwork fills in any empty description, medium and dimensions (and the title on a new product). It never changes the title or web address of a product that already exists. Its photographs are also used on the product page unless you upload separate product images.</span></label>
         <div className="md:col-span-2 grid gap-4 rounded border border-[#dedad2] bg-white p-4 sm:grid-cols-2"><div className="sm:col-span-2"><p className={label}>Independent regional pricing</p><p className="mt-1 text-[10px] leading-5 text-[#89847c]">Set each market price yourself. Prices are not converted automatically. Leave a currency blank until you are ready to sell in that market.</p></div><label className={label}>Uganda price (UGX)<input className={field} type="number" min="0" step="1" value={priceUGX} onChange={(e) => setPriceUGX(e.target.value)} placeholder="UGX price" /></label><label className={label}>International price (USD)<input className={field} type="number" min="0" step="0.01" value={priceUSD} onChange={(e) => setPriceUSD(e.target.value)} placeholder="USD price" /></label><label className={label}>Legacy display price (optional)<input className={field} type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="For older catalogue views" /></label><label className={label}>Legacy currency<select className={field} value={currency} onChange={(e) => setCurrency(e.target.value)}><option value="UGX">UGX</option><option value="USD">USD</option></select></label></div>
+        {published && status === "active" && missingMarketPrices.length > 0 && <p role="status" className="md:col-span-2 border border-[#e0cfae] bg-[#faf5e9] px-4 py-3 text-xs leading-5 text-[#7a6234]">This published listing is not purchasable in {missingMarketPrices.join(" and ")} because one or more required market prices are missing. Add those prices before promoting the listing to customers in those markets. No currency conversion is applied.</p>}
         {type === "limited_print" && <><label className={label}>Total edition size (all print sizes combined)<input className={field} type="number" min="1" value={editionSize} onChange={(e) => setEditionSize(e.target.value)} required /><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">One shared edition across the available sizes. Set the total number of prints in this edition.</span></label><label className={label}>Copies sold (all sizes combined)<input className={field} type="number" min="0" value={editionSold} onChange={(e) => setEditionSold(e.target.value)} /><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Update this as copies are sold, regardless of size.</span></label></>}
         <label className={label}>SKU / reference<input className={field} value={sku} onChange={(e) => setSku(e.target.value)} placeholder="Optional product code" /></label>
         <label className={label}>Stock quantity<input className={field} type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="Leave blank if not tracked" /></label>
@@ -329,7 +351,7 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
         <label className={label}>{isPrint ? "Presentation / border" : "Framing"}<input className={field} value={framing} onChange={(e) => setFraming(e.target.value)} placeholder={isPrint ? "e.g. Unframed; white border details if applicable" : "e.g. Unframed / Framed in natural wood"} /></label>
         <label className={label + " md:col-span-2"}>{isPrint ? "Print packaging & delivery" : "Shipping & delivery information"}<textarea className={field + " min-h-20"} value={shippingInformation} onChange={(e) => setShippingInformation(e.target.value)} placeholder={isPrint ? "Add confirmed packaging, dispatch and delivery information when available." : "e.g. Carefully packaged. International delivery arranged and quoted separately."} /></label>
         <div className="md:col-span-2">
-          <label className={label}>Product images<input className={field} type="file" accept="image/*" multiple onChange={(e) => setImageFiles(Array.from(e.target.files || []))} /><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Select multiple images. The first image is used as the main image unless you choose another below.</span></label>
+          <label className={label}>Product images<input className={field} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={(e) => setImageFiles(Array.from(e.target.files || []))} /><span className="mt-2 block text-[10px] normal-case tracking-normal text-[#89847c]">Select multiple images. The first image is used as the main image unless you choose another below.</span></label>
           {editing?.product_images?.length ? <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{[...editing.product_images].sort((a,b)=>a.sort_order-b.sort_order).map((img,index,arr)=><div key={img.id} className="border border-[#dedad2] bg-white p-2">
             <div className="relative aspect-square bg-[#e8e5de]"><Image src={publicUrl(img.storage_path)} alt={img.alt_text || title} fill sizes="(min-width: 640px) 25vw, 50vw" className="object-contain" /></div>
             <p className="mt-2 text-[9px] uppercase tracking-wider text-[#77736d]">{img.is_primary ? "Main image" : `Image ${index+1}`}</p>
@@ -369,9 +391,10 @@ export default function ProductManager({ initialProducts, artworks }: { initialP
     {products.length ? <div className="mt-3 divide-y divide-[#e2ded6]">{products.map((item, index) => {
       const cover = item.product_images?.find((img) => img.is_primary) || item.product_images?.[0];
       const typeLabel = types.find((t) => t.value === item.product_type)?.label || item.product_type;
+      const missingMarkets = item.product_type === "original" ? [] : (["UGX", "USD"] as const).filter((market) => !hasMarketPrice(item, market));
       return <article key={item.id} className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center">
         <div className="relative h-24 w-32 shrink-0 overflow-hidden bg-[#e8e5de]">{cover ? <Image src={publicUrl(cover.storage_path)} alt={item.title} fill sizes="128px" className="object-cover" /> : <div className="flex h-full items-center justify-center text-[9px] uppercase tracking-widest text-[#89847c]">No image</div>}</div>
-        <div className="min-w-0 flex-1"><p className="text-[9px] uppercase tracking-[.15em] text-[#9c8062]">0{index + 1} / {item.is_published ? "Published" : "Draft"} · {typeLabel}</p><h2 className="serif mt-2 text-2xl">{item.title}</h2><p className="mt-1 text-xs text-[#89847c]">{item.price == null ? "Price not set" : new Intl.NumberFormat("en-UG", { style: "currency", currency: item.currency || "UGX", maximumFractionDigits: 0 }).format(Number(item.price))} · {item.status.replace("_", " ")}</p>{(() => { const visibility = shopVisibility(item); return <p className={`mt-2 inline-block border px-2 py-1 text-[10px] leading-4 ${visibility.tone === "visible" ? "border-[#bfd0bb] bg-[#f1f6ef] text-[#4f6b4a]" : visibility.tone === "sold" ? "border-[#e0cfae] bg-[#faf5e9] text-[#7a6234]" : "border-[#e3c9c4] bg-[#fbf1ef] text-[#8a3a2f]"}`}>{visibility.label}</p>; })()}{item.product_type === "limited_print" && <p className="mt-1 text-[10px] text-[#89847c]">Edition: {item.edition_sold} / {item.edition_size}</p>}</div>
+        <div className="min-w-0 flex-1"><p className="text-[9px] uppercase tracking-[.15em] text-[#9c8062]">0{index + 1} / {item.is_published ? "Published" : "Draft"} · {typeLabel}</p><h2 className="serif mt-2 text-2xl">{item.title}</h2><p className="mt-1 text-xs text-[#89847c]">{item.price == null ? "Price not set" : new Intl.NumberFormat("en-UG", { style: "currency", currency: item.currency || "UGX", maximumFractionDigits: 0 }).format(Number(item.price))} · {item.status.replace("_", " ")}</p>{item.is_published && item.status === "active" && missingMarkets.length > 0 && <p className="mt-2 text-[10px] leading-5 text-[#8a6331]">Missing {missingMarkets.join(" / ")} pricing — not purchasable in those markets.</p>}{(() => { const visibility = shopVisibility(item); return <p className={`mt-2 inline-block border px-2 py-1 text-[10px] leading-4 ${visibility.tone === "visible" ? "border-[#bfd0bb] bg-[#f1f6ef] text-[#4f6b4a]" : visibility.tone === "sold" ? "border-[#e0cfae] bg-[#faf5e9] text-[#7a6234]" : "border-[#e3c9c4] bg-[#fbf1ef] text-[#8a3a2f]"}`}>{visibility.label}</p>; })()}{item.product_type === "limited_print" && <p className="mt-1 text-[10px] text-[#89847c]">Edition: {item.edition_sold} / {item.edition_size}</p>}</div>
         <div className="flex gap-4 text-[10px] uppercase tracking-[.12em]"><button onClick={() => edit(item)} className="underline underline-offset-4">Edit</button><button disabled={busy} onClick={() => remove(item)} className="text-[#9b5947] underline underline-offset-4">Delete</button></div>
       </article>;
     })}</div> : <div className="mt-8 border border-dashed border-[#cfcac0] bg-[#f7f6f2] px-6 py-14 text-center"><p className="display text-2xl">Your product catalogue starts here.</p><p className="mt-3 text-xs text-[#89847c]">Add an original painting, a print edition, or an object featuring your artwork.</p></div>}

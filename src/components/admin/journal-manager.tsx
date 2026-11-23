@@ -27,24 +27,34 @@ export default function JournalManager({initialPosts,artworks}:{initialPosts:Pos
   function publicImage(path:string) { return supabase.storage.from("artwork-images").getPublicUrl(path).data.publicUrl; }
   async function uploadImage(original:File, inline:boolean, insertAt?:number) {
     setUploading(true); setNotice("");
-    const file=await prepareImageForUpload(original);
-    const extension=file.name.split(".").pop()?.toLowerCase()||"jpg";
-    const path="journal/"+crypto.randomUUID()+"."+extension;
-    const {error}=await supabase.storage.from("artwork-images").upload(path,file,{contentType:file.type||undefined,upsert:false});
-    if(error){setNotice(error.message);setUploading(false);return;}
-    const url=publicImage(path);
-    if(inline)setForm(current=>{
-      const markdown="!["+file.name.replace(/\.[^.]+$/,"")+"]("+url+")";
-      const position=insertAt??contentRef.current?.selectionStart??current.content.length;
-      const before=current.content.slice(0,position);
-      const after=current.content.slice(position);
-      const prefix=before&&!before.endsWith("\n")?"\n\n":"";
-      const suffix=after&&!after.startsWith("\n")?"\n\n":"";
-      return {...current,content:before+prefix+markdown+suffix+after};
-    });
-    else setForm(current=>({...current,cover_image:url}));
-    setNotice(inline?"Image uploaded and added to the article.":"Cover image uploaded.");
-    setUploading(false);
+    let uploadedPath: string | null = null;
+    try {
+      const file=await prepareImageForUpload(original);
+      const extension=file.name.split(".").pop()?.toLowerCase()||"jpg";
+      const path="journal/"+crypto.randomUUID()+"."+extension;
+      const {error}=await supabase.storage.from("artwork-images").upload(path,file,{contentType:file.type||undefined,upsert:false});
+      if(error) throw error;
+      uploadedPath = path;
+      const url=publicImage(path);
+      if(inline)setForm(current=>{
+        const markdown="!["+file.name.replace(/\.[^.]+$/,"")+"]("+url+")";
+        const position=insertAt??contentRef.current?.selectionStart??current.content.length;
+        const before=current.content.slice(0,position);
+        const after=current.content.slice(position);
+        const prefix=before&&!before.endsWith("\n")?"\n\n":"";
+        const suffix=after&&!after.startsWith("\n")?"\n\n":"";
+        return {...current,content:before+prefix+markdown+suffix+after};
+      });
+      else setForm(current=>({...current,cover_image:url}));
+      setNotice(inline?"Image uploaded and added to the article.":"Cover image uploaded.");
+    } catch (error) {
+      if (uploadedPath) {
+        await supabase.storage.from("artwork-images").remove([uploadedPath]).catch(() => undefined);
+      }
+      setNotice(error instanceof Error ? error.message : "Image upload failed. Please try another image.");
+    } finally {
+      setUploading(false);
+    }
   }
   function insertArtworkImage(id:string, inline:boolean) {
     const artwork=artworks.find(item=>item.id===id); const image=artwork?.artwork_images?.find(item=>item.is_primary)||artwork?.artwork_images?.[0];
