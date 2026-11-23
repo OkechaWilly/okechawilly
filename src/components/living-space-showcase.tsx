@@ -80,7 +80,7 @@ export default function LivingSpaceShowcase({ photos }: { photos: LivingSpacePho
           <div className="mt-6 h-px w-full overflow-hidden bg-white/30" aria-hidden="true">
             <div
               key={active}
-              className="h-full origin-left bg-white/90"
+              className="living-space-progress-fill h-full origin-left bg-white/90"
               style={{ animation: "living-space-progress 6.8s linear forwards" }}
             />
           </div>
@@ -92,7 +92,7 @@ export default function LivingSpaceShowcase({ photos }: { photos: LivingSpacePho
           to { transform: scaleX(1); }
         }
         @media (prefers-reduced-motion: reduce) {
-          .unused { animation: none !important; }
+          .living-space-progress-fill { animation: none !important; }
         }
       `}</style>
     </aside>
