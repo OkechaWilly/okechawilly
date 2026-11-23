@@ -1,7 +1,9 @@
 import Link from "next/link";
 import ContactForm from "@/components/contact-form";
+import LivingSpaceShowcase from "@/components/living-space-showcase";
 import { cleanSubject } from "@/lib/contact";
 import { pageMetadata } from "@/lib/site";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata = pageMetadata({
   title: "Contact",
@@ -11,16 +13,40 @@ export const metadata = pageMetadata({
 
 export default async function Contact({ searchParams }: { searchParams: Promise<{ subject?: string }> }) {
   const params = await searchParams;
-  // Capped at the database limit (120) so a long artwork title can't make the insert fail.
   const initialSubject = cleanSubject(params.subject);
+  const supabase = await createClient();
+  const { data: galleryPhotos } = await supabase
+    .from("living_space_photos")
+    .select("id, title, caption, location, alt_text, storage_path, storage_bucket")
+    .eq("is_published", true)
+    .order("is_featured", { ascending: false })
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false })
+    .limit(20);
 
-  return <main className="container py-20">
-    <p className="eyebrow">Start a conversation</p>
-    <h1 className="display mt-4 max-w-3xl text-6xl md:text-8xl">Let’s talk<br/><em className="text-[#9c8062]">about art.</em></h1>
-    <p className="mt-8 max-w-lg text-sm leading-7 text-[#77736d]">For artwork enquiries, commissions, collaborations, exhibitions or just to say hello, reach out. I welcome conversations with collectors in Uganda and internationally.</p>
-    <ContactForm initialSubject={initialSubject}/>
-    <div className="mt-12 border-y border-[#e8e5de] py-8"><p className="eyebrow">Prefer email?</p><a href="mailto:okechawill@gmail.com" className="serif mt-2 inline-block text-3xl">okechawill@gmail.com ↗</a><p className="mt-2 text-xs text-[#77736d]">For direct enquiries, you can also email me here.</p></div>
-    <p className="mt-8 text-sm text-[#77736d]">Based in Wakiso, Uganda · Open to international enquiries.</p>
-    <Link href="/" className="mt-10 inline-block text-[10px] uppercase tracking-[.14em] underline underline-offset-4">Return home</Link>
-  </main>;
+  // Only published records are selected; they must reside in the public delivery bucket.
+  const photos = (galleryPhotos ?? []).map(photo => ({
+    ...photo,
+    image_url: supabase.storage.from("living-space-images").getPublicUrl(photo.storage_path).data.publicUrl,
+  }));
+
+  return (
+    <main className="grid min-h-[calc(100svh-5rem)] bg-[#f5f3ef] lg:grid-cols-2">
+      <LivingSpaceShowcase photos={photos} />
+      <section className="flex min-w-0 flex-col justify-center bg-[#eae7e0] px-6 py-14 sm:px-10 lg:px-[clamp(3rem,7vw,7.5rem)] lg:py-16">
+        <div className="mx-auto w-full max-w-[560px]">
+          <p className="eyebrow">Okecha Willy · Uganda</p>
+          <h1 className="display mt-5 text-5xl sm:text-6xl xl:text-7xl">Let’s talk.</h1>
+          <p className="mt-5 max-w-lg text-sm leading-7 text-[#77736d]">
+            Have a question, an idea or an artwork in mind? I welcome conversations about original works, commissions, collaborations and exhibitions.
+          </p>
+          <ContactForm initialSubject={initialSubject}/>
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[#d5d0c7] pt-5">
+            <a href="mailto:okechawill@gmail.com" className="text-xs text-[#77736d] transition-colors hover:text-[#242320]">okechawill@gmail.com ↗</a>
+            <Link href="/" className="text-[10px] uppercase tracking-[.14em] text-[#77736d] underline underline-offset-4 hover:text-[#242320]">Return home</Link>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 }
