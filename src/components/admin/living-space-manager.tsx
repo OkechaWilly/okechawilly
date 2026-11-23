@@ -97,16 +97,21 @@ export default function LivingSpaceManager({ initialPhotos, loadError }: { initi
         .from(storageBucket).createSignedUrl(storagePath, 4 * 60 * 60);
       const savedPhoto = { ...(data as Omit<Photo, "image_url">), image_url: signed?.signedUrl ?? "" } as Photo;
 
+      let cleanupWarning = false;
       if (oldObject) {
         const { error: cleanupError } = await supabase.storage.from(oldObject.bucket).remove([oldObject.path]);
-        if (cleanupError) setNotice("Saved, but the previous storage copy needs cleanup.");
+        cleanupWarning = Boolean(cleanupError);
       }
       setPhotos(current => {
         const next = current.filter(item => item.id !== savedPhoto.id);
         return [...next, savedPhoto].sort((a,b) => a.sort_order-b.sort_order);
       });
       reset();
-      setNotice(signError ? "Photograph saved. Refresh the page if its preview does not appear." : "Photograph saved.");
+      setNotice(cleanupWarning
+        ? "Saved, but the previous storage copy needs cleanup."
+        : signError
+          ? "Photograph saved. Refresh the page if its preview does not appear."
+          : "Photograph saved.");
     } catch (error) {
       if (!recordSaved) {
         if (newlyUploaded) await supabase.storage.from(newlyUploaded.bucket).remove([newlyUploaded.path]);
