@@ -31,8 +31,8 @@ export default function ContactForm({ initialSubject = DEFAULT_SUBJECT }: { init
     });
   }
 
-  const field = "mt-2 w-full border border-[#5a5750] bg-[#f7f6f2] px-4 py-3 text-sm text-[#242320] outline-none focus:border-[#b99a78]";
-  const label = "block text-[10px] uppercase tracking-[.14em] text-[#d5cfc5]";
+  const field = "mt-2 w-full border border-[#d9d4ca] bg-white px-4 py-3 text-sm text-[#242320] outline-none focus:border-[#9c8062]";
+  const label = "block text-[10px] uppercase tracking-[.14em] text-[#77736d]";
 
   return (
     <form onSubmit={submit} className="mt-12 max-w-2xl space-y-5">
@@ -60,7 +60,7 @@ export default function ContactForm({ initialSubject = DEFAULT_SUBJECT }: { init
         <label>Website<input type="text" name="website" tabIndex={-1} autoComplete="off" /></label>
       </div>
 
-      <button disabled={pending} className="bg-[#c2a17d] px-7 py-4 text-[10px] uppercase tracking-[.15em] !text-[#242320] transition-colors hover:bg-[#dfc5a5] disabled:opacity-50">
+      <button disabled={pending} className="bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] !text-[#f7f6f2] transition-colors hover:bg-[#9c8062] disabled:opacity-50">
         {pending ? "Sending..." : "Send enquiry ↗"}
       </button>
       {notice && (
@@ -83,7 +83,7 @@ export default function ContactForm({ initialSubject = DEFAULT_SUBJECT }: { init
           </div>
         </div>
       )}
-      <p className="text-[10px] leading-5 text-[#b9b2a8]">Your details will only be used to respond to this enquiry.</p>
+      <p className="text-[10px] leading-5 text-[#89847c]">Your details will only be used to respond to this enquiry.</p>
     </form>
   );
 }
