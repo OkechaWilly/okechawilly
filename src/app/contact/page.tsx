@@ -32,7 +32,7 @@ export default async function Contact({ searchParams }: { searchParams: Promise<
   return (
     <main className="grid min-h-[calc(100svh-5rem)] bg-[#f5f3ef] lg:grid-cols-2">
       <LivingSpaceShowcase photos={photos} />
-      <section className="flex min-w-0 flex-col justify-center bg-[#eae7e0] px-6 py-14 sm:px-10 lg:px-[clamp(3rem,7vw,7.5rem)] lg:py-16">
+      <section className="flex min-w-0 flex-col justify-center bg-[#d2ccc2] px-6 py-14 sm:px-10 lg:px-[clamp(3rem,7vw,7.5rem)] lg:py-16">
         <div className="mx-auto w-full max-w-[560px]">
           <p className="eyebrow">Okecha Willy · Uganda</p>
           <h1 className="display mt-5 text-5xl sm:text-6xl xl:text-7xl">Let’s talk.</h1>
