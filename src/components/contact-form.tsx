@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 import { BASE_SUBJECTS, DEFAULT_SUBJECT, SUBJECT_MAX } from "@/lib/contact";
 
 export default function ContactForm({ initialSubject = DEFAULT_SUBJECT }: { initialSubject?: string }) {
@@ -63,7 +64,29 @@ export default function ContactForm({ initialSubject = DEFAULT_SUBJECT }: { init
         {pending ? "Sending..." : "Send enquiry ↗"}
       </button>
       {notice && (
-        <p role={notice.ok ? "status" : "alert"} className={`text-sm ${notice.ok ? "text-[#5f7a5a]" : "text-[#a4493d]"}`}>{notice.text}</p>
+        <div
+          role={notice.ok ? "status" : "alert"}
+          aria-live={notice.ok ? "polite" : "assertive"}
+          aria-atomic="true"
+          className={notice.ok
+            ? "flex items-start gap-3 border border-[#cbd8c6] bg-[#f3f6f1] px-5 py-4 text-[#405b3d]"
+            : "flex items-start gap-3 border border-[#e5c9c4] bg-[#fbf4f2] px-5 py-4 text-[#8e3e34]"}
+        >
+          {notice.ok
+            ? <CheckCircle2 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
+            : <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />}
+          <div>
+            <p className="text-sm font-medium">
+              {notice.ok ? "Thank you for reaching out!" : "Your enquiry wasn't sent"}
+            </p>
+            <p className="mt-1 text-sm leading-6">{notice.text}</p>
+            {notice.ok && (
+              <p className="mt-2 text-xs leading-5 text-[#61745c]">
+                Your message is safely with the studio. You can expect a reply by email.
+              </p>
+            )}
+          </div>
+        </div>
       )}
       <p className="text-[10px] leading-5 text-[#89847c]">Your details will only be used to respond to this enquiry.</p>
     </form>
