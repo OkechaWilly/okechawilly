@@ -108,8 +108,11 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
+  const pathname = usePathname();
+  const compactTop = pathname === "/contact";
+
   return (
-    <footer className="mt-24 border-t border-white/10 bg-[#242320] text-[#f7f6f2]">
+    <footer className={`${compactTop ? "mt-0" : "mt-24"} border-t border-white/10 bg-[#242320] text-[#f7f6f2]`}>
       <div className="container grid gap-10 py-14 md:grid-cols-3">
         <div>
           <div className="serif text-3xl">Okecha Willy.</div>
