@@ -26,7 +26,7 @@ export default async function Home() {
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false })
       .limit(3),
-    supabase.from("projects").select("id,title,slug,summary,project_type,cover_image,clients(name)").eq("is_published", true).eq("is_featured", true).order("sort_order").limit(2),
+    supabase.from("projects").select("id,title,slug,summary,project_type,cover_image").eq("is_published", true).eq("is_featured", true).order("sort_order").limit(2),
     supabase.from("clients").select("id,name,logo_path,website_url").eq("is_published", true).eq("is_featured", true).order("sort_order").limit(8),
   ]);
 
