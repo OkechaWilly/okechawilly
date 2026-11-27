@@ -34,51 +34,39 @@ export default async function ProjectsPage() {
 
   return (
     <main className="pb-24">
-      <section className="container pb-12 pt-16 md:pb-16 md:pt-24">
-        <p className="eyebrow">Commissions · Collaborations · Selected work</p>
-        <div className="mt-5 grid gap-7 md:grid-cols-[minmax(0,1fr)_minmax(230px,390px)] md:items-end">
-          <h1 className="display max-w-4xl text-5xl leading-[1.02] md:text-7xl lg:text-8xl">
-            Work made<br className="hidden md:block" /> with purpose.
-          </h1>
-          <p className="max-w-md pb-1 text-sm leading-7 text-[#77736d] md:justify-self-end">
-            A selection of commissions and creative collaborations, shaped around a brief, a place and the people behind it.
+      <section className="container pb-10 pt-16 md:pb-14 md:pt-24">
+        <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(250px,390px)] md:items-end">
+          <div>
+            <p className="eyebrow">A selection of commissions and collaborations</p>
+            <h1 className="display mt-5 max-w-4xl text-5xl leading-[.98] md:text-7xl lg:text-8xl">Selected<br className="hidden md:block" /> work.</h1>
+          </div>
+          <p className="max-w-md pb-1 text-sm leading-8 text-[#77736d] md:justify-self-end md:text-base">
+            Projects shaped by people, places and ideas. Each one begins with a conversation and takes form through a considered creative process.
           </p>
         </div>
-        <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-2 border-y border-[#dedad2] py-4 text-[10px] uppercase tracking-[.15em] text-[#77736d]">
-          <span>{projects.length.toString().padStart(2, "0")} selected {projects.length === 1 ? "project" : "projects"}</span>
-          <span>Uganda and beyond</span>
-          <Link href="/contact" className="text-[#242320] underline underline-offset-4 transition-colors hover:text-[#9c8062]">Enquire about a project</Link>
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-y border-[#dedad2] py-4">
+          <p className="text-[10px] uppercase tracking-[.15em] text-[#77736d]">{projects.length.toString().padStart(2, "0")} selected {projects.length === 1 ? "project" : "projects"} <span className="mx-2 text-[#c7c1b7]">/</span> Uganda and beyond</p>
+          <Link href="/contact" className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#242320] underline underline-offset-4 transition-colors hover:text-[#9c8062]">Discuss a project</Link>
         </div>
       </section>
 
       {featured ? (
         <section className="container">
           <Link href={"/projects/" + featured.slug} className="group block">
-            <div className="relative aspect-[16/10] overflow-hidden bg-[#e8e5de] md:aspect-[2.05/1]">
+            <div className="relative aspect-[16/10] overflow-hidden bg-[#e8e5de] md:aspect-[2.15/1]">
               {featured.image ? (
-                <Image
-                  src={featured.image}
-                  alt={featured.title}
-                  fill
-                  priority
-                  sizes="100vw"
-                  className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center"><span className="display text-3xl">{featured.title}</span></div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#171614]/75 via-transparent to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-5 p-6 text-white md:p-10">
-                <div>
-                  <p className="eyebrow !text-white/75">Featured project {featured.project_type ? "· " + featured.project_type : ""}</p>
-                  <h2 className="display mt-3 max-w-3xl text-3xl leading-tight md:text-5xl">{featured.title}</h2>
-                  {featured.clientName && <p className="mt-3 text-xs text-white/80">{featured.clientName}</p>}
-                </div>
-                <span className="border border-white/70 px-5 py-3 text-[10px] uppercase tracking-[.15em] transition-colors group-hover:bg-white group-hover:text-[#242320]">Explore project</span>
+                <Image src={featured.image} alt={featured.title} fill priority sizes="100vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.02]" />
+              ) : <div className="flex h-full items-center justify-center"><span className="display text-3xl">{featured.title}</span></div>}
+            </div>
+            <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
+              <div>
+                <p className="eyebrow">Featured project{featured.project_type ? " · " + featured.project_type : ""}</p>
+                <h2 className="display mt-2 text-3xl md:text-5xl">{featured.title}</h2>
+                {featured.summary && <p className="mt-3 max-w-2xl text-sm leading-7 text-[#77736d]">{featured.summary}</p>}
               </div>
+              <span className="pt-1 text-xs text-[#77736d]">{featured.clientName || featured.location || "Selected commission"}</span>
             </div>
           </Link>
-          {featured.summary && <p className="mt-5 max-w-2xl text-sm leading-7 text-[#77736d]">{featured.summary}</p>}
         </section>
       ) : (
         <section className="container">
@@ -93,15 +81,12 @@ export default async function ProjectsPage() {
 
       {remaining.length > 0 && (
         <section className="container mt-20 md:mt-28">
-          <div className="mb-9 flex flex-wrap items-end justify-between gap-5">
-            <div>
-              <p className="eyebrow">More from the portfolio</p>
-              <h2 className="display mt-3 text-4xl md:text-5xl">Other projects.</h2>
-            </div>
-            <p className="max-w-xs text-xs leading-6 text-[#77736d]">A closer look at selected commissions, collaborations and creative work.</p>
+          <div className="mb-9 flex items-end justify-between gap-5">
+            <div><p className="eyebrow">The portfolio</p><h2 className="display mt-3 text-4xl md:text-5xl">More selected work.</h2></div>
+            <p className="max-w-xs text-xs leading-6 text-[#77736d]">A closer look at commissions, collaborations and creative work.</p>
           </div>
           <div className="grid gap-x-8 gap-y-12 md:grid-cols-2">
-            {remaining.map((project, index) => (
+            {remaining.map((project) => (
               <Link key={project.id} href={"/projects/" + project.slug} className="group block">
                 <div className="relative aspect-[16/11] overflow-hidden bg-[#e8e5de]">
                   {project.image && <Image src={project.image} alt={project.title} fill sizes="(min-width:768px) 50vw,100vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.025]" />}
@@ -112,7 +97,7 @@ export default async function ProjectsPage() {
                     <h3 className="display mt-2 text-3xl md:text-4xl">{project.title}</h3>
                     {project.summary && <p className="mt-3 max-w-xl text-sm leading-7 text-[#77736d]">{project.summary}</p>}
                   </div>
-                  <span className="pt-1 text-xs text-[#9c8062]">0{index + 2}</span>
+                  {project.location && <span className="shrink-0 pt-1 text-[10px] uppercase tracking-[.12em] text-[#89847c]">{project.location}</span>}
                 </div>
               </Link>
             ))}
