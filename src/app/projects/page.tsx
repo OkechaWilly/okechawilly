@@ -11,13 +11,14 @@ export const metadata = pageMetadata({
 
 export default async function ProjectsPage() {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("projects")
     .select("id,title,slug,summary,project_type,location,cover_image,is_featured,client:clients(name)")
     .eq("is_published", true)
     .order("is_featured", { ascending: false })
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
+  if (error) console.error("[projects-archive] Supabase query failed:", error);
 
   const projects = (data ?? []).map((project) => ({
     ...project,
