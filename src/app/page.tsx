@@ -10,7 +10,7 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const supabase = await createClient();
-  const [{ data: featuredData }, { data: collectionData }] = await Promise.all([
+  const [{ data: featuredData }, { data: collectionData }, { data: projectData }, { data: clientData }] = await Promise.all([
     supabase
       .from("artworks")
       .select("*, artwork_images(*)")
@@ -26,6 +26,8 @@ export default async function Home() {
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false })
       .limit(3),
+    supabase.from("projects").select("id,title,slug,summary,project_type,cover_image,clients(name)").eq("is_published", true).eq("is_featured", true).order("sort_order").limit(2),
+    supabase.from("clients").select("id,name,logo_path,website_url").eq("is_published", true).eq("is_featured", true).order("sort_order").limit(8),
   ]);
 
   const featured = (featuredData ?? []).map((artwork) => {
@@ -163,6 +165,13 @@ export default async function Home() {
         </div>
       </section>
 
+      {(selectedProjects.length > 0 || (clientData ?? []).length > 0) && <section className="container py-20 md:py-24">
+        {selectedProjects.length > 0 && <div>
+          <div className="mb-9 flex flex-wrap items-end justify-between gap-5"><div><p className="eyebrow mb-3">Commissions & collaborations</p><h2 className="display text-5xl md:text-6xl">Selected projects</h2></div><Link href="/projects" className="border-b border-[#c9c5bc] pb-2 text-[10px] uppercase tracking-[.14em]">View projects</Link></div>
+          <div className="grid gap-7 md:grid-cols-2">{selectedProjects.map(project=><Link key={project.id} href={"/projects/"+project.slug} className="group"><div className="relative aspect-[16/10] overflow-hidden bg-[#e8e5de]">{project.image&&<Image src={project.image} alt={project.title} fill sizes="(min-width:768px) 50vw,100vw" className="object-cover transition duration-700 group-hover:scale-[1.03]"/>}</div><p className="eyebrow mt-4">{project.project_type}</p><h3 className="display mt-2 text-3xl">{project.title}</h3>{project.summary&&<p className="mt-2 max-w-xl text-sm leading-7 text-[#77736d]">{project.summary}</p>}</Link>)}</div>
+        </div>}
+        {(clientData ?? []).length > 0 && <div className="mt-16 border-t border-[#e7e3dc] pt-8"><p className="eyebrow">Selected clients & collaborators</p><div className="mt-7 flex flex-wrap items-center justify-between gap-8">{(clientData ?? []).map(client=><div key={client.id} className="flex min-h-14 items-center justify-center">{client.logo_path?<Image src={supabase.storage.from("artwork-images").getPublicUrl(client.logo_path).data.publicUrl} alt={client.name+" logo"} width={150} height={64} className="max-h-14 w-auto max-w-[150px] object-contain grayscale opacity-75"/>:<span className="serif text-lg text-[#77736d]">{client.name}</span>}</div>)}</div></div>}
+      </section>}
       <section className="container grid gap-12 py-20 md:grid-cols-2 md:items-center md:py-24">
         <div className="relative flex aspect-[4/4.2] items-end overflow-hidden bg-[#e9e5dc] p-8 md:p-12">
           {aboutArtwork?.image && (
