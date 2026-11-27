@@ -64,6 +64,13 @@ export default async function Home() {
       : "",
   }));
 
+  const selectedProjects = (projectData ?? []).map((project) => ({
+    ...project,
+    image: project.cover_image
+      ? (project.cover_image.startsWith("http") ? project.cover_image : supabase.storage.from("artwork-images").getPublicUrl(project.cover_image).data.publicUrl)
+      : "",
+  }));
+
   return (
     <div>
       <FeaturedArtworkHero artworks={featured} />
