@@ -123,12 +123,12 @@ export default function ProjectManager({ initialProjects, clients }: { initialPr
               const existing = gallery[i];
               const selected = galleryFiles[i - gallery.length];
               return <div key={i} className="relative flex aspect-[4/3] items-center justify-center overflow-hidden border border-dashed border-[#cfc9bd] bg-[#eeece6]">
-                {selected ? <div className="p-2 text-center text-[10px] text-[#625e57]">{selected.name}</div> : existing ? <Image src={image(existing)} alt={"Project gallery image " + (i + 1)} fill sizes="180px" className="object-cover" /> : <div className="px-2 text-center"><span className="block text-2xl text-[#aaa49a]">+</span><span className="text-[9px] uppercase tracking-wider text-[#89847c]">Image placeholder</span></div>}
+                {selected ? <div className="p-2 text-center text-[10px] text-[#625e57]">{selected.name}</div> : existing ? <><Image src={image(existing)} alt={"Project gallery image " + (i + 1)} fill sizes="180px" className="object-cover" /><button type="button" onClick={() => setGallery(old => old.filter((_, index) => index !== i))} className="absolute inset-x-1 bottom-1 bg-white/95 px-2 py-1 text-[9px] uppercase tracking-wider text-[#625e57]">Remove image</button></> : <div className="px-2 text-center"><span className="block text-2xl text-[#aaa49a]">+</span><span className="text-[9px] uppercase tracking-wider text-[#89847c]">Image placeholder</span></div>}
               </div>;
             })}
           </div>
           <input type="file" multiple accept="image/jpeg,image/png,image/webp" className={field} onChange={e => setGalleryFiles(Array.from(e.target.files || []))} />
-          <p className="mt-2 text-[10px] normal-case tracking-normal text-[#89847c]">Choose several photographs at once. Existing images stay in place; new uploads are added to the gallery. You can add or replace images later from Studio.</p>
+          <p className="mt-2 text-[10px] normal-case tracking-normal text-[#89847c]">Remove an existing gallery image, then upload its replacement or add more photographs. The cover photograph can also be replaced.</p>
         </div>
         <label className={label}>Display order<input type="number" className={field} value={order} onChange={e => setOrder(e.target.value)} /></label>
       </div>
