@@ -28,10 +28,10 @@ export default async function Journal() {
           <p className="eyebrow">{post.published_at ? new Date(post.published_at).toLocaleDateString("en-UG",{day:"numeric",month:"long",year:"numeric"}) : "From the studio"}</p>
           <h2 className="display mt-3 text-3xl">{post.title}</h2>
           {post.excerpt&&<p className="mt-3 text-sm leading-7 text-[#77736d]">{post.excerpt}</p>}
-          <span className="mt-5 inline-block text-[10px] uppercase tracking-[.14em] underline underline-offset-4">Read journal entry ↗</span>
+          <span className="mt-5 inline-block text-[10px] uppercase tracking-[.14em] underline underline-offset-4">Read journal entry</span>
         </Link>
       </article>)}
-    </div> : <div className="mt-14 max-w-2xl border-y border-[#e8e5de] py-8"><p className="eyebrow">The studio notebook</p><h2 className="serif mt-3 text-3xl">Ideas, processes and things worth looking at.</h2><p className="mt-4 text-sm leading-7 text-[#77736d]">New notes from the studio will appear here. In the meantime, explore the artwork archive.</p><Link href="/artwork" className="mt-6 inline-block text-[10px] uppercase tracking-[.14em] underline underline-offset-4">Explore artwork ↗</Link></div>}
+    </div> : <div className="mt-14 max-w-2xl border-y border-[#e8e5de] py-8"><p className="eyebrow">The studio notebook</p><h2 className="serif mt-3 text-3xl">Ideas, processes and things worth looking at.</h2><p className="mt-4 text-sm leading-7 text-[#77736d]">New notes from the studio will appear here. In the meantime, explore the artwork archive.</p><Link href="/artwork" className="mt-6 inline-block text-[10px] uppercase tracking-[.14em] underline underline-offset-4">Explore artwork</Link></div>}
     </main>
   </>;
 }
