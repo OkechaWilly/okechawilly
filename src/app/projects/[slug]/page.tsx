@@ -35,10 +35,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function ProjectDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const supabase = await createClient();
-  const [{ data: project }, { data: otherProjects }] = await Promise.all([
+  const [{ data: project, error: projectError }, { data: otherProjects }] = await Promise.all([
     supabase.from("projects").select("*, client:clients(name)").eq("slug", slug).eq("is_published", true).maybeSingle(),
     supabase.from("projects").select("id,title,slug,project_type,cover_image").eq("is_published", true).neq("slug", slug).order("is_featured", { ascending: false }).order("sort_order").limit(2),
   ]);
+  if (projectError) console.error("[project-detail] Supabase query failed:", projectError);
 
   if (!project) notFound();
 
