@@ -53,7 +53,7 @@ alter table public.projects enable row level security;
 drop policy if exists "Public read published clients" on public.clients;
 create policy "Public read published clients" on public.clients
   for select to anon, authenticated
-  using (is_published or (select public.is_admin()));
+  using (is_published);
 
 drop policy if exists "Admin manage clients" on public.clients;
 create policy "Admin manage clients" on public.clients
@@ -72,5 +72,6 @@ create policy "Admin manage projects" on public.projects
   using ((select public.is_admin()))
   with check ((select public.is_admin()));
 
+revoke all privileges on table public.clients, public.projects from anon;
 grant select on public.clients, public.projects to anon, authenticated;
 grant insert, update, delete on public.clients, public.projects to authenticated;
