@@ -1,0 +1,3 @@
+import {createClient} from "@/lib/supabase/server";
+import ProjectManager from "@/components/admin/project-manager";
+export default async function AdminProjectsPage(){const supabase=await createClient();const [{data:projects,error},{data:clients}]=await Promise.all([supabase.from("projects").select("*").order("sort_order").order("created_at",{ascending:false}),supabase.from("clients").select("id,name").order("name")]);if(error)return <p className="border border-[#d9b7a9] bg-[#fbf2ee] p-5 text-sm text-[#8b4937]">Could not load projects: {error.message}</p>;return <ProjectManager initialProjects={(projects??[]).map(p=>({...p,gallery:Array.isArray(p.gallery)?p.gallery:[]}))} clients={clients??[]}/>;}
