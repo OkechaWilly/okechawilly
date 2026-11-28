@@ -53,11 +53,6 @@ export default async function ProjectDetail({ params }: { params: Promise<{ slug
     project.location ? { label: "Location", value: project.location } : null,
   ].filter((fact): fact is { label: string; value: string } => Boolean(fact));
 
-  const storySections = [
-    project.brief ? { label: "The brief", body: project.brief } : null,
-    project.approach ? { label: "The approach", body: project.approach } : null,
-    project.outcome ? { label: "The outcome", body: project.outcome } : null,
-  ].filter((section): section is { label: string; body: string } => Boolean(section));
 
   return (
     <main className="pb-24">
