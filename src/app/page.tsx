@@ -82,7 +82,7 @@ export default async function Home() {
       <section className="border-y border-[#e8e5de] py-6">
         <div className="container flex flex-wrap items-center justify-between gap-4">
           <p className="eyebrow">A visual practice rooted in curiosity</p>
-          <p className="serif text-lg italic text-[#77736d]">Wakiso · Uganda · Everywhere</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[.16em] text-[#77736d]">Wakiso · Uganda · Working worldwide</p>
         </div>
       </section>
 
@@ -157,7 +157,7 @@ export default async function Home() {
             </div>
             <Link
               href="/artwork"
-              className="border-b border-[#c9c5bc] pb-2 text-[10px] uppercase tracking-[.14em] transition hover:border-[#9c8062]"
+              className="inline-flex rounded-full border border-[#242320] px-5 py-3 text-[9px] font-semibold uppercase tracking-[.14em] transition-colors hover:bg-[#242320] hover:text-white"
             >
               View all works
             </Link>
