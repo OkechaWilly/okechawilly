@@ -94,9 +94,9 @@ export default async function Home() {
           </div>
           <Link
             href="/collections"
-            className="border-b border-[#c9c5bc] pb-2 text-[10px] uppercase tracking-[.14em] transition hover:border-[#9c8062]"
+            className="inline-flex rounded-full border border-[#242320] px-5 py-3 text-[9px] font-semibold uppercase tracking-[.14em] transition-colors hover:bg-[#242320] hover:text-white"
           >
-            All collections ↗
+            All collections
           </Link>
         </div>
         {collections.length ? (
@@ -136,7 +136,7 @@ export default async function Home() {
                       </p>
                     )}
                   </div>
-                  <span className="pt-1 transition-transform group-hover:translate-x-1">↗</span>
+                  
                 </div>
               </Link>
             ))}
@@ -159,7 +159,7 @@ export default async function Home() {
               href="/artwork"
               className="border-b border-[#c9c5bc] pb-2 text-[10px] uppercase tracking-[.14em] transition hover:border-[#9c8062]"
             >
-              View all works ↗
+              View all works
             </Link>
           </div>
           {selectedWorks.length ? (
@@ -236,7 +236,7 @@ export default async function Home() {
               <br />
               and the world
               <br />
-              <em className="text-[#e2cdb3]">around us.</em>
+              <span className="font-semibold text-[#e2cdb3]">around us.</span>
             </p>
           </div>
         </div>
@@ -252,9 +252,9 @@ export default async function Home() {
           </p>
           <Link
             href="/about"
-            className="mt-8 inline-flex items-center gap-5 border-b border-[#242320] pb-2 text-[10px] uppercase tracking-[.15em] transition-colors hover:border-[#9c8062] hover:text-[#9c8062]"
+            className="mt-8 inline-flex rounded-full border border-[#242320] px-6 py-3.5 text-[10px] font-semibold uppercase tracking-[.14em] transition-colors hover:bg-[#242320] hover:text-white"
           >
-            Read my story <span>↗</span>
+            Read my story
           </Link>
         </div>
       </section>
@@ -272,9 +272,9 @@ export default async function Home() {
           </p>
           <Link
             href="/contact"
-            className="mt-8 inline-flex items-center gap-5 bg-[#f7f6f2] px-7 py-4 text-[10px] uppercase tracking-[.15em] !text-[#242320] transition-colors hover:bg-[#c6b49e] hover:!text-[#242320]"
+            className="mt-8 inline-flex rounded-full bg-[#f7f6f2] px-7 py-4 text-[10px] font-semibold uppercase tracking-[.15em] !text-[#242320] transition-colors hover:bg-[#c6b49e] hover:!text-[#242320]"
           >
-            Get in touch <span>↗</span>
+            Get in touch
           </Link>
         </div>
       </section>
