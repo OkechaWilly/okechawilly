@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 const navigation = [
   { href: "/artwork", label: "Artwork" },
   { href: "/collections", label: "Collections" },
+  { href: "/projects", label: "Projects" },
   { href: "/shop", label: "Shop" },
   { href: "/about", label: "About" },
   { href: "/journal", label: "Journal" },
@@ -125,6 +126,7 @@ export function SiteFooter() {
           <div className="mt-4 flex flex-col gap-3 text-sm text-[#e1ddd6] [&_a]:transition-colors [&_a:hover]:text-[#c2a17d]">
             <Link href="/artwork">Artwork</Link>
             <Link href="/shop">Shop</Link>
+            <Link href="/projects">Projects</Link>
             <Link href="/journal">Journal</Link>
             <Link href="/faq">Collector FAQ</Link>
             <Link href="/about">About the artist</Link>
