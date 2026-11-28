@@ -85,7 +85,7 @@ export default async function FineArtPrintsPage() {
                     ) : print.product_type === "limited_print" && print.edition_size != null ? (
                       <span>{Math.max(0, print.edition_size - (print.edition_sold ?? 0))} remaining</span>
                     ) : (
-                      <Link href={`/shop/${print.slug}`} className="uppercase tracking-[.12em] !text-[#242320] transition-colors hover:!text-[#9c8062]">View details ↗</Link>
+                      <Link href={`/shop/${print.slug}`} className="uppercase tracking-[.12em] !text-[#242320] transition-colors hover:!text-[#9c8062]">View details</Link>
                     )}
                   </div>
                 </article>
@@ -95,7 +95,7 @@ export default async function FineArtPrintsPage() {
             <div className="mt-12 border-t border-[#ded9d0] pt-10">
               <h3 className="display text-3xl md:text-4xl">The print collection is taking shape.</h3>
               <p className="mt-4 max-w-xl text-sm leading-7 text-[#77736d]">Prints will appear here as they become available. If there is a particular work you would like to see as a print, you are welcome to enquire with the studio.</p>
-              <Link href="/contact?subject=Fine%20art%20print%20enquiry" className="mt-7 inline-flex border border-[#242320] px-6 py-4 text-[10px] uppercase tracking-[.15em] transition-colors hover:bg-[#242320] hover:!text-[#f7f6f2]">Ask about prints <span className="ml-5">↗</span></Link>
+              <Link href="/contact?subject=Fine%20art%20print%20enquiry" className="mt-7 inline-flex rounded-full border border-[#242320] px-6 py-4 text-[10px] font-semibold uppercase tracking-[.15em] transition-colors hover:bg-[#242320] hover:!text-[#f7f6f2]">Ask about prints</Link>
             </div>
           )}
         </div>
@@ -109,7 +109,7 @@ export default async function FineArtPrintsPage() {
           </div>
           <div>
             <p className="text-sm leading-7 text-[#77736d]">Print formats, paper or other materials, edition details and delivery options vary by work. Open an individual listing for its available information, or contact the studio before making arrangements.</p>
-            <Link href="/contact?subject=Fine%20art%20print%20enquiry" className="mt-7 inline-flex border border-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] transition-colors !text-[#242320] hover:bg-[#242320] hover:!text-[#f7f6f2]">Contact the studio <span className="ml-5">↗</span></Link>
+            <Link href="/contact?subject=Fine%20art%20print%20enquiry" className="mt-7 inline-flex rounded-full border border-[#242320] px-7 py-4 text-[10px] font-semibold uppercase tracking-[.15em] transition-colors !text-[#242320] hover:bg-[#242320] hover:!text-[#f7f6f2]">Contact the studio</Link>
           </div>
         </div>
       </section>

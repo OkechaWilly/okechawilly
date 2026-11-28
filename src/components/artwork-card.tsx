@@ -38,9 +38,6 @@ export function ArtworkCard({ item }: { item: ArtworkCardItem }) {
             {status}
           </span>
         )}
-        <span className="absolute bottom-3 right-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-[#f7f6f2] text-lg opacity-0 shadow-sm transition duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-          ↗
-        </span>
       </div>
       <div className="flex items-start justify-between gap-4 pt-4">
         <div className="min-w-0">

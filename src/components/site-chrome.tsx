@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 const navigation = [
   { href: "/artwork", label: "Artwork" },
   { href: "/collections", label: "Collections" },
+  { href: "/projects", label: "Projects" },
   { href: "/shop", label: "Shop" },
   { href: "/about", label: "About" },
   { href: "/journal", label: "Journal" },
@@ -63,10 +64,10 @@ export function SiteHeader() {
           <Link
             href="/contact"
             onClick={closeMenu}
-            className={`border px-3 py-3 text-[9px] uppercase tracking-[.12em] transition-colors sm:px-5 sm:text-[10px] sm:tracking-[.14em] ${darkHeader ? "border-white/60 text-[#f7f6f2] hover:bg-[#f7f6f2] hover:!text-[#242320]" : "border-[#242320] text-[#242320] hover:bg-[#242320] hover:!text-[#f7f6f2]"}`}
+            className={`rounded-full border px-3 py-3 text-[9px] font-semibold uppercase tracking-[.12em] transition-colors sm:px-5 sm:text-[10px] sm:tracking-[.14em] ${darkHeader ? "border-white/60 text-[#f7f6f2] hover:bg-[#f7f6f2] hover:!text-[#242320]" : "border-[#242320] text-[#242320] hover:bg-[#242320] hover:!text-[#f7f6f2]"}`}
           >
             <span className="sm:hidden">Contact</span>
-            <span className="hidden sm:inline">Get in touch</span> <span aria-hidden="true">↗</span>
+            <span className="hidden sm:inline">Get in touch</span>
           </Link>
 
           <button
@@ -125,6 +126,7 @@ export function SiteFooter() {
           <div className="mt-4 flex flex-col gap-3 text-sm text-[#e1ddd6] [&_a]:transition-colors [&_a:hover]:text-[#c2a17d]">
             <Link href="/artwork">Artwork</Link>
             <Link href="/shop">Shop</Link>
+            <Link href="/projects">Projects</Link>
             <Link href="/journal">Journal</Link>
             <Link href="/faq">Collector FAQ</Link>
             <Link href="/about">About the artist</Link>

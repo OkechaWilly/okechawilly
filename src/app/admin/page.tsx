@@ -6,6 +6,8 @@ const sections = [
   { title: "Artwork archive", description: "Add paintings, update details, organise collections and publish portfolio entries.", href: "/admin/artworks", label: "Manage artworks" },
   { title: "Art in living spaces", description: "Upload real photographs of your work in collectors’ homes, add captions, reorder images and manage what appears on the contact page.", href: "/admin/living-spaces", label: "Manage living-space gallery" },
   { title: "Collections", description: "Create themed bodies of work, upload cover images and assign artworks to each collection.", href: "/admin/collections", label: "Manage collections" },
+  { title: "Clients & collaborators", description: "Manage approved client names, collaboration details and logos for the public portfolio.", href: "/admin/clients", label: "Manage clients" },
+  { title: "Selected projects", description: "Build case studies for commissions and collaborations, including process and finished work.", href: "/admin/projects", label: "Manage projects" },
   { title: "Shop catalogue", description: "Prepare originals, print editions and merchandise for future sale.", href: "/admin/products", label: "Manage products" },
   { title: "Orders", description: "Review customer orders and track fulfilment once checkout is enabled.", href: "/admin/orders", label: "View orders" },
   { title: "Collector enquiries", description: "Keep track of questions about works, commissions and availability.", href: "/admin/inquiries", label: "View enquiries" },
@@ -14,12 +16,14 @@ const sections = [
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
-  const [artworks, collections, products, orders, inquiries] = await Promise.all([
+  const [artworks, collections, products, orders, inquiries, clients, projects] = await Promise.all([
     supabase.from("artworks").select("id", { count: "exact", head: true }),
     supabase.from("collections").select("id", { count: "exact", head: true }),
     supabase.from("products").select("id", { count: "exact", head: true }),
     supabase.from("orders").select("id", { count: "exact", head: true }),
     supabase.from("inquiries").select("id", { count: "exact", head: true }),
+    supabase.from("clients").select("id", { count: "exact", head: true }),
+    supabase.from("projects").select("id", { count: "exact", head: true }),
   ]);
 
   const stats = [
@@ -28,6 +32,8 @@ export default async function AdminDashboard() {
     ["Products", products.count ?? 0],
     ["Orders", orders.count ?? 0],
     ["Enquiries", inquiries.count ?? 0],
+    ["Clients", clients.count ?? 0],
+    ["Projects", projects.count ?? 0],
   ];
 
   return (

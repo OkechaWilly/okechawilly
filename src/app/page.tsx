@@ -10,7 +10,7 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const supabase = await createClient();
-  const [{ data: featuredData }, { data: collectionData }] = await Promise.all([
+  const [{ data: featuredData }, { data: collectionData }, { data: projectData }, { data: clientData }] = await Promise.all([
     supabase
       .from("artworks")
       .select("*, artwork_images(*)")
@@ -26,6 +26,8 @@ export default async function Home() {
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false })
       .limit(3),
+    supabase.from("projects").select("id,title,slug,summary,project_type,cover_image,client:clients(name)").eq("is_published", true).eq("is_featured", true).order("sort_order").limit(2),
+    supabase.from("clients").select("id,name,logo_path,website_url").eq("is_published", true).eq("is_featured", true).order("sort_order").limit(8),
   ]);
 
   const featured = (featuredData ?? []).map((artwork) => {
@@ -62,6 +64,17 @@ export default async function Home() {
       : "",
   }));
 
+  const selectedProjects = (projectData ?? []).map((project) => {
+    const relation = (project as unknown as { client?: { name?: string } | { name?: string }[] | null }).client;
+    return {
+      ...project,
+      clientName: Array.isArray(relation) ? relation[0]?.name ?? "" : relation?.name ?? "",
+      image: project.cover_image
+        ? (project.cover_image.startsWith("http") ? project.cover_image : supabase.storage.from("artwork-images").getPublicUrl(project.cover_image).data.publicUrl)
+        : "",
+    };
+  });
+
   return (
     <div>
       <FeaturedArtworkHero artworks={featured} />
@@ -69,7 +82,7 @@ export default async function Home() {
       <section className="border-y border-[#e8e5de] py-6">
         <div className="container flex flex-wrap items-center justify-between gap-4">
           <p className="eyebrow">A visual practice rooted in curiosity</p>
-          <p className="serif text-lg italic text-[#77736d]">Wakiso · Uganda · Everywhere</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[.16em] text-[#77736d]">Wakiso · Uganda · Working worldwide</p>
         </div>
       </section>
 
@@ -81,9 +94,9 @@ export default async function Home() {
           </div>
           <Link
             href="/collections"
-            className="border-b border-[#c9c5bc] pb-2 text-[10px] uppercase tracking-[.14em] transition hover:border-[#9c8062]"
+            className="inline-flex rounded-full border border-[#242320] px-5 py-3 text-[9px] font-semibold uppercase tracking-[.14em] transition-colors hover:bg-[#242320] hover:text-white"
           >
-            All collections ↗
+            All collections
           </Link>
         </div>
         {collections.length ? (
@@ -123,7 +136,7 @@ export default async function Home() {
                       </p>
                     )}
                   </div>
-                  <span className="pt-1 transition-transform group-hover:translate-x-1">↗</span>
+                  
                 </div>
               </Link>
             ))}
@@ -144,9 +157,9 @@ export default async function Home() {
             </div>
             <Link
               href="/artwork"
-              className="border-b border-[#c9c5bc] pb-2 text-[10px] uppercase tracking-[.14em] transition hover:border-[#9c8062]"
+              className="inline-flex rounded-full border border-[#242320] px-5 py-3 text-[9px] font-semibold uppercase tracking-[.14em] transition-colors hover:bg-[#242320] hover:text-white"
             >
-              View all works ↗
+              View all works
             </Link>
           </div>
           {selectedWorks.length ? (
@@ -163,6 +176,44 @@ export default async function Home() {
         </div>
       </section>
 
+      {(selectedProjects.length > 0 || (clientData ?? []).length > 0) && <section className="container py-20 md:py-24">
+        {selectedProjects.length > 0 && <div>
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-5">
+            <div>
+              <p className="eyebrow mb-3">Commissions & collaborations</p>
+              <h2 className="display text-5xl md:text-6xl">Selected projects</h2>
+            </div>
+            <Link href="/projects" className="inline-flex rounded-full border border-[#242320] px-6 py-3.5 text-[10px] font-semibold uppercase tracking-[.14em] transition-colors hover:bg-[#242320] hover:text-white">Explore projects</Link>
+          </div>
+          <div className="space-y-12 md:space-y-16">
+            {selectedProjects.map((project) => (
+              <Link key={project.id} href={"/projects/" + project.slug} className="group grid gap-6 md:grid-cols-[minmax(0,1.35fr)_minmax(260px,.65fr)] md:items-center md:gap-12">
+                <div className="relative aspect-[16/10] overflow-hidden bg-[#e8e5de]">
+                  {project.image && <Image src={project.image} alt={project.title + " — selected project by Okecha Willy"} fill sizes="(min-width:768px) 65vw,100vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.025]"/>}
+                </div>
+                <div className="max-w-lg py-2">
+                  <p className="eyebrow">{project.project_type || "Selected project"}{project.clientName ? " · " + project.clientName : ""}</p>
+                  <h3 className="display mt-4 text-4xl leading-tight transition-colors group-hover:text-[#8e745b] md:text-5xl">{project.title}</h3>
+                  {project.summary && <p className="mt-5 text-sm leading-7 text-[#77736d]">{project.summary}</p>}
+                  <p className="mt-7 inline-flex rounded-full border border-[#dedad2] px-5 py-3 text-[9px] font-semibold uppercase tracking-[.14em] transition-colors group-hover:border-[#9c8062]">View project</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>}
+        {(clientData ?? []).length > 0 && <div className="mt-16 border-t border-[#e7e3dc] pt-8 md:mt-20">
+          <p className="eyebrow">Selected clients & collaborators</p>
+          <div className="mt-7 flex flex-wrap items-center justify-start gap-x-12 gap-y-8 md:gap-x-16">
+            {(clientData ?? []).map(client => (
+              <div key={client.id} className="flex min-h-14 items-center justify-center">
+                {client.logo_path
+                  ? <Image src={supabase.storage.from("artwork-images").getPublicUrl(client.logo_path).data.publicUrl} alt={client.name + " logo"} width={160} height={68} className="max-h-14 w-auto max-w-[160px] object-contain grayscale opacity-75"/>
+                  : <span className="serif text-lg text-[#77736d]">{client.name}</span>}
+              </div>
+            ))}
+          </div>
+        </div>}
+      </section>}
       <section className="container grid gap-12 py-20 md:grid-cols-2 md:items-center md:py-24">
         <div className="relative flex aspect-[4/4.2] items-end overflow-hidden bg-[#e9e5dc] p-8 md:p-12">
           {aboutArtwork?.image && (
@@ -185,7 +236,7 @@ export default async function Home() {
               <br />
               and the world
               <br />
-              <em className="text-[#e2cdb3]">around us.</em>
+              <span className="font-semibold text-[#e2cdb3]">around us.</span>
             </p>
           </div>
         </div>
@@ -201,9 +252,9 @@ export default async function Home() {
           </p>
           <Link
             href="/about"
-            className="mt-8 inline-flex items-center gap-5 border-b border-[#242320] pb-2 text-[10px] uppercase tracking-[.15em] transition-colors hover:border-[#9c8062] hover:text-[#9c8062]"
+            className="mt-8 inline-flex rounded-full border border-[#242320] px-6 py-3.5 text-[10px] font-semibold uppercase tracking-[.14em] transition-colors hover:bg-[#242320] hover:text-white"
           >
-            Read my story <span>↗</span>
+            Read my story
           </Link>
         </div>
       </section>
@@ -221,9 +272,9 @@ export default async function Home() {
           </p>
           <Link
             href="/contact"
-            className="mt-8 inline-flex items-center gap-5 bg-[#f7f6f2] px-7 py-4 text-[10px] uppercase tracking-[.15em] !text-[#242320] transition-colors hover:bg-[#c6b49e] hover:!text-[#242320]"
+            className="mt-8 inline-flex rounded-full bg-[#f7f6f2] px-7 py-4 text-[10px] font-semibold uppercase tracking-[.15em] !text-[#242320] transition-colors hover:bg-[#c6b49e] hover:!text-[#242320]"
           >
-            Get in touch <span>↗</span>
+            Get in touch
           </Link>
         </div>
       </section>

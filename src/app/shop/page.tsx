@@ -55,7 +55,7 @@ function ProductCard({ product }: { product: ShopProduct }) {
         <span>Enquire for details</span>
         {!state && product.product_type === "limited_print" && product.edition_size != null
           ? <span>{Math.max(0, product.edition_size - (product.edition_sold ?? 0))} remaining</span>
-          : <Link href={`/shop/${product.slug}`} className="uppercase tracking-[.12em] !text-[#242320] transition-colors hover:!text-[#9c8062]">View details ↗</Link>}
+          : <Link href={`/shop/${product.slug}`} className="uppercase tracking-[.12em] !text-[#242320] transition-colors hover:!text-[#9c8062]">View details</Link>}
       </div>
     </article>
   );
@@ -132,7 +132,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
             <h2 className="display mt-2 text-3xl md:text-4xl">Fine art prints.</h2>
             <p className="mt-3 max-w-xl text-sm leading-7 text-[#77736d]">Explore available limited and open-edition prints, with details on formats, materials and availability.</p>
           </div>
-          <Link href="/prints" className="inline-flex shrink-0 items-center self-start border border-[#242320] px-6 py-4 text-[10px] uppercase tracking-[.15em] transition-colors hover:bg-[#242320] hover:!text-[#f7f6f2] md:self-center">Explore prints <span className="ml-5">↗</span></Link>
+          <Link href="/prints" className="inline-flex shrink-0 items-center self-start rounded-full border border-[#242320] px-6 py-4 text-[10px] font-semibold uppercase tracking-[.15em] transition-colors hover:bg-[#242320] hover:!text-[#f7f6f2] md:self-center">Explore prints</Link>
         </div>
       </section>}
 
@@ -213,7 +213,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ c
         <div className="grid gap-8 md:grid-cols-[1fr_.8fr] md:items-end">
           <div><p className="eyebrow">Interested in collecting?</p><h2 className="display mt-4 max-w-xl text-4xl leading-tight md:text-5xl">Start a conversation about a work.</h2></div>
           <div><p className="text-sm leading-7 text-[#77736d]">For current availability, commissions, print enquiries or questions about shipping, get in touch. I can share details and discuss the best way to get a work to you.</p>
-            <Link href="/contact" className="mt-7 inline-flex border border-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] transition-colors !text-[#242320] hover:bg-[#242320] hover:!text-[#f7f6f2]">Make an enquiry <span className="ml-5">↗</span></Link>
+            <Link href="/contact" className="mt-7 inline-flex rounded-full border border-[#242320] px-7 py-4 text-[10px] font-semibold uppercase tracking-[.15em] transition-colors !text-[#242320] hover:bg-[#242320] hover:!text-[#f7f6f2]">Make an enquiry</Link>
           </div>
         </div>
       </section>
