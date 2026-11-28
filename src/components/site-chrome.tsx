@@ -64,10 +64,10 @@ export function SiteHeader() {
           <Link
             href="/contact"
             onClick={closeMenu}
-            className={`border px-3 py-3 text-[9px] uppercase tracking-[.12em] transition-colors sm:px-5 sm:text-[10px] sm:tracking-[.14em] ${darkHeader ? "border-white/60 text-[#f7f6f2] hover:bg-[#f7f6f2] hover:!text-[#242320]" : "border-[#242320] text-[#242320] hover:bg-[#242320] hover:!text-[#f7f6f2]"}`}
+            className={`rounded-full border px-3 py-3 text-[9px] font-semibold uppercase tracking-[.12em] transition-colors sm:px-5 sm:text-[10px] sm:tracking-[.14em] ${darkHeader ? "border-white/60 text-[#f7f6f2] hover:bg-[#f7f6f2] hover:!text-[#242320]" : "border-[#242320] text-[#242320] hover:bg-[#242320] hover:!text-[#f7f6f2]"}`}
           >
             <span className="sm:hidden">Contact</span>
-            <span className="hidden sm:inline">Get in touch</span> <span aria-hidden="true">↗</span>
+            <span className="hidden sm:inline">Get in touch</span>
           </Link>
 
           <button
