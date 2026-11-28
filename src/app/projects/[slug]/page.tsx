@@ -45,7 +45,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ slug
     ? path
     : supabase.storage.from("artwork-images").getPublicUrl(path).data.publicUrl;
   const gallery = Array.isArray(project.gallery) ? project.gallery as string[] : [];
-  const clientName = project.client?.[0]?.name ?? "";
+  const clientName = Array.isArray(project.client) ? project.client[0]?.name ?? "" : project.client?.name ?? "";
   const projectFacts = [
     clientName ? { label: "Client", value: clientName } : null,
     project.project_type ? { label: "Project type", value: project.project_type } : null,
