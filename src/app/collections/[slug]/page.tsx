@@ -82,9 +82,9 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
     <main className="container pb-24 pt-12 md:pt-16">
       <Link
         href="/collections"
-        className="inline-flex items-center gap-3 text-[10px] uppercase tracking-[.15em] text-[#77736d] transition-colors hover:text-[#9c8062]"
+        className="inline-flex rounded-full border border-[#dedad2] px-5 py-3 text-[10px] font-semibold uppercase tracking-[.14em] text-[#77736d] transition-colors hover:border-[#9c8062] hover:text-[#9c8062]"
       >
-        <span aria-hidden="true">←</span> All collections
+        All collections
       </Link>
 
       <section className="mt-9 grid gap-9 md:grid-cols-[1.15fr_.85fr] md:gap-14">
@@ -137,7 +137,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ slu
 
       <div className="mt-24 border-t border-[#dedad2] pt-8 text-center">
         <p className="eyebrow">Continue exploring</p>
-        <Link href="/collections" className="serif mt-3 inline-block text-2xl transition-colors hover:text-[#9c8062]">View all collections ↗</Link>
+        <Link href="/collections" className="serif mt-3 inline-block text-2xl transition-colors hover:text-[#9c8062]">View all collections</Link>
       </div>
     </main>
   );
