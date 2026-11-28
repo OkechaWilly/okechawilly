@@ -57,18 +57,38 @@ export default async function ProjectDetail({ params }: { params: Promise<{ slug
 
   return (
     <main className="pb-24">
-      <section className="container pt-8 md:pt-12">
-        <div className="grid gap-9 md:grid-cols-[minmax(260px,.78fr)_minmax(0,1.22fr)] md:items-stretch md:gap-14 lg:gap-20">
-          <div className="flex flex-col py-2 md:py-5">
-            <Link href="/projects" className="mb-12 inline-flex w-fit rounded-full border border-[#dedad2] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[.14em] text-[#625e57] transition-colors hover:border-[#9c8062] hover:text-[#9c8062]">
-              Back to selected work
-            </Link>
-            <p className="eyebrow">{project.project_type || "Selected project"}</p>
-            <h1 className="display mt-5 text-5xl leading-[.98] md:text-6xl lg:text-7xl">{project.title}</h1>
-            {project.summary && (
-              <p className="mt-7 max-w-lg text-sm leading-8 text-[#77736d] md:text-base">{project.summary}</p>
+      <section className="container pt-10 md:pt-16">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <Link href="/projects" className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#77736d] transition-colors hover:text-[#9c8062]">Selected works</Link>
+          <p className="eyebrow">{project.project_type || "Selected project"}</p>
+        </div>
+        <div className="grid gap-5 border-b border-[#dedad2] pb-8 md:grid-cols-[1fr_auto] md:items-end md:gap-10 md:pb-10">
+          <h1 className="display max-w-5xl text-5xl leading-[.98] md:text-7xl lg:text-[6.5rem]">{project.title}</h1>
+          {clientName && <p className="max-w-xs text-sm leading-7 text-[#77736d] md:pb-2">{clientName}</p>}
+        </div>
+        <div className="relative mt-8 aspect-[16/10] overflow-hidden bg-[#e8e5de] md:mt-12 md:aspect-[2/1]">
+          {project.cover_image ? (
+            <Image src={imageUrl(project.cover_image)} alt={project.title + " — completed project"} fill priority sizes="100vw" className="object-contain" />
+          ) : (
+            <div className="flex h-full items-center justify-center p-8 text-center"><span className="display text-4xl md:text-6xl">{project.title}</span></div>
+          )}
+        </div>
+      </section>
+
+      <section className="container py-12 md:py-20">
+        <div className="grid gap-10 border-b border-[#dedad2] pb-12 md:grid-cols-[1.1fr_.9fr] md:gap-20 md:pb-16">
+          <div>
+            <p className="eyebrow">The project</p>
+            <p className="mt-5 max-w-3xl text-base leading-8 text-[#625e57] md:text-lg md:leading-9">
+              {project.summary || project.brief || "A selected project by Okecha Willy."}
+            </p>
+            {project.brief && project.summary && project.brief !== project.summary && (
+              <p className="mt-5 max-w-3xl whitespace-pre-line text-sm leading-8 text-[#77736d]">{project.brief}</p>
             )}
-            <dl className="mt-auto grid grid-cols-2 gap-x-5 gap-y-5 border-t border-[#dedad2] pt-7 md:mt-12">
+          </div>
+          <div className="md:pl-8">
+            <p className="eyebrow">Project details</p>
+            <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-6">
               {projectFacts.map((fact) => (
                 <div key={fact.label}>
                   <dt className="text-[9px] font-semibold uppercase tracking-[.15em] text-[#89847c]">{fact.label}</dt>
@@ -77,39 +97,14 @@ export default async function ProjectDetail({ params }: { params: Promise<{ slug
               ))}
             </dl>
           </div>
-          <div className="relative min-h-[360px] overflow-hidden bg-[#e8e5de] aspect-[4/5] md:min-h-[620px] md:aspect-auto">
-            {project.cover_image ? (
-              <Image
-                src={imageUrl(project.cover_image)}
-                alt={project.title + " — completed project"}
-                fill
-                priority
-                sizes="(min-width:768px) 62vw, 100vw"
-                className="object-contain"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center p-8 text-center">
-                <span className="display text-4xl md:text-6xl">{project.title}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="container border-b border-[#dedad2] py-12 md:py-16">
-        <div className="grid gap-5 md:grid-cols-[minmax(180px,.7fr)_minmax(0,1.3fr)] md:gap-12">
-          <p className="eyebrow">About the project</p>
-          <p className="max-w-4xl whitespace-pre-line text-sm leading-8 text-[#625e57] md:text-[15px]">
-            {project.brief || project.summary || "A selected project by Okecha Willy."}
-          </p>
         </div>
       </section>
 
       {project.approach && (
-        <section className="container py-14 md:py-20">
-          <div className="grid gap-5 md:grid-cols-[minmax(180px,.7fr)_minmax(0,1.3fr)] md:gap-12">
-            <p className="eyebrow">The creative approach</p>
-            <p className="max-w-4xl whitespace-pre-line text-lg leading-8 text-[#625e57] md:text-2xl md:leading-[1.65]">{project.approach}</p>
+        <section className="container py-8 md:py-12">
+          <div className="mx-auto max-w-5xl border-y border-[#dedad2] py-10 md:py-16">
+            <p className="eyebrow">Creative direction</p>
+            <p className="display mt-5 text-3xl leading-[1.2] text-[#37342f] md:text-5xl md:leading-[1.2]">{project.approach}</p>
           </div>
         </section>
       )}
