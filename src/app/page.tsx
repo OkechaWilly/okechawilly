@@ -186,7 +186,7 @@ export default async function Home() {
             <Link href="/projects" className="inline-flex rounded-full border border-[#242320] px-6 py-3.5 text-[10px] font-semibold uppercase tracking-[.14em] transition-colors hover:bg-[#242320] hover:text-white">Explore projects</Link>
           </div>
           <div className="space-y-12 md:space-y-16">
-            {selectedProjects.map((project, index) => (
+            {selectedProjects.map((project) => (
               <Link key={project.id} href={"/projects/" + project.slug} className="group grid gap-6 md:grid-cols-[minmax(0,1.35fr)_minmax(260px,.65fr)] md:items-center md:gap-12">
                 <div className="relative aspect-[16/10] overflow-hidden bg-[#e8e5de]">
                   {project.image && <Image src={project.image} alt={project.title + " — selected project by Okecha Willy"} fill sizes="(min-width:768px) 65vw,100vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.025]"/>}
