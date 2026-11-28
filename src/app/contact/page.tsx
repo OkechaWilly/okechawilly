@@ -42,7 +42,7 @@ export default async function Contact({ searchParams }: { searchParams: Promise<
           </p>
           <ContactForm initialSubject={initialSubject}/>
           <div className="mt-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-[#d5d0c7] pt-5">
-            <a href="mailto:okechawill@gmail.com" className="text-xs text-[#77736d] transition-colors hover:text-[#242320]">okechawill@gmail.com ↗</a>
+            <a href="mailto:okechawill@gmail.com" className="text-xs text-[#77736d] transition-colors hover:text-[#242320]">okechawill@gmail.com</a>
             <Link href="/" className="text-[10px] uppercase tracking-[.14em] text-[#77736d] underline underline-offset-4 hover:text-[#242320]">Return home</Link>
           </div>
         </div>
