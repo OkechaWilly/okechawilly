@@ -81,7 +81,7 @@ export default function CollectorFAQ() {
           </div>
           <div>
             <p className="text-sm leading-7 text-[#77736d]">If you need more information about a particular artwork, print or delivery arrangement, please get in touch directly.</p>
-            <Link href="/contact?subject=Collector%20enquiry" className="mt-7 inline-flex border border-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] transition-colors hover:bg-[#242320] hover:!text-[#f7f6f2]">Contact the studio <span className="ml-5">↗</span></Link>
+            <Link href="/contact?subject=Collector%20enquiry" className="mt-7 inline-flex rounded-full border border-[#242320] px-7 py-4 text-[10px] font-semibold uppercase tracking-[.15em] transition-colors hover:bg-[#242320] hover:!text-[#f7f6f2]">Contact the studio</Link>
           </div>
         </div>
       </section>
