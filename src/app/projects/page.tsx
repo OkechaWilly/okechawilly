@@ -45,7 +45,7 @@ export default async function ProjectsPage({
         ? project.cover_image
         : supabase.storage.from("artwork-images").getPublicUrl(project.cover_image).data.publicUrl
       : "",
-    clientName: project.client?.[0]?.name ?? "",
+    clientName: Array.isArray(project.client) ? project.client[0]?.name ?? "" : project.client?.name ?? "",
   }));
   const categories = Array.from(
     new Set(projects.map((project) => project.project_type?.trim()).filter((value): value is string => Boolean(value))),
