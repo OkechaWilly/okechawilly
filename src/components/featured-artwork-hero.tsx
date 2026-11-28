@@ -35,11 +35,11 @@ export function FeaturedArtworkHero({ artworks }: { artworks: FeaturedArtwork[] 
       <section className="container grid items-center gap-12 pb-20 pt-12 md:min-h-[690px] md:grid-cols-[.88fr_1.12fr] md:gap-16 md:py-20">
         <div>
           <p className="eyebrow mb-7 flex items-center gap-3"><span className="inline-block h-px w-8 bg-[#9c8062]" />Independent artist · Uganda</p>
-          <h1 className="display max-w-[620px] text-[clamp(58px,7vw,100px)]">Art that<br /><em className="text-[#9c8062]">holds</em> a story.</h1>
+          <h1 className="display max-w-[620px] text-[clamp(58px,7vw,100px)]">Art that<br /><span className="font-semibold text-[#9c8062]">holds</span> a story.</h1>
           <p className="mt-8 max-w-md text-[15px] leading-7 text-[#77736d]">Exploring identity, spirituality, culture and the human experience through painting and visual storytelling. A growing body of work shaped by observation, memory and curiosity.</p>
           <div className="mt-9 flex flex-wrap gap-3">
-            <Link href="/artwork" className="inline-flex items-center gap-5 bg-[#242320] px-7 py-4 text-[10px] uppercase tracking-[.15em] !text-[#f7f6f2] transition hover:bg-[#9c8062]">Explore artwork <span aria-hidden="true">↗</span></Link>
-            <Link href="/about" className="inline-flex items-center border border-[#c9c5bc] px-7 py-4 text-[10px] uppercase tracking-[.15em] transition hover:border-[#242320]">Meet the artist</Link>
+            <Link href="/artwork" className="inline-flex rounded-full bg-[#242320] px-7 py-4 text-[10px] font-semibold uppercase tracking-[.15em] !text-[#f7f6f2] transition hover:bg-[#9c8062]">Explore artwork</Link>
+            <Link href="/about" className="inline-flex rounded-full border border-[#c9c5bc] px-7 py-4 text-[10px] font-semibold uppercase tracking-[.15em] transition hover:border-[#242320]">Meet the artist</Link>
           </div>
           <div className="mt-16 flex items-center gap-4"><span className="text-[10px] tracking-[.16em] text-[#9c8062]">01</span><span className="h-px w-10 bg-[#d9d4ca]" /><p className="text-[10px] uppercase tracking-[.16em] text-[#aaa49a]">A practice in progress</p></div>
         </div>
